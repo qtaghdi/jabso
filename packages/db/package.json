@@ -17,6 +17,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
+    "db:seed": "dotenv -e ../../.env -- tsx scripts/seed.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -25,7 +27,9 @@
   },
   "devDependencies": {
     "@types/node": "24.13.3",
+    "dotenv-cli": "11.0.0",
     "drizzle-kit": "0.31.10",
+    "tsx": "4.23.12",
     "typescript": "5.9.3"
   }
 }
