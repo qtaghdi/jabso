@@ -1,0 +1,13 @@
+node_modules
+.next
+.spike-dumps
+.jabso-diagnostics
+.idea
+*.tsbuildinfo
+.turbo
+coverage
+dist
+*.log
+.env
+.env.*
+!.env.example

@@ -1,0 +1,32 @@
+{
+  "name": "jabso",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@jabso/web",
+    "dev:server": "turbo run dev --filter=@jabso/server",
+    "lint": "eslint .",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck && tsc -p tsconfig.domains.json",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm boundra:check",
+    "boundra:check": "boundra check-boundaries --root . --format json",
+    "boundra:graph": "boundra graph-domains --root . --format mermaid",
+    "db:generate": "turbo run db:generate --filter=@jabso/db"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.3.1",
+    "boundra": "0.2.2",
+    "eslint": "10.8.1",
+    "globals": "17.11.0",
+    "turbo": "2.10.11",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "zod": "4.4.3"
+  }
+}

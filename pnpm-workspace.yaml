@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+  - domains/*
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+minimumReleaseAgeExclude:
+  - boundra@0.2.2
