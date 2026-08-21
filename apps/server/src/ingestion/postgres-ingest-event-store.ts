@@ -27,21 +27,28 @@ export class PostgresIngestEventStore implements IngestEventStore {
     return this.database.transaction(async (transaction) => {
       const issueResult = await transaction.query<IssueRow>(
         `insert into issues (
-          project_id, fingerprint, title, level, event_count, first_seen_at, last_seen_at
-        ) values ($1, $2, $3, $4, 0, $5, $5)
+          project_id, fingerprint, title, exception_type, level, event_count, first_seen_at, last_seen_at
+        ) values ($1, $2, $3, $4, $5, 0, $6, $6)
         on conflict (project_id, fingerprint) do update
-          set title = excluded.title, level = excluded.level
+          set title = excluded.title, exception_type = excluded.exception_type, level = excluded.level
         returning id, event_count`,
-        [input.projectId, fingerprint, input.message ?? input.exceptionType ?? 'Unknown error', input.level, occurredAt],
+        [
+          input.projectId,
+          fingerprint,
+          input.message ?? input.exceptionType ?? 'Unknown error',
+          input.exceptionType ?? null,
+          input.level,
+          occurredAt,
+        ],
       )
       const issue = issueResult.rows[0]
       if (!issue) throw new Error('Failed to create or find an issue')
 
       const eventResult = await transaction.query<EventRow>(
         `insert into events (
-          event_id, project_id, issue_id, message, level, platform, environment,
+          event_id, project_id, issue_id, message, exception_type, level, platform, environment,
           release, occurred_at, stacktrace, tags
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb)
         on conflict (project_id, event_id) do nothing
         returning id`,
         [
@@ -49,6 +56,7 @@ export class PostgresIngestEventStore implements IngestEventStore {
           input.projectId,
           issue.id,
           input.message ?? null,
+          input.exceptionType ?? null,
           input.level,
           input.platform ?? null,
           input.environment ?? null,

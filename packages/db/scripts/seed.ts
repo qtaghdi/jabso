@@ -4,7 +4,7 @@ const database = createSqlExecutor()
 
 try {
   const dsnProjectId = process.env.JABSO_DEV_PROJECT_ID ?? '1'
-  const publicKey = process.env.JABSO_DEV_PROJECT_KEY ?? 'local-dev-key'
+  const publicKey = process.env.JABSO_DEV_PROJECT_KEY ?? '0123456789abcdef0123456789abcdef'
   const result = await database.query<{ id: string }>(
     `insert into projects (name, slug, dsn_project_id, public_key)
       values ($1, $2, $3, $4)
