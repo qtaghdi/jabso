@@ -2,10 +2,10 @@
   "name": "@jabso/web",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3999",
-    "build": "next build",
-    "start": "next start -p 3999",
-    "typecheck": "next typegen && tsc --noEmit"
+    "dev": "dotenv -e ../../.env -- next dev -p 3999",
+    "build": "dotenv -e ../../.env -- next build",
+    "start": "dotenv -e ../../.env -- next start -p 3999",
+    "typecheck": "dotenv -e ../../.env -- next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@sentry/browser": "10.70.0",
@@ -17,6 +17,7 @@
     "@types/node": "24.13.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.3",
+    "dotenv-cli": "11.0.0",
     "typescript": "5.9.3"
   }
 }
