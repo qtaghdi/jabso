@@ -5,10 +5,10 @@ import {
   type GetIssueQueryInput,
 } from "../../shared/contracts/get-issue";
 
-export function getIssue(
+export const getIssue = (
   client: BoundraClient,
   input: GetIssueQueryInput,
   options?: BoundraCallOptions,
-) {
+) => {
   return client.query(getIssueQuery, input, options);
 }

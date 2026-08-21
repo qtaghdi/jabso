@@ -5,10 +5,10 @@ import {
   type GetEventQueryInput,
 } from "../../shared/contracts/get-event";
 
-export function getEvent(
+export const getEvent = (
   client: BoundraClient,
   input: GetEventQueryInput,
   options?: BoundraCallOptions,
-) {
+) => {
   return client.query(getEventQuery, input, options);
 }

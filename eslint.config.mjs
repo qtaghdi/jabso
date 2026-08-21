@@ -1,7 +1,42 @@
 import eslint from '@eslint/js'
 import nextPlugin from '@next/eslint-plugin-next'
 import globals from 'globals'
+import path from 'node:path'
 import tseslint from 'typescript-eslint'
+
+const allowedSourceNames = new Set([
+  'error',
+  'global-error',
+  'index',
+  'layout',
+  'loading',
+  'not-found',
+  'page',
+  'route',
+  'template',
+])
+
+const jabsoPlugin = {
+  rules: {
+    'kebab-case-filenames': {
+      meta: { type: 'suggestion', schema: [] },
+      create: (context) => ({
+        Program: (node) => {
+          const filename = path.basename(context.filename)
+          const sourceName = filename
+            .replace(/\.d\.(?:ts|tsx)$/, '')
+            .replace(/\.(?:[cm]?[jt]sx?)$/, '')
+            .replace(/\.(?:test|spec)$/, '')
+          const isConfig = sourceName.endsWith('.config')
+          const isKebabCase = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(sourceName)
+          if (!allowedSourceNames.has(sourceName) && !isConfig && !isKebabCase) {
+            context.report({ node, message: 'Source filenames must use kebab-case.' })
+          }
+        },
+      }),
+    },
+  },
+}
 
 export default tseslint.config(
   {
@@ -19,6 +54,8 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    files: ['**/*.{ts,tsx,js,jsx,mjs,cjs}'],
+    plugins: { jabso: jabsoPlugin },
     languageOptions: {
       globals: {
         ...globals.browser,
@@ -27,6 +64,14 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      'jabso/kebab-case-filenames': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'FunctionDeclaration',
+          message: 'Use a const arrow function instead of a function declaration.',
+        },
+      ],
     },
   },
   {

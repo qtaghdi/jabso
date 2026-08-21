@@ -5,10 +5,10 @@ import {
   type IngestEventMutationInput,
 } from "../../shared/contracts/ingest-event";
 
-export function ingestEvent(
+export const ingestEvent = (
   client: BoundraClient,
   input: IngestEventMutationInput,
   options?: BoundraCallOptions,
-) {
+) => {
   return client.mutation(ingestEventMutation, input, options);
 }

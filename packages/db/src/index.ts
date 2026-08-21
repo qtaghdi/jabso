@@ -15,7 +15,7 @@ export type SqlExecutor = {
   close?(): Promise<void>
 }
 
-function postgresExecutor(sql: postgres.Sql | postgres.TransactionSql): SqlExecutor {
+const postgresExecutor = (sql: postgres.Sql | postgres.TransactionSql): SqlExecutor => {
   const executor: SqlExecutor = {
     async query<Row>(statement: string, parameters: readonly unknown[] = []) {
       const result = await sql.unsafe(statement, parameters as never[])
@@ -26,7 +26,7 @@ function postgresExecutor(sql: postgres.Sql | postgres.TransactionSql): SqlExecu
   return executor
 }
 
-export function createSqlExecutor(url = process.env.JABSO_DATABASE_URL): SqlExecutor {
+export const createSqlExecutor = (url = process.env.JABSO_DATABASE_URL): SqlExecutor => {
   if (!url) throw new Error('JABSO_DATABASE_URL is required')
   const sql = postgres(url, { prepare: false })
   const executor = postgresExecutor(sql)
@@ -36,13 +36,13 @@ export function createSqlExecutor(url = process.env.JABSO_DATABASE_URL): SqlExec
   return executor
 }
 
-export function getDatabase(url = process.env.JABSO_DATABASE_URL) {
+export const getDatabase = (url = process.env.JABSO_DATABASE_URL) => {
   if (!url) throw new Error('JABSO_DATABASE_URL is required')
   client ??= postgres(url, { prepare: false })
   return drizzle(client, { schema })
 }
 
-export async function closeDatabase() {
+export const closeDatabase = async () => {
   if (!client) return
   await client.end()
   client = undefined

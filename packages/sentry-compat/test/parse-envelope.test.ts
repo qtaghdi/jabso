@@ -7,7 +7,7 @@ import {
 
 const encoder = new TextEncoder()
 
-function envelope(itemHeader: Record<string, unknown>, payload: string) {
+const envelope = (itemHeader: Record<string, unknown>, payload: string) => {
   return encoder.encode(`{"event_id":"event-1"}\n${JSON.stringify(itemHeader)}\n${payload}\n`)
 }
 

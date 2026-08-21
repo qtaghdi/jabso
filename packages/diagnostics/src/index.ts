@@ -31,11 +31,11 @@ export type DiagnosticInput = Omit<BoundraDiagnostic, 'id' | 'occurredAt'> & {
 
 export type DiagnosticSink = (diagnostic: BoundraDiagnostic) => Promise<void>
 
-function truncate(value: string, maxLength: number) {
+const truncate = (value: string, maxLength: number) => {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength)}…`
 }
 
-export function createBoundraDiagnostic(input: DiagnosticInput): BoundraDiagnostic {
+export const createBoundraDiagnostic = (input: DiagnosticInput): BoundraDiagnostic => {
   return {
     ...input,
     id: input.id ?? randomUUID(),
@@ -48,18 +48,18 @@ export function createBoundraDiagnostic(input: DiagnosticInput): BoundraDiagnost
   }
 }
 
-export function createNdjsonFileSink(path: string): DiagnosticSink {
+export const createNdjsonFileSink = (path: string): DiagnosticSink => {
   return async (diagnostic) => {
     await mkdir(dirname(path), { recursive: true })
     await appendFile(path, `${JSON.stringify(diagnostic)}\n`, { encoding: 'utf8', mode: 0o600 })
   }
 }
 
-export function createDiagnosticRecorder(options: {
+export const createDiagnosticRecorder = (options: {
   primary: DiagnosticSink
   fallback?: DiagnosticSink
   onDropped?: (diagnostic: BoundraDiagnostic, reason: unknown) => void
-}) {
+}) => {
   const recording = new AsyncLocalStorage<boolean>()
 
   return async (input: DiagnosticInput) => {

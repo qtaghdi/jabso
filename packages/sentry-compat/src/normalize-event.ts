@@ -26,18 +26,18 @@ const text = (value: unknown, max: number) =>
 const integer = (value: unknown) =>
   typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined
 
-function normalizeTimestamp(value: unknown) {
+const normalizeTimestamp = (value: unknown) => {
   const date = typeof value === 'number' ? new Date(value * 1_000) : typeof value === 'string' ? new Date(value) : undefined
   return date && Number.isFinite(date.getTime()) ? date.toISOString() : undefined
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
+const asRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined
 }
 
-export function normalizeSentryEvent(payload: unknown, fallbackEventId?: string): NormalizedSentryEvent {
+export const normalizeSentryEvent = (payload: unknown, fallbackEventId?: string): NormalizedSentryEvent => {
   const event = asRecord(payload) ?? {}
   const exceptions = asRecord(event.exception)?.values
   const exception = Array.isArray(exceptions) ? asRecord(exceptions.at(-1)) : undefined

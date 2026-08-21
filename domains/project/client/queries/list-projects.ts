@@ -5,10 +5,10 @@ import {
   type ListProjectsQueryInput,
 } from "../../shared/contracts/list-projects";
 
-export function listProjects(
+export const listProjects = (
   client: BoundraClient,
   input: ListProjectsQueryInput,
   options?: BoundraCallOptions,
-) {
+) => {
   return client.query(listProjectsQuery, input, options);
 }
