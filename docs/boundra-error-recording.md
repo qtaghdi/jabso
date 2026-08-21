@@ -1,0 +1,91 @@
+# Boundra error recording policy
+
+Jabso는 Boundra를 사용하면서 Boundra 자체의 문제도 실전 환경에서 관찰한다. 하지만 Boundra 오류를 일반 ingestion contract로 다시 보내면 contract 오류가 자기 자신을 반복 생성할 수 있다. 이 문서는 해당 재귀를 차단하고 유용한 진단 정보만 보존하기 위한 정책이다.
+
+## What is recorded
+
+| Kind | Example | Destination |
+| --- | --- | --- |
+| `boundary_violation` | `BR-001`~`BR-006` | CI artifact, optional import |
+| `runtime_contract` | `RUNTIME-001`~`RUNTIME-003` | Internal diagnostics sink |
+| `host_adapter` | Fastify/Next adapter mismatch | Internal diagnostics sink |
+| `cli` | native binary download or execution failure | Local diagnostic file |
+| `unexpected` | Boundra integration code exception | Internal diagnostics sink |
+
+## Isolation rules
+
+1. Boundra diagnostics never call the public event ingestion endpoint.
+2. Diagnostics never pass through the same failing Boundra contract.
+3. The primary sink writes through a minimal repository or SQL adapter.
+4. A process-local recursion guard drops nested diagnostic attempts after logging one line to stderr.
+5. If the database is unavailable, diagnostics append to `.jabso-diagnostics/boundra.ndjson` in local development.
+6. Production fallback behavior must match the selected deployment runtime; ephemeral local files are not considered durable storage.
+
+## Safe diagnostic shape
+
+```ts
+type BoundraDiagnostic = {
+  id: string
+  kind:
+    | 'boundary_violation'
+    | 'runtime_contract'
+    | 'host_adapter'
+    | 'cli'
+    | 'unexpected'
+  code?: string
+  message: string
+  contract?: string
+  operation?: 'route' | 'query' | 'mutation'
+  issues?: Array<{
+    path: Array<string | number>
+    message: string
+  }>
+  boundraVersion: string
+  jabsoVersion?: string
+  occurredAt: string
+  context?: Record<string, string | number | boolean | null>
+}
+```
+
+Do not store:
+
+- original contract input
+- authorization headers, cookies, or tokens
+- internal `cause` objects without sanitization
+- request or response bodies
+- arbitrary environment variables
+
+Boundra runtime errors should use their safe `toJSON()` representation as the source. Stack traces are allowed only after path and secret scrubbing.
+
+## Proposed database table
+
+```text
+internal_diagnostics
+├── id uuid primary key
+├── kind text
+├── code text nullable
+├── message text
+├── contract text nullable
+├── operation text nullable
+├── issues jsonb
+├── context jsonb
+├── boundra_version text
+├── jabso_version text nullable
+└── occurred_at timestamptz
+```
+
+This table is intentionally separate from customer `events` and `issues`. Internal diagnostics do not affect issue counts, alerts, quotas, or retention calculations.
+
+## CI boundary violations
+
+`boundra check-boundaries --format json` should run in CI. Its JSON output is retained as a build artifact. Importing it into Jabso is optional and should be a separate CI integration, not part of the production runtime.
+
+The first implementation only needs:
+
+- structured stderr/Pino output
+- safe serialization test
+- recursion guard test
+- local NDJSON fallback
+
+Direct database persistence can be added when the PostgreSQL schema exists.
+

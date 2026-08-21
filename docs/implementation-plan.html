@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jabso Implementation Plan</title>
+  <style>
+    :root {
+      --bg: #f7f7f2;
+      --surface: #ffffff;
+      --ink: #18201c;
+      --muted: #66706a;
+      --line: #dfe5df;
+      --brand: #315c45;
+      --brand-soft: #e3eee7;
+      --lime: #c8ed6b;
+      --sky: #cbe7ef;
+      --red: #dc4c4c;
+      --orange: #d88922;
+      --gray: #89938d;
+      --code: #1f2923;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 64px 24px 96px; }
+    h1 { margin: 0; font-size: clamp(2.4rem, 6vw, 5.5rem); line-height: 1; letter-spacing: -0.055em; }
+    h1 span { color: var(--brand); }
+    h2 { margin: 64px 0 24px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); font-size: 1.65rem; letter-spacing: -0.03em; }
+    h3 { margin: 0 0 12px; color: var(--brand); font-size: 1.08rem; }
+    p { margin: 8px 0 16px; }
+    a { color: var(--brand); }
+    .hero { display: grid; grid-template-columns: 1.45fr .55fr; gap: 32px; align-items: end; }
+    .tagline { max-width: 700px; margin-top: 22px; color: var(--muted); font-size: 1.2rem; }
+    .meta { color: var(--muted); font-size: .9rem; text-align: right; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .note { background: #fff4cd; border-left: 5px solid var(--orange); padding: 18px 20px; border-radius: 8px; }
+    .decision { background: var(--brand-soft); border-left: 5px solid var(--brand); padding: 18px 20px; border-radius: 8px; }
+    .badge { display: inline-block; margin-right: 7px; padding: 3px 9px; border-radius: 999px; color: white; font-weight: 750; font-size: .72rem; letter-spacing: .04em; vertical-align: 2px; }
+    .p0 { background: var(--red); }
+    .p1 { background: var(--orange); }
+    .p2 { background: var(--gray); }
+    .phase { background: var(--brand); }
+    .later { background: #6e8fa0; }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 12px; }
+    th, td { padding: 13px 15px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: #edf2ee; font-size: .82rem; color: #455149; text-transform: uppercase; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: 0; }
+    code { background: #edf2ee; padding: 2px 6px; border-radius: 5px; font-size: .9em; }
+    pre { overflow: auto; background: var(--code); color: #edf6ef; padding: 22px; border-radius: 12px; line-height: 1.5; }
+    pre code { background: transparent; padding: 0; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 5px 0; }
+    details { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 0 18px; margin: 10px 0; }
+    summary { cursor: pointer; padding: 16px 0; font-weight: 700; color: var(--brand); }
+    .flow { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; }
+    .flow > div { flex: 1; min-width: 145px; padding: 16px; border-radius: 10px; background: white; border: 1px solid var(--line); }
+    .flow b { display: block; color: var(--brand); margin-bottom: 5px; }
+    .small { color: var(--muted); font-size: .9rem; }
+    .check { list-style: none; padding-left: 0; }
+    .check li::before { content: "□"; color: var(--brand); font-weight: bold; margin-right: 9px; }
+    @media (max-width: 760px) {
+      main { padding: 40px 18px 72px; }
+      .hero, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .meta { text-align: left; }
+      h2 { margin-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <h1><span>Jabso</span><br />Implementation Plan</h1>
+      <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
+    </div>
+    <div class="meta">작성일 2026-08-21<br />Status: proposed<br />Scope: MVP → MCP</div>
+  </section>
+
+  <h2>Context — 왜 지금?</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>이미 증명된 것</h3>
+      <p>Sentry Browser SDK의 envelope를 자체 Next.js endpoint에서 받고, event 및 zlib replay segment를 byte 단위로 해제할 수 있다. 현재 fixture에는 동일 replay의 segment 0–7과 총 106개 rrweb event가 있다.</p>
+    </div>
+    <div class="card">
+      <h3>아직 제품이 아닌 이유</h3>
+      <p>데이터가 로컬 파일에 저장되고 인증·quota·grouping·검색이 없다. Replay 마스킹도 꺼져 있어 현재 코드는 protocol spike로만 취급해야 한다.</p>
+    </div>
+  </div>
+  <div class="decision" style="margin-top:16px"><strong>제품 정의:</strong> Sentry 전체 대체가 아니라 개인 프로젝트를 위한 <strong>error inbox + issue grouping + MCP context</strong>. DOM Replay와 자체 browser SDK는 후순위다.</div>
+
+  <h2>핵심 컨셉</h2>
+  <table>
+    <thead><tr><th>결정</th><th>선택</th><th>이유</th></tr></thead>
+    <tbody>
+      <tr><td>Repository</td><td>pnpm workspace + Turborepo</td><td>웹·서버·도메인·MCP adapter를 한 저장소에서 독립 배포 가능하게 관리</td></tr>
+      <tr><td>Web</td><td>Next.js 16 + React 19</td><td>관리 UI와 서버 렌더링, 현재 React 역량 재사용</td></tr>
+      <tr><td>Server</td><td>Fastify + Node.js 24</td><td>수집 경로의 body limit, hook, schema, Pino, graceful shutdown</td></tr>
+      <tr><td>Architecture</td><td>Boundra + Zod</td><td>도메인 공개 API와 client/server 경계를 강제하고 UI/MCP 계약을 공유</td></tr>
+      <tr><td>Persistence</td><td>PostgreSQL + Drizzle</td><td>초기 검색·JSONB·transaction·migration을 하나의 저장소로 처리</td></tr>
+      <tr><td>Client intake</td><td>Sentry SDK compatibility</td><td>초기에는 검증된 capture, breadcrumb, framework integration을 재사용</td></tr>
+      <tr><td>MCP</td><td>공식 TypeScript SDK, Streamable HTTP</td><td>REST와 같은 domain handler를 호출하는 얇은 읽기 전용 adapter</td></tr>
+      <tr><td>Replay</td><td>Later</td><td>개인정보·대용량 저장·segment 처리보다 오류 inbox의 가치 검증이 먼저</td></tr>
+    </tbody>
+  </table>
+
+  <h2>목표 아키텍처</h2>
+  <div class="flow">
+    <div><b>Sentry SDK</b><span class="small">기존 capture API와 framework integration</span></div>
+    <div><b>Fastify adapter</b><span class="small">DSN key, size, rate limit, envelope parsing</span></div>
+    <div><b>Boundra domain</b><span class="small">normalize, fingerprint, issue upsert</span></div>
+    <div><b>PostgreSQL</b><span class="small">projects, issues, events, releases</span></div>
+    <div><b>UI + MCP</b><span class="small">같은 query handler와 권한 규칙</span></div>
+  </div>
+  <pre><code>apps/
+├── web/                     # Next.js UI
+└── server/                  # Fastify composition root
+    ├── routes/              # external HTTP adapters
+    └── mcp/                 # later: MCP adapter
+
+domains/
+├── project/
+├── event/
+├── issue/
+└── release/
+
+packages/
+├── sentry-compat/           # binary envelope parser
+├── db/                      # Drizzle schema and migrations
+└── config/                  # shared tooling config
+
+fixtures/
+└── sentry-envelopes/        # sanitized golden fixtures</code></pre>
+  <div class="note"><strong>Boundary rule:</strong> raw Sentry envelope endpoint는 Boundra contract로 감싸지 않는다. Fastify adapter가 외부 protocol을 검증·파싱한 뒤 canonical event만 domain mutation에 전달한다.</div>
+
+  <h2><span class="badge phase">Phase 0</span>스파이크 보존과 기반 정리</h2>
+  <div class="card">
+    <ul class="check">
+      <li>현재 Next.js spike를 새 Jabso 저장소로 이전</li>
+      <li>민감정보를 제거한 최소 envelope fixture 선별</li>
+      <li>parser를 fixture 기반 golden test로 고정</li>
+      <li>pnpm workspace와 Turborepo 초기화</li>
+      <li>Next.js 16으로 올리고 보안 audit 재확인</li>
+      <li>Boundra 버전을 exact pin하고 boundary check를 CI에 추가</li>
+    </ul>
+    <p class="small">Exit criteria: clean install, typecheck, build, parser tests, boundary checks가 새 환경에서 모두 통과한다.</p>
+  </div>
+
+  <h2><span class="badge p0">P0</span><span class="badge phase">Phase 1</span>Error ingestion MVP</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>수집 경로</h3>
+      <ul>
+        <li>Fastify server와 health endpoint</li>
+        <li><code>/api/sentry/:projectId/envelope</code></li>
+        <li>project key 검증과 CORS allowlist</li>
+        <li>compressed/uncompressed body limit</li>
+        <li>허용 item type과 length 검증</li>
+        <li>안전한 error response와 structured log</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>도메인과 저장</h3>
+      <ul>
+        <li><code>project</code>, <code>event</code>, <code>issue</code> domain</li>
+        <li>canonical event schema</li>
+        <li>message와 stack frame normalization</li>
+        <li>fingerprint 계산과 issue upsert</li>
+        <li>PostgreSQL migration과 repository</li>
+        <li>raw payload PII 최소화</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small">Exit criteria: 테스트 앱의 오류가 Jabso에 저장되고 같은 오류가 하나의 issue occurrence로 누적된다.</p>
+
+  <h2><span class="badge p1">P1</span><span class="badge phase">Phase 2</span>Issue inbox</h2>
+  <div class="grid-3">
+    <div class="card"><h3>목록</h3><p>status, level, environment, release, last seen 기준 검색·필터·cursor pagination.</p></div>
+    <div class="card"><h3>상세</h3><p>stack trace, breadcrumbs, tags, user-safe context, occurrence history.</p></div>
+    <div class="card"><h3>Lifecycle</h3><p>unresolved, resolved, ignored 상태와 regression 감지의 최소 구현.</p></div>
+  </div>
+  <p class="small">Exit criteria: Jabso UI만으로 최근 오류를 찾고 원인 후보가 되는 frame과 문맥을 확인할 수 있다.</p>
+
+  <h2><span class="badge p1">P1</span><span class="badge phase">Phase 3</span>Source map과 release</h2>
+  <div class="card">
+    <ul class="check">
+      <li>release 생성과 deploy 식별자 저장</li>
+      <li>source map upload API 또는 CLI 계약 정의</li>
+      <li>artifact path 매칭과 symbolication worker</li>
+      <li>원본 frame과 symbolicated frame을 함께 보존</li>
+      <li>release별 first seen 및 regression 표시</li>
+    </ul>
+  </div>
+  <div class="note" style="margin-top:16px">Source map이 없으면 production stack trace의 가치가 급격히 떨어진다. MCP보다 먼저 완성할 가능성이 높은 기능이다.</div>
+
+  <h2><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>첫 도구</h3>
+      <ul>
+        <li><code>list_projects</code></li>
+        <li><code>search_issues</code></li>
+        <li><code>get_issue</code></li>
+        <li><code>get_event</code></li>
+        <li><code>get_issue_occurrences</code></li>
+        <li><code>get_release_regressions</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>안전장치</h3>
+      <ul>
+        <li>project scope가 있는 token</li>
+        <li>PII 제거된 응답 schema</li>
+        <li>결과 개수와 payload 크기 제한</li>
+        <li>도구 호출 audit log</li>
+        <li>쓰기 도구는 명시적으로 out of scope</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small">MCP adapter는 DB를 직접 조회하지 않고 Phase 2에서 만든 Boundra query handler를 호출한다.</p>
+
+  <h2><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
+  <div class="decision">
+    <strong>재귀 방지 설계:</strong> Boundra runtime/adapter 오류는 일반 Jabso ingestion과 failing contract를 통과하지 않는다. 최소 diagnostic sink가 safe shape를 직접 기록하며 nested attempt는 recursion guard로 차단한다.
+  </div>
+  <div class="grid-2" style="margin-top:16px">
+    <div class="card">
+      <h3>Primary sink</h3>
+      <p><code>internal_diagnostics</code> 테이블에 최소 repository 또는 SQL adapter로 직접 기록한다. 일반 issue count, quota, alert와 완전히 분리한다.</p>
+    </div>
+    <div class="card">
+      <h3>Fallback</h3>
+      <p>로컬 개발에서는 <code>.jabso-diagnostics/boundra.ndjson</code>로 fallback한다. production에서는 선택한 배포 환경에 맞는 별도 durable fallback을 결정한다.</p>
+    </div>
+  </div>
+  <ul>
+    <li>기록: stable code, safe message, field path, contract name, operation, Boundra/Jabso version</li>
+    <li>금지: original input, token, cookie, authorization header, 임의 환경 변수</li>
+    <li>CI boundary violation은 <code>check-boundaries --format json</code> artifact로 먼저 보존</li>
+  </ul>
+
+  <h2><span class="badge p2">P2</span><span class="badge later">Later</span>운영 확장</h2>
+  <table>
+    <thead><tr><th>기능</th><th>도입 신호</th><th>방향</th></tr></thead>
+    <tbody>
+      <tr><td>Queue/worker</td><td>DB 지연이 intake 성공률에 영향을 줄 때</td><td>raw 수신과 normalize/persist 분리</td></tr>
+      <tr><td>Partitioning</td><td>event table과 retention delete가 느려질 때</td><td>시간 기준 PostgreSQL partition</td></tr>
+      <tr><td>Search store</td><td>PostgreSQL 검색 병목이 측정될 때</td><td>그때 별도 검색/분석 저장소 검토</td></tr>
+      <tr><td>Alerts</td><td>issue inbox가 안정된 뒤</td><td>새 issue/regression webhook부터 시작</td></tr>
+      <tr><td>Own SDK</td><td>Sentry SDK 제약이 실제로 확인될 때</td><td><code>@jabso/browser</code> wrapper에서 점진 교체</td></tr>
+      <tr><td>Session Replay</td><td>오류 문맥만으로 원인 분석이 부족할 때</td><td>private object storage + rrweb + 안전한 masking</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Critical files</h2>
+  <details open><summary>신규 — 먼저 만들 파일</summary>
+    <ul>
+      <li><code>pnpm-workspace.yaml</code>, <code>turbo.json</code>, root <code>package.json</code></li>
+      <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/routes/sentry-envelope.ts</code></li>
+      <li><code>packages/sentry-compat/src/parse-envelope.ts</code></li>
+      <li><code>packages/db/src/schema.ts</code>, first migration</li>
+      <li><code>domains/event</code>, <code>domains/issue</code>, <code>domains/project</code> manifests and contracts</li>
+      <li><code>fixtures/sentry-envelopes</code> sanitized samples</li>
+    </ul>
+  </details>
+  <details><summary>재사용 — 현재 스파이크에서 가져올 것</summary>
+    <ul>
+      <li>byte-level envelope parser</li>
+      <li>content encoding 처리의 성공 fixture</li>
+      <li>Sentry DSN을 자체 endpoint로 연결한 demo</li>
+      <li>Replay segment decoder는 별도 spike로 보존하되 MVP runtime에서는 제외</li>
+    </ul>
+  </details>
+  <details><summary>폐기 또는 격리</summary>
+    <ul>
+      <li>인증 없는 <code>/api/dumps</code>는 production 코드로 승격하지 않는다.</li>
+      <li>동기식 local filesystem persistence는 fixture/dev 전용으로만 남긴다.</li>
+      <li>Replay의 <code>maskAllText: false</code>, <code>maskAllInputs: false</code>는 demo 외부에서 사용하지 않는다.</li>
+    </ul>
+  </details>
+
+  <h2>Verification</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>자동 검증</h3>
+      <ul>
+        <li>typecheck, lint, build</li>
+        <li>Boundra boundary check</li>
+        <li>envelope golden fixture test</li>
+        <li>fingerprint table test</li>
+        <li>repository integration test</li>
+        <li>safe diagnostic serialization test</li>
+        <li>Boundra diagnostic recursion test</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Story 검증</h3>
+      <ol>
+        <li>demo app에서 같은 오류를 세 번 전송</li>
+        <li>하나의 issue에 occurrence 3개가 쌓이는지 확인</li>
+        <li>release가 바뀐 뒤 regression 표시 확인</li>
+        <li>MCP로 issue 검색과 stack trace 조회</li>
+        <li>민감한 입력이 어떤 응답에도 없는지 확인</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>Out of scope</h2>
+  <div class="card">
+    <ul>
+      <li>초기 MVP의 DOM Session Replay</li>
+      <li>Sentry Browser SDK의 완전한 자체 재구현</li>
+      <li>APM transaction, distributed tracing, metrics, profiling</li>
+      <li>다중 조직 billing과 복잡한 RBAC</li>
+      <li>Elasticsearch/ClickHouse의 선제 도입</li>
+      <li>MCP 쓰기 도구와 자동 issue 해결</li>
+      <li>Sentry protocol의 모든 item type 지원</li>
+    </ul>
+  </div>
+
+  <h2>예상 작업량</h2>
+  <table>
+    <thead><tr><th>Phase</th><th>크기</th><th>불확실성</th><th>완료 판단</th></tr></thead>
+    <tbody>
+      <tr><td>0. 기반 정리</td><td>Small</td><td>낮음</td><td>새 모노레포에서 CI green</td></tr>
+      <tr><td>1. Ingestion MVP</td><td>Large</td><td>중간</td><td>issue grouping과 DB 저장</td></tr>
+      <tr><td>2. Issue inbox</td><td>Medium</td><td>낮음</td><td>UI에서 오류 조사 가능</td></tr>
+      <tr><td>3. Source maps</td><td>Large</td><td>높음</td><td>production stack symbolication</td></tr>
+      <tr><td>4. Read-only MCP</td><td>Medium</td><td>중간</td><td>agent가 project-scoped 조회</td></tr>
+      <tr><td>Later. Replay</td><td>XL</td><td>높음</td><td>privacy-safe replay 연결</td></tr>
+    </tbody>
+  </table>
+  <p class="small" style="margin-top:24px">이 문서는 구현 순서의 기준이다. 실제 저장소 상태와 학습에 따라 단계 내부는 변경할 수 있지만, P0 안전 조건과 out-of-scope 경계는 명시적인 결정 없이 넓히지 않는다.</p>
+</main>
+</body>
+</html>
