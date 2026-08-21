@@ -1,10 +1,10 @@
 import { PGlite, type PGliteInterface, type Transaction } from '@electric-sql/pglite'
 import type { SqlExecutor } from '@jabso/db'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 
 type Queryable = Pick<PGliteInterface, 'query'> | Transaction
 
-function wrap(queryable: Queryable, database?: PGlite): SqlExecutor {
+const wrap = (queryable: Queryable, database?: PGlite): SqlExecutor => {
   return {
     async query<Row>(statement: string, parameters: readonly unknown[] = []) {
       const result = await queryable.query<Row>(statement, [...parameters])
@@ -20,9 +20,14 @@ function wrap(queryable: Queryable, database?: PGlite): SqlExecutor {
   }
 }
 
-export async function createTestDatabase() {
+export const createTestDatabase = async () => {
   const database = new PGlite()
-  const migrationUrl = new URL('../../../packages/db/migrations/0000_wet_professor_monster.sql', import.meta.url)
-  await database.exec(await readFile(migrationUrl, 'utf8'))
+  const migrationsUrl = new URL('../../../packages/db/migrations/', import.meta.url)
+  const migrations = (await readdir(migrationsUrl))
+    .filter((filename) => filename.endsWith('.sql'))
+    .sort()
+  for (const migration of migrations) {
+    await database.exec(await readFile(new URL(migration, migrationsUrl), 'utf8'))
+  }
   return { database, executor: wrap(database, database) }
 }

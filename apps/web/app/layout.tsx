@@ -1,9 +1,16 @@
-export const metadata = { title: 'Jabso — error logging spike' }
+import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
+import './globals.css'
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ko">
-      <body style={{ fontFamily: 'ui-monospace, monospace', margin: 0, padding: 24 }}>{children}</body>
-    </html>
-  )
+export const metadata: Metadata = {
+  title: { default: 'Jabso Issues', template: '%s · Jabso' },
+  description: 'A personal error inbox for application failures.',
 }
+
+type RootLayoutProps = { children: ReactNode }
+
+const RootLayout = ({ children }: RootLayoutProps) => (
+  <html lang="en"><body>{children}</body></html>
+)
+
+export default RootLayout

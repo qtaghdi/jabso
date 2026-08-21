@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { IngestEventMutationInput } from "../shared/contracts/ingest-event";
 
-function normalizeMessage(message: string) {
+const normalizeMessage = (message: string) => {
   return message
     .toLowerCase()
     .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "<uuid>")
@@ -13,7 +13,7 @@ function normalizeMessage(message: string) {
     .trim();
 }
 
-export function fingerprintEvent(input: IngestEventMutationInput) {
+export const fingerprintEvent = (input: IngestEventMutationInput) => {
   const components = input.customFingerprint?.length
     ? ["custom", ...input.customFingerprint]
     : [

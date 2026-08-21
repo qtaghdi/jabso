@@ -8,12 +8,12 @@ const project = {
   publicKey: 'public-test-key',
 }
 
-function envelope(event: Record<string, unknown>) {
+const envelope = (event: Record<string, unknown>) => {
   const payload = JSON.stringify(event)
   return `${JSON.stringify({ event_id: event.event_id })}\n${JSON.stringify({ type: 'event', length: Buffer.byteLength(payload) })}\n${payload}\n`
 }
 
-async function fixture() {
+const fixture = async () => {
   const { database, executor } = await createTestDatabase()
   await executor.query(
     'insert into projects (id, name, slug, dsn_project_id, public_key) values ($1, $2, $3, $4, $5)',
@@ -61,6 +61,29 @@ describe('Jabso server', () => {
     expect(issues.rows).toEqual([{ event_count: 3 }])
     expect(events.rows).toHaveLength(3)
     expect(sensitiveColumns.rows).toEqual([])
+
+    const issueResponse = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+    })
+    expect(issueResponse.statusCode).toBe(200)
+    const issueList = issueResponse.json<{ items: Array<{ id: string; eventCount: number; exceptionType: string }> }>()
+    expect(issueList.items).toHaveLength(1)
+    expect(issueList.items[0]).toMatchObject({ eventCount: 3, exceptionType: 'TypeError' })
+
+    const detailResponse = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues/${issueList.items[0]?.id}?sentry_key=${project.publicKey}`,
+    })
+    expect(detailResponse.statusCode).toBe(200)
+    expect(detailResponse.json()).toMatchObject({
+      eventCount: 3,
+      latestEvent: {
+        exceptionType: 'TypeError',
+        environment: null,
+        stacktrace: [{ filename: 'src/user.ts', function: 'loadUser', line: 12, inApp: true }],
+      },
+    })
     await app.close()
     await database.close()
   })
@@ -92,5 +115,28 @@ describe('Jabso server', () => {
     await app.close()
     await database.close()
     expect(response.statusCode).toBe(403)
+  })
+
+  it('isolates issue reads by project and returns 404 for missing issues', async () => {
+    const { app, database } = await fixture()
+    await database.query(
+      `insert into projects (id, name, slug, dsn_project_id, public_key)
+       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', 'Other project', 'other-project', '84', 'other-key')`,
+    )
+
+    const isolatedResponse = await app.inject({
+      method: 'GET',
+      url: '/api/84/issues?sentry_key=other-key',
+    })
+    expect(isolatedResponse.statusCode).toBe(200)
+    expect(isolatedResponse.json()).toEqual({ items: [], nextCursor: null })
+
+    const missingResponse = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues/018f47a2-5d1d-7e19-aab8-6f8cc59d9aff?sentry_key=${project.publicKey}`,
+    })
+    expect(missingResponse.statusCode).toBe(404)
+    await app.close()
+    await database.close()
   })
 })

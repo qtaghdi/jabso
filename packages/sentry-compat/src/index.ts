@@ -41,7 +41,7 @@ export class SentryEnvelopeParseError extends Error {
   }
 }
 
-function parseObject(bytes: Uint8Array, label: string): Record<string, unknown> {
+const parseObject = (bytes: Uint8Array, label: string): Record<string, unknown> => {
   let value: unknown
   try {
     value = JSON.parse(decoder.decode(bytes))
@@ -55,10 +55,10 @@ function parseObject(bytes: Uint8Array, label: string): Record<string, unknown> 
   return value as Record<string, unknown>
 }
 
-export function parseSentryEnvelope(
+export const parseSentryEnvelope = (
   input: Uint8Array,
   options: ParseEnvelopeOptions = {},
-): SentryEnvelope {
+): SentryEnvelope => {
   const maxItems = options.maxItems ?? 100
   const maxItemBytes = options.maxItemBytes ?? 5 * 1024 * 1024
   let offset = 0
@@ -115,7 +115,7 @@ export function parseSentryEnvelope(
   return { header, items }
 }
 
-export function decodeJsonItem<T = unknown>(item: SentryEnvelopeItem): T {
+export const decodeJsonItem = <T = unknown>(item: SentryEnvelopeItem): T => {
   try {
     return JSON.parse(decoder.decode(item.payload)) as T
   } catch {

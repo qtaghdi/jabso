@@ -6,7 +6,7 @@ import {
 import { BoundraRuntimeError } from 'boundra'
 import { resolve } from 'node:path'
 
-export function toBoundraDiagnosticInput(error: BoundraRuntimeError): DiagnosticInput {
+export const toBoundraDiagnosticInput = (error: BoundraRuntimeError): DiagnosticInput => {
   const safe = error.toJSON()
   return {
     kind: 'runtime_contract',
@@ -25,7 +25,7 @@ export function toBoundraDiagnosticInput(error: BoundraRuntimeError): Diagnostic
   }
 }
 
-export function createBoundraErrorRecorder(path = process.env.JABSO_BOUNDRA_DIAGNOSTIC_PATH) {
+export const createBoundraErrorRecorder = (path = process.env.JABSO_BOUNDRA_DIAGNOSTIC_PATH) => {
   const filePath = path ?? resolve(process.cwd(), '.jabso-diagnostics/boundra.ndjson')
   return createDiagnosticRecorder({
     primary: createNdjsonFileSink(filePath),
