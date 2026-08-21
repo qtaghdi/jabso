@@ -1,0 +1,24 @@
+{
+  "$schema": "https://boundra.dev/schemas/domain-manifest.v1.json",
+  "dependsOn": [
+    "project"
+  ],
+  "name": "event",
+  "policies": {
+    "allowCrossDomainServerImport": false,
+    "allowMcpWrite": false
+  },
+  "publicApi": {
+    "client": [
+      "./client/public.ts"
+    ],
+    "server": [
+      "./server/public.ts"
+    ],
+    "shared": [
+      "./shared/public.ts",
+      "./shared/contracts/get-event.ts"
+    ]
+  },
+  "version": "0.1.0"
+}
