@@ -103,9 +103,11 @@ pnpm db:seed
 pnpm dev
 ```
 
-웹은 `http://localhost:3999`, collector는 `http://localhost:4000`에서 실행됩니다. 기본 개발 DSN은 `http://local-dev-key@localhost:4000/1`입니다. `/health`는 프로세스 상태를, `/ready`는 PostgreSQL 연결 상태를 확인합니다.
+웹 issue inbox는 `http://localhost:3999`, collector는 `http://localhost:4000`에서 실행됩니다. `http://localhost:3999/smoke-test`에서 실제 Sentry Browser SDK 오류를 보내 end-to-end 수집 경로를 확인할 수 있습니다. 기본 개발 DSN은 `http://0123456789abcdef0123456789abcdef@localhost:4000/1`입니다. `/health`는 프로세스 상태를, `/ready`는 PostgreSQL 연결 상태를 확인합니다.
 
 Phase 1 수집 경로는 raw envelope만 Fastify에서 다루고, 정규화된 event를 Boundra 계약으로 검증한 뒤 하나의 transaction에서 issue upsert와 event insert를 수행합니다. `user`, `request`, breadcrumb, 원본 payload는 저장하지 않으며 동일한 `event_id` 재전송은 event 수를 증가시키지 않습니다.
+
+Phase 1.5 조회 경로는 동일한 Boundra issue query를 Fastify read API가 실행하고 Next.js Server Component가 소비합니다. 웹 앱은 PostgreSQL에 직접 접근하지 않으며 현재 조회 API는 로컬 프로젝트 key로만 보호되므로 외부 배포 전 관리자 인증이 필요합니다.
 
 ```bash
 pnpm lint
@@ -117,13 +119,15 @@ pnpm boundra:check
 
 기존 Replay 실험은 `spikes/replay`에 보존되어 있으며 현재 빌드와 제품 runtime에서는 제외됩니다.
 
+파일명, 함수 스타일, 아키텍처, DB, 테스트, Git/PR 규칙은 [repository instructions](AGENTS.md)에 정리되어 있으며 ESLint가 kebab-case source filename과 const arrow function 규칙을 검사합니다.
+
 ## Roadmap
 
 1. ~~기존 스파이크 보존과 byte-safe envelope parser 테스트~~
 2. ~~pnpm/Turborepo 모노레포와 Boundra 경계 구성~~
 3. ~~Fastify collector에서 canonical event 변환과 PostgreSQL 영속성~~
 4. ~~error normalization과 issue grouping~~
-5. Next.js issue inbox와 상세 화면
+5. ~~Next.js issue inbox와 상세 화면~~
 6. source map과 release 문맥
 7. 읽기 전용 MCP 도구
 8. 운영 안전장치와 retention
