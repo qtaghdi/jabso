@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "build": "tsup src/index.ts --format esm --sourcemap --clean",
+    "dev": "dotenv -e ../../.env -- tsx watch src/index.ts",
+    "start": "dotenv -e ../../.env -- node dist/index.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -14,13 +14,17 @@
     "@fastify/cors": "11.3.0",
     "@fastify/rate-limit": "11.2.0",
     "@jabso/diagnostics": "workspace:*",
+    "@jabso/db": "workspace:*",
     "@jabso/sentry-compat": "workspace:*",
     "boundra": "0.2.2",
     "fastify": "5.12.1",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.5",
     "@types/node": "24.13.3",
+    "dotenv-cli": "11.0.0",
+    "tsup": "8.5.1",
     "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11"

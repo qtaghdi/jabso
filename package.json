@@ -16,11 +16,14 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm boundra:check",
     "boundra:check": "boundra check-boundaries --root . --format json",
     "boundra:graph": "boundra graph-domains --root . --format mermaid",
-    "db:generate": "turbo run db:generate --filter=@jabso/db"
+    "db:generate": "turbo run db:generate --filter=@jabso/db",
+    "db:migrate": "pnpm --filter @jabso/db db:migrate",
+    "db:seed": "pnpm --filter @jabso/db db:seed"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "16.3.1",
+    "@types/node": "24.13.3",
     "boundra": "0.2.2",
     "eslint": "10.8.1",
     "globals": "17.11.0",

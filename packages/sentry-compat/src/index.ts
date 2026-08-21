@@ -1,5 +1,7 @@
 const decoder = new TextDecoder('utf-8', { fatal: true })
 
+export * from './normalize-event.js'
+
 export type SentryEnvelopeHeader = Record<string, unknown>
 
 export type SentryEnvelopeItemHeader = Record<string, unknown> & {

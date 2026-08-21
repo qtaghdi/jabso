@@ -21,6 +21,7 @@ export const ingestEventInputSchema = z.object({
   occurredAt: z.iso.datetime().optional(),
   stacktrace: z.array(stackFrameSchema).max(200).default([]),
   tags: z.record(z.string(), z.string().max(1_000)).default({}),
+  customFingerprint: z.array(z.string().min(1).max(500)).max(20).optional(),
 });
 export const ingestEventResultSchema = z.object({
   eventId: z.string(),
