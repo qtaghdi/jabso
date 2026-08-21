@@ -4,7 +4,7 @@
 
 Jabso는 개인 프로젝트에서 발생한 브라우저·서버 오류를 한곳에 모으고, 비슷한 오류를 issue로 묶어 조사할 수 있게 만드는 토이 프로젝트입니다. 장기적으로는 MCP를 통해 코딩 에이전트가 오류, stack trace, release 문맥을 직접 조회하도록 만드는 것을 목표로 합니다.
 
-현재 코드는 Sentry Browser SDK가 보내는 envelope와 Session Replay segment를 자체 서버에서 수신하고 해제할 수 있는지 확인한 기술 스파이크입니다. 제품 MVP에서는 오류 수집과 issue grouping에 먼저 집중하며 DOM Replay는 후순위로 둡니다.
+현재 Phase 1은 Sentry Browser SDK가 보내는 error envelope를 수신해 canonical event로 정규화하고, fingerprint가 같은 오류를 PostgreSQL의 issue 하나로 묶어 저장합니다. Session Replay 실험은 보존만 하며 제품 runtime에서는 제외합니다.
 
 ## Product direction
 
@@ -96,10 +96,16 @@ spikes/
 ```bash
 corepack enable
 pnpm install
+cp .env.example .env
+docker compose up -d postgres
+pnpm db:migrate
+pnpm db:seed
 pnpm dev
 ```
 
-웹은 `http://localhost:3999`, collector는 `http://localhost:4000`에서 실행됩니다. 기본 개발 DSN은 `http://spike@localhost:4000/1`입니다.
+웹은 `http://localhost:3999`, collector는 `http://localhost:4000`에서 실행됩니다. 기본 개발 DSN은 `http://local-dev-key@localhost:4000/1`입니다. `/health`는 프로세스 상태를, `/ready`는 PostgreSQL 연결 상태를 확인합니다.
+
+Phase 1 수집 경로는 raw envelope만 Fastify에서 다루고, 정규화된 event를 Boundra 계약으로 검증한 뒤 하나의 transaction에서 issue upsert와 event insert를 수행합니다. `user`, `request`, breadcrumb, 원본 payload는 저장하지 않으며 동일한 `event_id` 재전송은 event 수를 증가시키지 않습니다.
 
 ```bash
 pnpm lint
@@ -115,8 +121,8 @@ pnpm boundra:check
 
 1. ~~기존 스파이크 보존과 byte-safe envelope parser 테스트~~
 2. ~~pnpm/Turborepo 모노레포와 Boundra 경계 구성~~
-3. Fastify collector에서 canonical event 변환과 PostgreSQL 영속성
-4. error normalization과 issue grouping
+3. ~~Fastify collector에서 canonical event 변환과 PostgreSQL 영속성~~
+4. ~~error normalization과 issue grouping~~
 5. Next.js issue inbox와 상세 화면
 6. source map과 release 문맥
 7. 읽기 전용 MCP 도구
