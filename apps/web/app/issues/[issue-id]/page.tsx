@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { CopyButton } from '@/components/copy-button'
 import { formatCount, formatDateTime, formatLocation } from '@/lib/format'
-import { getIssue } from '@/lib/jabso-api'
+import { getIssue, type StackFrame } from '@/lib/jabso-api'
 import { changeIssueStatus } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -36,12 +36,27 @@ const StatusButton = ({ issueId, status, label, active }: {
   </form>
 )
 
+const StackTraceTable = ({ frames }: { frames: StackFrame[] }) => (
+  <div className="stack-table-wrap"><table className="stack-table">
+    <thead><tr><th scope="col">#</th><th scope="col">Frame</th><th scope="col">Location</th><th scope="col"><span className="sr-only">Copy location</span></th></tr></thead>
+    <tbody>{frames.map((frame, index) => (
+      <tr key={`${frame.filename}-${frame.function}-${frame.line}-${index}`} className={frame.inApp ? 'in-app-frame' : undefined}>
+        <td>{index + 1}</td>
+        <td><code>{frame.function ?? '(anonymous)'}</code><span>{frame.inApp ? 'In app' : 'Library'}</span></td>
+        <td><code>{formatLocation(frame)}</code></td>
+        <td><CopyButton label={`Copy ${formatLocation(frame)}`} value={formatLocation(frame)} /></td>
+      </tr>
+    ))}</tbody>
+  </table></div>
+)
+
 const IssuePage = async ({ params }: IssuePageProps) => {
   const { 'issue-id': issueId } = await params
   const issue = await getIssue(issueId)
   if (!issue) notFound()
   const event = issue.latestEvent
   const frames = [...(event?.stacktrace ?? [])].reverse()
+  const originalFrames = [...(event?.originalStacktrace ?? [])].reverse()
   const safeContext = Object.entries({
     Environment: event?.environment,
     Release: event?.release,
@@ -76,21 +91,42 @@ const IssuePage = async ({ params }: IssuePageProps) => {
         {event ? <dl className="occurrence-grid">
           <div><dt>Environment</dt><dd>{event.environment ?? '—'}</dd></div>
           <div><dt>Release</dt><dd><code>{event.release ?? '—'}</code></dd></div>
+          <div><dt>Dist</dt><dd><code>{event.dist || '—'}</code></dd></div>
           <div><dt>Event ID</dt><dd><code>{event.eventId}</code></dd></div>
           <div><dt>Occurred</dt><dd>{formatDateTime(event.occurredAt ?? event.receivedAt)}</dd></div>
         </dl> : <p className="muted-copy">No occurrence is available.</p>}
       </section>
       <section className="detail-section">
-        <h2>Stack trace</h2>
+        <div className="section-heading-row">
+          <h2>Stack trace</h2>
+          {event ? <span className={`symbolication-status symbolication-${event.symbolication.status}`}>
+            {event.symbolication.status === 'completed' ? 'Source mapped' : event.symbolication.status.replace('_', ' ')}
+          </span> : null}
+        </div>
+        {event?.symbolication.errorCode ? <p className="symbolication-note">Symbolication: {event.symbolication.errorCode.replaceAll('_', ' ')}</p> : null}
         {frames.length === 0 ? <p className="muted-copy">No stack trace was captured.</p> : (
-          <div className="stack-table-wrap"><table className="stack-table">
-            <thead><tr><th scope="col">#</th><th scope="col">Frame</th><th scope="col">Location</th><th scope="col"><span className="sr-only">Copy location</span></th></tr></thead>
-            <tbody>{frames.map((frame, index) => (
-              <tr key={`${frame.filename}-${frame.function}-${frame.line}-${index}`} className={frame.inApp ? 'in-app-frame' : undefined}>
-                <td>{index + 1}</td>
-                <td><code>{frame.function ?? '(anonymous)'}</code><span>{frame.inApp ? 'In app' : 'Library'}</span></td>
-                <td><code>{formatLocation(frame)}</code></td>
-                <td><CopyButton label={`Copy ${formatLocation(frame)}`} value={formatLocation(frame)} /></td>
+          <StackTraceTable frames={frames} />
+        )}
+        {event?.symbolication.status === 'completed' ? (
+          <details className="original-stack-details">
+            <summary>View original minified frames</summary>
+            <StackTraceTable frames={originalFrames} />
+          </details>
+        ) : null}
+      </section>
+      <section className="detail-section">
+        <h2>Release history</h2>
+        {issue.releaseHistory.length === 0 ? <p className="muted-copy">No release context is available.</p> : (
+          <div className="history-table-wrap"><table className="history-table release-history-table">
+            <thead><tr><th scope="col">Release</th><th scope="col">Dist</th><th scope="col">Events</th><th scope="col">First seen</th><th scope="col">Last seen</th><th scope="col">Lifecycle</th></tr></thead>
+            <tbody>{issue.releaseHistory.map((release) => (
+              <tr key={`${release.release}-${release.dist}`}>
+                <td><code>{release.release}</code></td>
+                <td><code>{release.dist || '—'}</code></td>
+                <td>{formatCount(release.eventCount)}</td>
+                <td>{formatDateTime(release.firstSeenAt)}</td>
+                <td>{formatDateTime(release.lastSeenAt)}</td>
+                <td>{release.regressedAt ? <span className="regression-label"><span />Regressed {formatDateTime(release.regressedAt)}</span> : 'First seen'}</td>
               </tr>
             ))}</tbody>
           </table></div>

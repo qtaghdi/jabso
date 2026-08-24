@@ -38,9 +38,14 @@ type IssueDetailRow = IssueSummaryRow & {
   event_message: string | null
   event_exception_type: string | null
   platform: string | null
+  dist: string | null
   occurred_at: Timestamp | null
   received_at: Timestamp | null
   stacktrace: StackFrame[] | null
+  symbolicated_stacktrace: StackFrame[] | null
+  symbolication_status: 'not_applicable' | 'pending' | 'completed' | 'missing' | 'failed'
+  symbolication_error_code: string | null
+  symbolicated_at: Timestamp | null
   tags: Record<string, string> | null
   breadcrumbs: Breadcrumb[] | null
   context: Record<string, string> | null
@@ -53,6 +58,16 @@ type OccurrenceRow = {
   release: string | null
   occurred_at: Timestamp | null
   received_at: Timestamp
+}
+
+type IssueReleaseRow = {
+  version: string
+  dist: string
+  event_count: number
+  first_seen_at: Timestamp
+  last_seen_at: Timestamp
+  previous_resolved_at: Timestamp | null
+  regressed_at: Timestamp | null
 }
 
 type FacetRow = { value: string }
@@ -179,7 +194,7 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
   },
 
   get: async (input: GetIssueQueryInput): Promise<GetIssueQueryResult> => {
-    const [detail, occurrences] = await Promise.all([
+    const [detail, occurrences, releaseHistory] = await Promise.all([
       database.query<IssueDetailRow>(
         `select
           issue.id, issue.project_id, issue.fingerprint, issue.title, issue.exception_type,
@@ -187,7 +202,9 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
           issue.status_changed_at, issue.resolved_at, issue.regressed_at,
           latest.event_id, latest.message as event_message,
           latest.exception_type as event_exception_type, latest.platform, latest.environment,
-          latest.release, latest.occurred_at, latest.received_at, latest.stacktrace, latest.tags,
+          latest.release, latest.dist, latest.occurred_at, latest.received_at, latest.stacktrace,
+          latest.symbolicated_stacktrace, latest.symbolication_status,
+          latest.symbolication_error_code, latest.symbolicated_at, latest.tags,
           latest.breadcrumbs, latest.context
         from issues as issue
         left join lateral (
@@ -201,6 +218,17 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
         `select event_id, level, environment, release, occurred_at, received_at
          from events where project_id = $1 and issue_id = $2
          order by received_at desc, id desc limit 25`,
+        [input.projectId, input.issueId],
+      ),
+      database.query<IssueReleaseRow>(
+        `select release.version, release.dist, issue_release.event_count,
+          issue_release.first_seen_at, issue_release.last_seen_at,
+          issue_release.previous_resolved_at, issue_release.regressed_at
+         from issue_releases as issue_release
+         join releases as release on release.id = issue_release.release_id
+         join issues as issue on issue.id = issue_release.issue_id
+         where issue.project_id = $1 and issue.id = $2
+         order by issue_release.last_seen_at desc, release.id desc limit 25`,
         [input.projectId, input.issueId],
       ),
     ])
@@ -222,6 +250,17 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
       resolvedAt: row.resolved_at ? toIsoString(row.resolved_at) : null,
       regressedAt: row.regressed_at ? toIsoString(row.regressed_at) : null,
       occurrences: occurrences.rows.map(mapOccurrence),
+      releaseHistory: releaseHistory.rows.map((release) => ({
+        release: release.version,
+        dist: release.dist,
+        eventCount: release.event_count,
+        firstSeenAt: toIsoString(release.first_seen_at),
+        lastSeenAt: toIsoString(release.last_seen_at),
+        previousResolvedAt: release.previous_resolved_at
+          ? toIsoString(release.previous_resolved_at)
+          : null,
+        regressedAt: release.regressed_at ? toIsoString(release.regressed_at) : null,
+      })),
       latestEvent: row.event_id && row.received_at
         ? {
             eventId: row.event_id,
@@ -230,9 +269,16 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
             platform: row.platform,
             environment: row.environment,
             release: row.release,
+            dist: row.dist,
             occurredAt: row.occurred_at ? toIsoString(row.occurred_at) : null,
             receivedAt: toIsoString(row.received_at),
-            stacktrace: row.stacktrace ?? [],
+            stacktrace: row.symbolicated_stacktrace ?? row.stacktrace ?? [],
+            originalStacktrace: row.stacktrace ?? [],
+            symbolication: {
+              status: row.symbolication_status,
+              errorCode: row.symbolication_error_code,
+              mappedAt: row.symbolicated_at ? toIsoString(row.symbolicated_at) : null,
+            },
             tags: row.tags ?? {},
             breadcrumbs: row.breadcrumbs ?? [],
             context: row.context ?? {},

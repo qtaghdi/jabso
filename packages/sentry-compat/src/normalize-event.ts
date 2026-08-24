@@ -14,6 +14,7 @@ export type NormalizedSentryEvent = {
   platform?: string
   environment?: string
   release?: string
+  dist?: string
   occurredAt?: string
   stacktrace: NormalizedStackFrame[]
   tags: Record<string, string>
@@ -130,6 +131,7 @@ export const normalizeSentryEvent = (payload: unknown, fallbackEventId?: string)
     platform: text(event.platform, 64),
     environment: text(event.environment, 128),
     release: text(event.release, 250),
+    dist: text(event.dist, 128),
     occurredAt: normalizeTimestamp(event.timestamp),
     stacktrace: frames.flatMap((value) => {
       const frame = asRecord(value)

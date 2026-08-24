@@ -5,6 +5,7 @@ node_modules
 .idea
 *.tsbuildinfo
 .turbo
+.pnpm-store
 coverage
 dist
 *.log

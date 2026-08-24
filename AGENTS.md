@@ -24,6 +24,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - `packages/sentry-compat`: byte-safe Sentry envelope parsing
 - `packages/db`: Drizzle schema and database connection
 - `packages/diagnostics`: isolated Boundra diagnostic recording
+- `packages/symbolication`: source-map validation, path normalization, and frame mapping
 - `packages/config`: shared TypeScript configuration
 - `spikes/replay`: preserved non-production Session Replay experiment
 
@@ -88,9 +89,9 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 ## Release and source-map conventions
 
 - A release is project-scoped. Artifact lookup must require an exact project, release, optional dist, and normalized artifact path match; do not use fuzzy cross-release fallback.
-- Source-map upload uses an administrator credential, never the public DSN key. Bound decompressed size, file count, path length, and processing time.
+- Source-map upload uses an administrator credential, never the public DSN key. Keep the current 5 MiB decoded byte limit, 50-artifact release limit, 2,000-character path limit, and 100-event backfill batch unless a measured requirement changes them.
 - Preserve original stack frames. Store symbolicated frames and symbolication status separately so a missing or malformed map never makes ingestion fail.
-- For the toy-project MVP, store bounded artifact bytes, metadata, and checksums in PostgreSQL behind a `SourceMapArtifactStore` adapter. Do not add object storage until measured size or deployment constraints justify it.
+- For the toy-project MVP, store bounded artifact bytes, metadata, and checksums inside the PostgreSQL-backed release store adapter. Do not add object storage until measured size or deployment constraints justify it.
 - Treat source maps and `sourcesContent` as private source code. Do not expose their raw contents through UI, logs, public APIs, diagnostics, or MCP responses.
 - Until measured load requires a worker, use bounded retry/backfill over persisted pending state. Do not add Redis or a queue only for Phase 3.
 

@@ -4,12 +4,14 @@ import { z } from "zod";
 export const getReleaseRegressionsInputSchema = z.object({
   projectId: z.uuid(),
   release: z.string().min(1).max(250),
+  dist: z.string().max(128).default(''),
   limit: z.number().int().min(1).max(100).default(25),
 });
 export const getReleaseRegressionsResultSchema = z.object({
   items: z.array(z.object({
     issueId: z.uuid(),
     title: z.string(),
+    dist: z.string(),
     previousResolvedAt: z.iso.datetime(),
     regressedAt: z.iso.datetime(),
   })),

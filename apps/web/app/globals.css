@@ -169,7 +169,14 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 
 .detail-section { padding: 30px 0 34px; border-bottom: 1px solid var(--border); }
 .detail-section h2 { margin: 0 0 20px; font-size: 18px; letter-spacing: -0.015em; }
-.occurrence-grid { display: grid; grid-template-columns: 0.8fr 0.8fr 1.5fr 1.2fr; margin: 0; }
+.section-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.section-heading-row h2 { margin: 0; }
+.symbolication-status { padding: 4px 9px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 11px; font-weight: 680; text-transform: capitalize; }
+.symbolication-completed { border-color: #9cc8ac; background: #eff8f2; color: #21623b; }
+.symbolication-failed { border-color: #efb6aa; background: var(--accent-soft); color: #9d2d19; }
+.symbolication-pending { border-color: #e2c682; background: #fff9e8; color: #7d5900; }
+.symbolication-note { margin: -10px 0 18px; color: var(--muted); font-size: 12px; text-transform: capitalize; }
+.occurrence-grid { display: grid; grid-template-columns: 0.7fr 0.8fr 0.6fr 1.5fr 1.2fr; margin: 0; }
 .occurrence-grid div { padding: 0 24px; border-left: 1px solid var(--border); min-width: 0; }
 .occurrence-grid div:first-child { padding-left: 0; border-left: 0; }
 .occurrence-grid dd { margin-top: 7px; overflow-wrap: anywhere; }
@@ -187,6 +194,9 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .stack-table td:nth-child(3) code { color: #3f4650; font-size: 13px; }
 .stack-table .in-app-frame { background: var(--accent-soft); }
 .stack-table .in-app-frame td:nth-child(2) span { color: var(--accent); }
+.original-stack-details { margin-top: 20px; border-top: 1px solid var(--border); }
+.original-stack-details summary { width: fit-content; padding: 18px 0 12px; color: #075fb7; font-size: 13px; font-weight: 650; cursor: pointer; }
+.original-stack-details[open] summary { margin-bottom: 4px; }
 .copy-button { display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 5px; background: transparent; color: #4e5864; cursor: pointer; }
 .copy-button:hover { background: var(--surface-strong); color: var(--text); }
 .copy-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; }
@@ -199,6 +209,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .history-table th { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 650; text-align: left; }
 .history-table td { padding: 12px; border-bottom: 1px solid var(--border); color: #3f4650; font-size: 13px; }
 .history-table th:first-child, .history-table td:first-child { padding-left: 0; }
+.release-history-table { min-width: 980px; }
 .context-columns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; border-bottom: 1px solid var(--border); }
 .context-columns .detail-section { border-bottom: 0; }
 .safe-context-section { padding-left: 36px; border-left: 1px solid var(--border); }

@@ -25,6 +25,7 @@ export const ingestEventInputSchema = z.object({
   platform: z.string().max(64).optional(),
   environment: z.string().max(128).optional(),
   release: z.string().max(250).optional(),
+  dist: z.string().max(128).optional(),
   occurredAt: z.iso.datetime().optional(),
   stacktrace: z.array(stackFrameSchema).max(200).default([]),
   tags: z.record(z.string(), z.string().max(1_000)).default({}),
