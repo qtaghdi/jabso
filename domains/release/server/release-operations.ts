@@ -12,7 +12,7 @@ import {
   uploadSourceMapMutation,
   type UploadSourceMapMutationInput,
   type UploadSourceMapMutationResult,
-} from '../shared/public'
+} from '../shared/public.js'
 
 export type ReleaseStore = {
   list(input: ListReleasesQueryInput): Promise<ListReleasesQueryResult>

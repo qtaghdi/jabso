@@ -4,7 +4,7 @@ import {
   ingestEventMutation,
   type IngestEventMutationInput,
   type IngestEventMutationResult,
-} from "../shared/contracts/ingest-event";
+} from '../shared/contracts/ingest-event.js'
 
 export type IngestEventStore = {
   ingest(input: IngestEventMutationInput): Promise<IngestEventMutationResult>;

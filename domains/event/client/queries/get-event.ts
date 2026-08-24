@@ -3,7 +3,7 @@ import type { BoundraCallOptions, BoundraClient } from "boundra";
 import {
   getEventQuery,
   type GetEventQueryInput,
-} from "../../shared/contracts/get-event";
+} from '../../shared/contracts/get-event.js'
 
 export const getEvent = (
   client: BoundraClient,

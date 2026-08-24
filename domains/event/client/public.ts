@@ -1,1 +1,1 @@
-export * from "./queries/get-event";
+export * from './queries/get-event.js'

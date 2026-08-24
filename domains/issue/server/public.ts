@@ -1,1 +1,1 @@
-export * from "./issue-queries";
+export * from './issue-queries.js'
