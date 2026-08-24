@@ -191,10 +191,18 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .setup-index-active::before { display: none; }
 .setup-index-active .setup-step-button > span { font-weight: 720; }
 .setup-focus { min-width: 0; padding-left: 40px; }
-.code-panel-heading { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: 16px; }
-.code-panel-heading > code { color: var(--text); font-size: 13px; font-weight: 680; }
-.code-panel-heading .ui-button { min-height: 32px; }
-.code-panel { max-width: 760px; border: 1px solid #292d32; border-radius: 3px; background: #191c20; color: #e8ebee; box-shadow: 0 10px 24px rgb(23 25 29 / 8%); }
+.setup-code-shell { max-width: 760px; overflow: hidden; border: 1px solid #292d32; border-radius: 7px; box-shadow: 0 10px 24px rgb(23 25 29 / 8%); }
+.code-panel-heading { display: flex; min-height: 62px; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px 10px 16px; border-bottom: 1px solid #292d32; background: var(--surface); }
+.code-panel-meta { display: flex; min-width: 0; align-items: center; gap: 16px; }
+.framework-control { display: flex; align-items: center; gap: 9px; }
+.framework-control > span, .code-file > span { color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }
+.framework-select select { min-width: 150px; min-height: 36px; padding: 0 34px 0 11px; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; color: var(--text); font-size: 12px; font-weight: 650; }
+.framework-select svg { right: 10px; }
+.code-file { display: flex; min-width: 0; align-items: center; gap: 9px; padding-left: 16px; border-left: 1px solid var(--border); }
+.code-file code { overflow: hidden; color: var(--text); font-size: 12px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.copy-icon-button { flex: 0 0 auto; width: 36px; min-height: 36px; padding: 0; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; }
+.copy-icon-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.code-panel { background: #191c20; color: #e8ebee; }
 .code-panel pre { margin: 0; padding: 20px 0; overflow-x: auto; font-size: 12px; line-height: 1.8; }
 .code-line { display: grid; grid-template-columns: 46px minmax(max-content, 1fr); padding-right: 22px; }
 .code-line > span:first-child { color: #707780; text-align: right; user-select: none; }
@@ -203,6 +211,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .code-line:nth-child(4) > span:last-child { color: #b7d59b; }
 .getting-started-actions { display: flex; align-items: center; gap: 24px; margin-top: 22px; }
 .getting-started-actions > span { color: var(--muted); font-size: 12px; }
+.setup-note { max-width: 720px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(560px, 1.04fr) minmax(500px, 0.96fr); }
 .auth-intro { display: grid; min-width: 0; min-height: 100vh; grid-template-rows: auto minmax(280px, 1fr) auto; gap: 28px; padding: 34px clamp(34px, 4vw, 72px) 42px; border-right: 1px solid #272b30; background: #111316; color: #fff; }
@@ -413,6 +422,9 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .setup-index li::before { top: 0; left: 0; }
   .setup-index-active::after { top: 0; bottom: auto; left: 0; width: 42%; height: 3px; }
   .setup-focus { padding: 24px 0 0; }
+  .code-panel-heading { align-items: flex-start; }
+  .code-panel-meta { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .code-file { padding-left: 0; border-left: 0; }
   .getting-started-actions { align-items: stretch; flex-direction: column; gap: 12px; }
   .getting-started-actions > span { text-align: center; }
 }
