@@ -1,4 +1,5 @@
 import {
+  customType,
   index,
   integer,
   jsonb,
@@ -11,6 +12,17 @@ import {
 } from 'drizzle-orm/pg-core'
 
 export const issueStatus = pgEnum('issue_status', ['unresolved', 'resolved', 'ignored'])
+export const symbolicationStatus = pgEnum('symbolication_status', [
+  'not_applicable',
+  'pending',
+  'completed',
+  'missing',
+  'failed',
+])
+
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
+  dataType: () => 'bytea',
+})
 
 export const projects = pgTable('projects', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -20,6 +32,22 @@ export const projects = pgTable('projects', {
   publicKey: text('public_key').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
+
+export const releases = pgTable(
+  'releases',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    version: text('version').notNull(),
+    dist: text('dist').notNull().default(''),
+    deployedAt: timestamp('deployed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('releases_project_version_dist_uidx').on(table.projectId, table.version, table.dist),
+    index('releases_project_created_idx').on(table.projectId, table.createdAt),
+  ],
+)
 
 export const issues = pgTable(
   'issues',
@@ -44,6 +72,41 @@ export const issues = pgTable(
   ],
 )
 
+export const issueReleases = pgTable(
+  'issue_releases',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    issueId: uuid('issue_id').references(() => issues.id, { onDelete: 'cascade' }).notNull(),
+    releaseId: uuid('release_id').references(() => releases.id, { onDelete: 'cascade' }).notNull(),
+    eventCount: integer('event_count').notNull().default(0),
+    firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+    previousResolvedAt: timestamp('previous_resolved_at', { withTimezone: true }),
+    regressedAt: timestamp('regressed_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('issue_releases_issue_release_uidx').on(table.issueId, table.releaseId),
+    index('issue_releases_release_regressed_idx').on(table.releaseId, table.regressedAt),
+  ],
+)
+
+export const sourceMapArtifacts = pgTable(
+  'source_map_artifacts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    releaseId: uuid('release_id').references(() => releases.id, { onDelete: 'cascade' }).notNull(),
+    path: text('path').notNull(),
+    checksum: text('checksum').notNull(),
+    content: bytea('content').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('source_map_artifacts_release_path_uidx').on(table.releaseId, table.path),
+  ],
+)
+
 export const events = pgTable(
   'events',
   {
@@ -57,9 +120,15 @@ export const events = pgTable(
     platform: text('platform'),
     environment: text('environment'),
     release: text('release'),
+    dist: text('dist'),
+    releaseId: uuid('release_id').references(() => releases.id, { onDelete: 'set null' }),
     occurredAt: timestamp('occurred_at', { withTimezone: true }),
     receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
     stacktrace: jsonb('stacktrace'),
+    symbolicatedStacktrace: jsonb('symbolicated_stacktrace'),
+    symbolicationStatus: symbolicationStatus('symbolication_status').notNull().default('not_applicable'),
+    symbolicationErrorCode: text('symbolication_error_code'),
+    symbolicatedAt: timestamp('symbolicated_at', { withTimezone: true }),
     tags: jsonb('tags'),
     breadcrumbs: jsonb('breadcrumbs'),
     context: jsonb('context'),
@@ -67,6 +136,7 @@ export const events = pgTable(
   (table) => [
     uniqueIndex('events_project_event_id_uidx').on(table.projectId, table.eventId),
     index('events_issue_received_idx').on(table.issueId, table.receivedAt),
+    index('events_release_symbolication_idx').on(table.releaseId, table.symbolicationStatus),
   ],
 )
 

@@ -16,6 +16,7 @@
     "@jabso/diagnostics": "workspace:*",
     "@jabso/db": "workspace:*",
     "@jabso/sentry-compat": "workspace:*",
+    "@jabso/symbolication": "workspace:*",
     "boundra": "0.2.2",
     "fastify": "5.12.1",
     "zod": "4.4.3"
