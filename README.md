@@ -4,7 +4,7 @@
 
 Jabso는 개인 프로젝트에서 발생한 브라우저·서버 오류를 한곳에 모으고, 비슷한 오류를 issue로 묶어 조사할 수 있게 만드는 토이 프로젝트입니다. 장기적으로는 MCP를 통해 코딩 에이전트가 오류, stack trace, release 문맥을 직접 조회하도록 만드는 것을 목표로 합니다.
 
-현재 Phase 3까지 완료했습니다. Sentry Browser SDK가 보내는 error envelope를 PostgreSQL issue로 묶고, release/dist에 맞는 source map으로 production stack을 원본 frame으로 변환합니다. 웹에서는 필터·occurrence·안전한 문맥·lifecycle과 함께 mapped/original stack, release별 first seen과 regression을 확인할 수 있습니다.
+현재 Phase 3.5까지 완료했습니다. Sentry Browser SDK가 보내는 error envelope를 PostgreSQL issue로 묶고, release/dist에 맞는 source map으로 production stack을 원본 frame으로 변환합니다. 웹에서는 GitHub 소유자 인증 뒤 필터·occurrence·안전한 문맥·lifecycle과 함께 mapped/original stack, release별 first seen과 regression을 확인할 수 있습니다.
 
 ## Product direction
 
@@ -107,9 +107,11 @@ pnpm dev
 
 웹 issue inbox는 `http://localhost:3999`, collector는 `http://localhost:4000`에서 실행됩니다. `http://localhost:3999/smoke-test`에서 실제 Sentry Browser SDK 오류를 보내 end-to-end 수집 경로를 확인할 수 있습니다. 기본 개발 DSN은 `http://0123456789abcdef0123456789abcdef@localhost:4000/1`입니다. `/health`는 프로세스 상태를, `/ready`는 PostgreSQL 연결 상태를 확인합니다.
 
+Collector의 대화형 API 문서는 `/docs`, OpenAPI 3.0 JSON은 `/docs/json`, YAML은 `/docs/yaml`에서 제공합니다. 문서는 Sentry envelope 수집, issue 조회와 lifecycle, release 조회, source-map upload와 symbolication retry endpoint를 포함합니다. 수집 endpoint의 `sentry_key`는 공개 DSN project key입니다. 대시보드 API는 서버 전용 `JABSO_DASHBOARD_TOKEN`, source-map 관리 endpoint는 별도의 `JABSO_ADMIN_TOKEN` bearer credential을 사용합니다.
+
 Phase 1 수집 경로는 raw envelope만 Fastify에서 다루고, 정규화된 event를 Boundra 계약으로 검증한 뒤 하나의 transaction에서 issue upsert와 event insert를 수행합니다. `user`, `request`, breadcrumb, 원본 payload는 저장하지 않으며 동일한 `event_id` 재전송은 event 수를 증가시키지 않습니다.
 
-Phase 1.5 조회 경로는 동일한 Boundra issue query를 Fastify read API가 실행하고 Next.js Server Component가 소비합니다. 웹 앱은 PostgreSQL에 직접 접근하지 않으며 현재 조회 API는 로컬 프로젝트 key로만 보호되므로 외부 배포 전 관리자 인증이 필요합니다.
+Phase 1.5 조회 경로는 동일한 Boundra issue query를 Fastify read API가 실행하고 Next.js Server Component가 소비합니다. 웹 앱은 PostgreSQL에 직접 접근하지 않으며 조회·변경 API는 브라우저에 노출되지 않는 대시보드 bearer token으로 보호합니다.
 
 Phase 2는 status/level/environment/release/last-seen 필터와 안정적인 복합 cursor pagination, 최근 occurrence 이력, lifecycle 변경을 완성합니다. resolved issue에 새 event가 들어오면 unresolved로 다시 열고 regression 시각을 기록하며, ignored issue는 자동으로 다시 열지 않습니다.
 
@@ -138,8 +140,9 @@ pnpm boundra:check
 3. ~~Phase 1.5 — Boundra read path와 Next.js inbox shell~~
 4. ~~Phase 2 — 필터, cursor, occurrence, safe context와 issue lifecycle~~
 5. ~~Phase 3 — release, source map artifact와 stack symbolication~~
-6. **Phase 4 — 읽기 전용 MCP 도구**
-7. Later — 운영 안전장치, retention, Session Replay 재도입
+6. ~~Phase 3.5 — GitHub owner 인증, 대시보드 API 분리, 첫 사용 온보딩과 공용 UI~~
+7. **Phase 4 — 읽기 전용 MCP 도구**
+8. Later — 운영 안전장치, retention, Session Replay 재도입
 
 다음 Phase 4는 Phase 1.5~3의 Boundra query handler를 재사용하는 읽기 전용 MCP adapter입니다. MCP가 DB나 source map 원문에 직접 접근하지 않게 하고 project-scoped token, bounded result, audit log를 먼저 적용합니다.
 

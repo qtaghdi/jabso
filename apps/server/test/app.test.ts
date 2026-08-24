@@ -8,6 +8,7 @@ const project = {
   publicKey: 'public-test-key',
 }
 const adminToken = 'phase-three-admin-token'
+const dashboardToken = 'phase-three-dashboard-token'
 const sourceMap = JSON.stringify({
   version: 3,
   file: 'app.min.js',
@@ -28,11 +29,34 @@ const fixture = async () => {
     'insert into projects (id, name, slug, dsn_project_id, public_key) values ($1, $2, $3, $4, $5)',
     [project.id, 'Test project', 'test-project', project.dsnProjectId, project.publicKey],
   )
-  const app = await buildServer({ adminToken, database: executor })
+  const app = await buildServer({ adminToken, dashboardToken, database: executor })
   return { app, database }
 }
 
 describe('Jabso server', () => {
+  it('serves OpenAPI documentation', async () => {
+    const { database, executor } = await createTestDatabase()
+    const app = await buildServer({ database: executor })
+
+    const specification = await app.inject({ method: 'GET', url: '/docs/json' })
+    const documentation = await app.inject({ method: 'GET', url: '/docs/' })
+
+    expect(specification.statusCode).toBe(200)
+    expect(specification.json()).toMatchObject({
+      openapi: '3.0.3',
+      info: { title: 'Jabso API' },
+      paths: {
+        '/api/{projectId}/envelope': expect.any(Object),
+        '/api/{projectId}/issues': expect.any(Object),
+      },
+    })
+    expect(documentation.statusCode).toBe(200)
+    expect(documentation.headers['content-type']).toContain('text/html')
+
+    await app.close()
+    await database.close()
+  })
+
   it('reports health and database readiness', async () => {
     const { app, database } = await fixture()
     expect((await app.inject({ method: 'GET', url: '/health' })).json()).toEqual({ status: 'ok' })
@@ -86,6 +110,7 @@ describe('Jabso server', () => {
     const issueResponse = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(issueResponse.statusCode).toBe(200)
     const issueList = issueResponse.json<{ items: Array<{ id: string; eventCount: number; exceptionType: string }> }>()
@@ -95,6 +120,7 @@ describe('Jabso server', () => {
     const detailResponse = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues/${issueList.items[0]?.id}?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(detailResponse.statusCode).toBe(200)
     expect(detailResponse.json()).toMatchObject({
@@ -142,6 +168,18 @@ describe('Jabso server', () => {
     expect(response.statusCode).toBe(403)
   })
 
+  it('does not accept a public DSN key for dashboard APIs', async () => {
+    const { app, database } = await fixture()
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+    })
+
+    expect(response.statusCode).toBe(403)
+    await app.close()
+    await database.close()
+  })
+
   it('isolates issue reads by project and returns 404 for missing issues', async () => {
     const { app, database } = await fixture()
     await database.query(
@@ -152,6 +190,7 @@ describe('Jabso server', () => {
     const isolatedResponse = await app.inject({
       method: 'GET',
       url: '/api/84/issues?sentry_key=other-key',
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(isolatedResponse.statusCode).toBe(200)
     expect(isolatedResponse.json()).toEqual({ items: [], nextCursor: null, previousCursor: null })
@@ -159,6 +198,7 @@ describe('Jabso server', () => {
     const missingResponse = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues/018f47a2-5d1d-7e19-aab8-6f8cc59d9aff?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(missingResponse.statusCode).toBe(404)
     await app.close()
@@ -187,6 +227,7 @@ describe('Jabso server', () => {
     const first = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&limit=2`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     const firstPage = first.json<{ items: Array<{ title: string }>; nextCursor: string; previousCursor: null }>()
     expect(firstPage.items.map((item) => item.title)).toEqual(['Page failure 2', 'Page failure 1'])
@@ -195,6 +236,7 @@ describe('Jabso server', () => {
     const second = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&limit=2&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     const secondPage = second.json<{ items: Array<{ title: string }>; previousCursor: string }>()
     expect(secondPage.items.map((item) => item.title)).toEqual(['Page failure 0'])
@@ -203,6 +245,7 @@ describe('Jabso server', () => {
     const filtered = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&level=warning&environment=production&release=web%401.0.1`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(filtered.json<{ items: Array<{ title: string }> }>().items.map((item) => item.title)).toEqual(['Page failure 1'])
     await app.close()
@@ -226,11 +269,13 @@ describe('Jabso server', () => {
     const list = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     const issueId = list.json<{ items: Array<{ id: string }> }>().items[0]?.id
     const resolved = await app.inject({
       method: 'PATCH',
       url: `/api/${project.dsnProjectId}/issues/${issueId}/status?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
       payload: { status: 'resolved' },
     })
     expect(resolved.json()).toMatchObject({ issueId, status: 'resolved' })
@@ -239,6 +284,7 @@ describe('Jabso server', () => {
     const detail = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues/${issueId}?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(detail.json()).toMatchObject({ status: 'unresolved', resolvedAt: null })
     expect(detail.json<{ regressedAt: string; occurrences: unknown[] }>().regressedAt).toBeTruthy()
@@ -303,11 +349,13 @@ describe('Jabso server', () => {
     const issueList = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     const issueId = issueList.json<{ items: Array<{ id: string }> }>().items[0]?.id
     const detail = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues/${issueId}?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(detail.json()).toMatchObject({
       releaseHistory: [{ release: 'web@2.0.0', dist: 'browser', eventCount: 1 }],
@@ -328,6 +376,7 @@ describe('Jabso server', () => {
     const releases = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/releases?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(releases.json()).toMatchObject({
       items: [{ version: 'web@2.0.0', dist: 'browser', artifactCount: 1, eventCount: 1 }],
@@ -437,11 +486,13 @@ describe('Jabso server', () => {
     const list = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     const issueId = list.json<{ items: Array<{ id: string }> }>().items[0]?.id
     await app.inject({
       method: 'PATCH',
       url: `/api/${project.dsnProjectId}/issues/${issueId}/status?sentry_key=${project.publicKey}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
       payload: { status: 'resolved' },
     })
     await send('release-after', 'web@2.0.0', '2026-08-22T00:00:00.000Z')
@@ -449,6 +500,7 @@ describe('Jabso server', () => {
     const regressions = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/releases/web%402.0.0/regressions?sentry_key=${project.publicKey}&dist=browser`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
     })
     expect(regressions.statusCode).toBe(200)
     expect(regressions.json()).toMatchObject({

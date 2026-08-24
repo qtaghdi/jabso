@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { requireOwner } from '@/lib/auth'
 
 export type IssueSummary = {
   id: string
@@ -84,18 +85,35 @@ export type IssueFacets = {
   releases: string[]
 }
 
-const getApiConfig = () => ({
-  baseUrl: process.env.JABSO_API_URL ?? 'http://localhost:4000',
-  projectId: process.env.JABSO_PROJECT_ID ?? '1',
-  projectKey: process.env.JABSO_PROJECT_KEY ?? '0123456789abcdef0123456789abcdef',
-})
+const getApiConfig = () => {
+  const config = {
+    baseUrl: process.env.JABSO_API_URL?.trim() || 'http://localhost:4000',
+    projectId: process.env.JABSO_PROJECT_ID?.trim() || '1',
+    dashboardToken: process.env.JABSO_DASHBOARD_TOKEN?.trim() || 'replace-with-a-long-random-token',
+  }
+  const missingProductionVariables = process.env.VERCEL === '1'
+    ? [
+        !process.env.JABSO_API_URL?.trim() && 'JABSO_API_URL',
+        !process.env.JABSO_PROJECT_ID?.trim() && 'JABSO_PROJECT_ID',
+        !process.env.JABSO_DASHBOARD_TOKEN?.trim() && 'JABSO_DASHBOARD_TOKEN',
+      ].filter(Boolean)
+    : []
+
+  if (missingProductionVariables.length > 0) {
+    throw new Error(`Jabso web configuration is missing: ${missingProductionVariables.join(', ')}`)
+  }
+
+  return { ...config, baseUrl: config.baseUrl.replace(/\/$/, '') }
+}
 
 const request = async <Result>(path: string, init?: RequestInit): Promise<Result | null> => {
-  const { baseUrl, projectId, projectKey } = getApiConfig()
-  const separator = path.includes('?') ? '&' : '?'
+  await requireOwner()
+  const { baseUrl, projectId, dashboardToken } = getApiConfig()
+  const headers = new Headers(init?.headers)
+  headers.set('authorization', `Bearer ${dashboardToken}`)
   const response = await fetch(
-    `${baseUrl}/api/${encodeURIComponent(projectId)}${path}${separator}sentry_key=${encodeURIComponent(projectKey)}`,
-    { cache: 'no-store', ...init },
+    `${baseUrl}/api/${encodeURIComponent(projectId)}${path}`,
+    { cache: 'no-store', ...init, headers },
   )
   if (response.status === 404) return null
   if (!response.ok) throw new Error(`Jabso API request failed with status ${response.status}`)

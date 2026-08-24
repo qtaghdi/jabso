@@ -91,7 +91,7 @@
       <h1><span>Jabso</span><br />Implementation Plan</h1>
       <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
     </div>
-    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-24<br />Status: Phase 3 complete · Phase 4 next<br />Scope: MVP → MCP</div>
+    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-24<br />Status: Phase 3.5 complete · Phase 4 next<br />Scope: MVP → MCP</div>
   </section>
 
   <h2>현재 위치</h2>
@@ -101,6 +101,7 @@
     <div class="status-step done"><strong>Phase 1.5</strong><span class="small">조회 기반<br />완료</span></div>
     <div class="status-step done"><strong>Phase 2</strong><span class="small">Issue workflow<br />완료</span></div>
     <div class="status-step done"><strong>Phase 3</strong><span class="small">Source map<br />완료</span></div>
+    <div class="status-step done"><strong>Phase 3.5</strong><span class="small">Owner auth<br />완료</span></div>
     <div class="status-step next"><strong>Phase 4</strong><span class="small">Read-only MCP<br />다음</span></div>
     <div class="status-step planned"><strong>Later</strong><span class="small">운영·Replay<br />보류</span></div>
   </div>
@@ -283,7 +284,30 @@ spikes/
     </div>
   </div>
   <div class="note" style="margin-top:16px"><strong>Phase 3 비범위:</strong> 완성형 배포 CLI, Debug ID 기반 matching, source code snippet 노출, 외부 queue/worker, source map 공개 다운로드는 먼저 넣지 않는다. 특히 <code>sourcesContent</code>는 소스 유출 위험이 있어 UI/MCP 응답에 기본 포함하지 않는다.</div>
-  <p class="small">완료 근거: map 선·후발 업로드, exact project/release/dist 격리, 원본 frame 보존, private source 비노출, malformed/traversal 거부, bounded backfill, release regression을 통합 테스트로 검증했다. 전체 24 tests와 Boundra 77-file boundary check, production build가 통과한다.</p>
+  <p class="small">완료 근거: map 선·후발 업로드, exact project/release/dist 격리, 원본 frame 보존, private source 비노출, malformed/traversal 거부, bounded backfill, release regression을 통합 테스트로 검증했다.</p>
+
+  <h2><span class="badge done-badge">완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 3.5</span>Owner 인증과 첫 사용 경험</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>접근 경계</h3>
+      <ul>
+        <li>Clerk GitHub 로그인과 단일 owner 계정 제한</li>
+        <li>Next.js <code>proxy.ts</code>, Server Component, Server Action에서 중복 검증</li>
+        <li>공개 DSN key는 envelope 수집에만 사용</li>
+        <li>조회·변경 API는 서버 전용 <code>JABSO_DASHBOARD_TOKEN</code> 사용</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>제품 사용성</h3>
+      <ul>
+        <li>첫 issue 전 SDK 설치·초기화·검증 온보딩</li>
+        <li>DSN 예제와 복사 동작, smoke test와 API 문서 진입점</li>
+        <li>공용 Button·Select와 owner/project sidebar</li>
+        <li>실제 issue 또는 활성 filter가 있을 때만 filter table 노출</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small">완료 근거: 공개 DSN key의 dashboard 접근 거부를 통합 테스트로 검증하고, lint·typecheck·test·Boundra boundary check·production build와 실제 Clerk redirect 렌더링을 확인했다.</p>
 
   <h2><span class="badge next-badge">다음</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
   <div class="grid-2">
@@ -340,6 +364,7 @@ spikes/
       <tr><td>Phase 1.5</td><td>UI와 향후 MCP가 재사용할 project-scoped read path 확보</td><td>Boundra queries, Fastify read API, Next.js inbox/detail</td></tr>
       <tr><td>Phase 2</td><td>개인 프로젝트 오류를 실제로 분류하고 조사할 수 있는 workflow 완성</td><td>filters, cursors, occurrences, safe context, lifecycle, regression</td></tr>
       <tr><td>Phase 3</td><td>minified production stack을 원본 위치로 변환하고 release별 발생·회귀 문맥 확보</td><td>artifact upload, PostgreSQL storage, symbolication, backfill, release history UI</td></tr>
+      <tr><td>Phase 3.5</td><td>개인용 dashboard 접근을 owner로 제한하고 첫 error까지의 사용 흐름 제공</td><td>Clerk GitHub auth, dashboard bearer token, onboarding, shared Button/Select</td></tr>
     </tbody>
   </table>
 
