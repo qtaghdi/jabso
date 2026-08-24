@@ -4,6 +4,7 @@ import { OwnerSummary } from '@/components/owner-summary'
 import { SessionExpiryWatcher } from '@/components/session-expiry-watcher'
 
 type AppShellProps = {
+  activeNav?: 'issues' | 'projects'
   children: ReactNode
 }
 
@@ -14,7 +15,13 @@ const IssueIcon = () => (
   </svg>
 )
 
-export const AppShell = ({ children }: AppShellProps) => (
+const ProjectIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M3.5 7.5h17v12h-17zM3.5 7.5l3-3h5l2 3" />
+  </svg>
+)
+
+export const AppShell = ({ activeNav = 'issues', children }: AppShellProps) => (
   <div className="app-shell">
     <SessionExpiryWatcher />
     <aside className="sidebar">
@@ -22,9 +29,13 @@ export const AppShell = ({ children }: AppShellProps) => (
         Jabso
       </Link>
       <nav aria-label="Primary navigation">
-        <Link className="nav-item nav-item-active" href="/">
+        <Link className={`nav-item ${activeNav === 'issues' ? 'nav-item-active' : ''}`} href="/">
           <IssueIcon />
           Issues
+        </Link>
+        <Link className={`nav-item ${activeNav === 'projects' ? 'nav-item-active' : ''}`} href="/projects">
+          <ProjectIcon />
+          Projects
         </Link>
       </nav>
       <div className="sidebar-footer">

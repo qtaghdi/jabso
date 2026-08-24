@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { requireOwner } from '@/lib/auth'
+import { getActiveProject, getServerApiConfig } from '@/lib/projects'
 
 export type IssueSummary = {
   id: string
@@ -85,34 +86,15 @@ export type IssueFacets = {
   releases: string[]
 }
 
-const getApiConfig = () => {
-  const config = {
-    baseUrl: process.env.JABSO_API_URL?.trim() || 'http://localhost:4000',
-    projectId: process.env.JABSO_PROJECT_ID?.trim() || '1',
-    dashboardToken: process.env.JABSO_DASHBOARD_TOKEN?.trim() || 'replace-with-a-long-random-token',
-  }
-  const missingProductionVariables = process.env.VERCEL === '1'
-    ? [
-        !process.env.JABSO_API_URL?.trim() && 'JABSO_API_URL',
-        !process.env.JABSO_PROJECT_ID?.trim() && 'JABSO_PROJECT_ID',
-        !process.env.JABSO_DASHBOARD_TOKEN?.trim() && 'JABSO_DASHBOARD_TOKEN',
-      ].filter(Boolean)
-    : []
-
-  if (missingProductionVariables.length > 0) {
-    throw new Error(`Jabso web configuration is missing: ${missingProductionVariables.join(', ')}`)
-  }
-
-  return { ...config, baseUrl: config.baseUrl.replace(/\/$/, '') }
-}
-
 const request = async <Result>(path: string, init?: RequestInit): Promise<Result | null> => {
   await requireOwner()
-  const { baseUrl, projectId, dashboardToken } = getApiConfig()
+  const project = await getActiveProject()
+  if (!project) return null
+  const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
   headers.set('authorization', `Bearer ${dashboardToken}`)
   const response = await fetch(
-    `${baseUrl}/api/${encodeURIComponent(projectId)}${path}`,
+    `${baseUrl}/api/${encodeURIComponent(project.dsnProjectId)}${path}`,
     { cache: 'no-store', ...init, headers },
   )
   if (response.status === 404) return null
