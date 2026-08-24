@@ -42,9 +42,16 @@ export type IssueDetail = Omit<IssueSummary, 'environment' | 'release'> & {
     platform: string | null
     environment: string | null
     release: string | null
+    dist: string | null
     occurredAt: string | null
     receivedAt: string
     stacktrace: StackFrame[]
+    originalStacktrace: StackFrame[]
+    symbolication: {
+      status: 'not_applicable' | 'pending' | 'completed' | 'missing' | 'failed'
+      errorCode: string | null
+      mappedAt: string | null
+    }
     tags: Record<string, string>
     breadcrumbs: Array<{
       timestamp?: string
@@ -54,6 +61,15 @@ export type IssueDetail = Omit<IssueSummary, 'environment' | 'release'> & {
     }>
     context: Record<string, string>
   } | null
+  releaseHistory: Array<{
+    release: string
+    dist: string
+    eventCount: number
+    firstSeenAt: string
+    lastSeenAt: string
+    previousResolvedAt: string | null
+    regressedAt: string | null
+  }>
 }
 
 type IssueList = {
