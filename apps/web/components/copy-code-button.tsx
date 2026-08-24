@@ -1,11 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonProps } from '@/components/ui/button'
 
-type CopyCodeButtonProps = { value: string }
+type CopyCodeButtonProps = {
+  label?: string
+  value: string
+  variant?: ButtonProps['variant']
+}
 
-export const CopyCodeButton = ({ value }: CopyCodeButtonProps) => {
+export const CopyCodeButton = ({ label = 'Copy', value, variant = 'ghost' }: CopyCodeButtonProps) => {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -14,5 +18,5 @@ export const CopyCodeButton = ({ value }: CopyCodeButtonProps) => {
     window.setTimeout(() => setCopied(false), 1_500)
   }
 
-  return <Button variant="ghost" type="button" onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>
+  return <Button variant={variant} type="button" onClick={copy}>{copied ? 'Copied' : label}</Button>
 }
