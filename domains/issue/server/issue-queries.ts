@@ -1,4 +1,10 @@
-import { implementQuery } from "boundra";
+import { implementMutation, implementQuery } from "boundra";
+
+import {
+  getIssueFacetsQuery,
+  type GetIssueFacetsQueryInput,
+  type GetIssueFacetsQueryResult,
+} from "../shared/contracts/get-issue-facets";
 
 import {
   getIssueQuery,
@@ -10,10 +16,17 @@ import {
   type SearchIssuesQueryInput,
   type SearchIssuesQueryResult,
 } from "../shared/contracts/search-issues";
+import {
+  updateIssueStatusMutation,
+  type UpdateIssueStatusMutationInput,
+  type UpdateIssueStatusMutationResult,
+} from "../shared/contracts/update-issue-status";
 
 export type IssueQueryStore = {
   search(input: SearchIssuesQueryInput): Promise<SearchIssuesQueryResult>;
   get(input: GetIssueQueryInput): Promise<GetIssueQueryResult>;
+  facets(input: GetIssueFacetsQueryInput): Promise<GetIssueFacetsQueryResult>;
+  updateStatus(input: UpdateIssueStatusMutationInput): Promise<UpdateIssueStatusMutationResult>;
 };
 
 export const createSearchIssuesImplementation = (store: IssueQueryStore) =>
@@ -21,3 +34,9 @@ export const createSearchIssuesImplementation = (store: IssueQueryStore) =>
 
 export const createGetIssueImplementation = (store: IssueQueryStore) =>
   implementQuery(getIssueQuery, (input) => store.get(input));
+
+export const createGetIssueFacetsImplementation = (store: IssueQueryStore) =>
+  implementQuery(getIssueFacetsQuery, (input) => store.facets(input));
+
+export const createUpdateIssueStatusImplementation = (store: IssueQueryStore) =>
+  implementMutation(updateIssueStatusMutation, (input) => store.updateStatus(input));

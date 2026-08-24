@@ -10,7 +10,9 @@ import {
 import { createIngestEventImplementation } from '../../../domains/ingestion/server/public.js'
 import {
   createGetIssueImplementation,
+  createGetIssueFacetsImplementation,
   createSearchIssuesImplementation,
+  createUpdateIssueStatusImplementation,
 } from '../../../domains/issue/server/public.js'
 import { BoundraRuntimeError, executeContract } from 'boundra'
 import Fastify from 'fastify'
@@ -47,6 +49,8 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const issueStore = createPostgresIssueQueryStore(database)
   const searchIssues = createSearchIssuesImplementation(issueStore)
   const getIssue = createGetIssueImplementation(issueStore)
+  const getIssueFacets = createGetIssueFacetsImplementation(issueStore)
+  const updateIssueStatus = createUpdateIssueStatusImplementation(issueStore)
 
   const app = Fastify({
     bodyLimit: compressedBodyLimit,
@@ -91,9 +95,12 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       sentry_key?: string
       query?: string
       status?: 'unresolved' | 'resolved' | 'ignored'
+      level?: string
       environment?: string
       release?: string
+      last_seen_after?: string
       cursor?: string
+      direction?: 'next' | 'previous'
       limit?: string
     }
   }>('/api/:projectId/issues', async (request, reply) => {
@@ -106,12 +113,26 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       projectId: project.id,
       query: request.query.query,
       status: request.query.status,
+      level: request.query.level,
       environment: request.query.environment,
       release: request.query.release,
+      lastSeenAfter: request.query.last_seen_after,
       cursor: request.query.cursor,
+      direction: request.query.direction,
       limit: request.query.limit ? Number(request.query.limit) : undefined,
     })
     return reply.send(result)
+  })
+
+  app.get<{
+    Params: { projectId: string }
+    Querystring: { sentry_key?: string }
+  }>('/api/:projectId/issues/facets', async (request, reply) => {
+    const project = request.query.sentry_key
+      ? await store.findProject(request.params.projectId, request.query.sentry_key)
+      : undefined
+    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    return reply.send(await executeContract(getIssueFacets, { projectId: project.id }))
   })
 
   app.get<{
@@ -126,6 +147,23 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     const result = await executeContract(getIssue, {
       projectId: project.id,
       issueId: request.params.issueId,
+    })
+    return result ? reply.send(result) : reply.code(404).send({ error: 'issue not found' })
+  })
+
+  app.patch<{
+    Params: { projectId: string; issueId: string }
+    Querystring: { sentry_key?: string }
+    Body: { status?: 'unresolved' | 'resolved' | 'ignored' }
+  }>('/api/:projectId/issues/:issueId/status', async (request, reply) => {
+    const project = request.query.sentry_key
+      ? await store.findProject(request.params.projectId, request.query.sentry_key)
+      : undefined
+    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    const result = await executeContract(updateIssueStatus, {
+      projectId: project.id,
+      issueId: request.params.issueId,
+      status: request.body?.status,
     })
     return result ? reply.send(result) : reply.code(404).send({ error: 'issue not found' })
   })

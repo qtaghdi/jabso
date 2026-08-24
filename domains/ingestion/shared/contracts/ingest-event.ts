@@ -9,6 +9,13 @@ const stackFrameSchema = z.object({
   inApp: z.boolean().optional(),
 });
 
+const breadcrumbSchema = z.object({
+  timestamp: z.iso.datetime().optional(),
+  category: z.string().max(64),
+  level: z.string().max(32).optional(),
+  message: z.string().max(500).optional(),
+});
+
 export const ingestEventInputSchema = z.object({
   projectId: z.uuid(),
   eventId: z.string().min(1).max(64),
@@ -21,6 +28,8 @@ export const ingestEventInputSchema = z.object({
   occurredAt: z.iso.datetime().optional(),
   stacktrace: z.array(stackFrameSchema).max(200).default([]),
   tags: z.record(z.string(), z.string().max(1_000)).default({}),
+  breadcrumbs: z.array(breadcrumbSchema).max(50).default([]),
+  context: z.record(z.string(), z.string().max(500)).default({}),
   customFingerprint: z.array(z.string().min(1).max(500)).max(20).optional(),
 });
 export const ingestEventResultSchema = z.object({

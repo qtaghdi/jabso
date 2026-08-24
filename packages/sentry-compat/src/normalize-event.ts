@@ -17,6 +17,13 @@ export type NormalizedSentryEvent = {
   occurredAt?: string
   stacktrace: NormalizedStackFrame[]
   tags: Record<string, string>
+  breadcrumbs: Array<{
+    timestamp?: string
+    category: string
+    level?: string
+    message?: string
+  }>
+  context: Record<string, string>
   customFingerprint?: string[]
 }
 
@@ -35,6 +42,35 @@ const asRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : undefined
+}
+
+const sensitiveKey = /(?:auth|authorization|cookie|email|ip|password|secret|session|token|user)/i
+
+const sanitizeContextText = (value: unknown, max: number) => {
+  const normalized = text(value, max)
+  if (!normalized) return undefined
+  return normalized
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '<email>')
+    .replace(/([?&](?:access_token|auth|key|session|token)=)[^&#\s]+/gi, '$1<redacted>')
+}
+
+const safeContext = (event: Record<string, unknown>) => {
+  const result: Record<string, string> = {}
+  const contexts = asRecord(event.contexts)
+  const allowlisted = [
+    ['browser', ['name', 'version']],
+    ['runtime', ['name', 'version']],
+    ['os', ['name', 'version']],
+    ['device', ['family']],
+  ] as const
+  for (const [group, fields] of allowlisted) {
+    const context = asRecord(contexts?.[group])
+    for (const field of fields) {
+      const value = sanitizeContextText(context?.[field], 500)
+      if (value) result[`${group}.${field}`] = value
+    }
+  }
+  return result
 }
 
 export const normalizeSentryEvent = (payload: unknown, fallbackEventId?: string): NormalizedSentryEvent => {
@@ -58,11 +94,29 @@ export const normalizeSentryEvent = (payload: unknown, fallbackEventId?: string)
   const rawTags = asRecord(event.tags)
   if (rawTags) {
     for (const [key, value] of Object.entries(rawTags).slice(0, 100)) {
-      if (['string', 'number', 'boolean'].includes(typeof value)) {
-        tags[key.slice(0, 200)] = String(value).slice(0, 1_000)
+      if (!sensitiveKey.test(key) && ['string', 'number', 'boolean'].includes(typeof value)) {
+        tags[key.slice(0, 200)] = sanitizeContextText(String(value), 1_000) ?? ''
       }
     }
   }
+
+  const rawBreadcrumbs = Array.isArray(event.breadcrumbs)
+    ? event.breadcrumbs
+    : Array.isArray(asRecord(event.breadcrumbs)?.values)
+      ? asRecord(event.breadcrumbs)?.values as unknown[]
+      : []
+  const breadcrumbs = rawBreadcrumbs.slice(-50).flatMap((value) => {
+    const breadcrumb = asRecord(value)
+    if (!breadcrumb) return []
+    const category = sanitizeContextText(breadcrumb.category ?? breadcrumb.type, 64) ?? 'default'
+    const message = sanitizeContextText(breadcrumb.message, 500)
+    return [{
+      category,
+      ...(message ? { message } : {}),
+      ...(text(breadcrumb.level, 32) ? { level: text(breadcrumb.level, 32) } : {}),
+      ...(normalizeTimestamp(breadcrumb.timestamp) ? { timestamp: normalizeTimestamp(breadcrumb.timestamp) } : {}),
+    }]
+  })
 
   const fingerprint = Array.isArray(event.fingerprint)
     ? event.fingerprint.flatMap((value) => (typeof value === 'string' ? [value.slice(0, 500)] : [])).slice(0, 20)
@@ -89,6 +143,8 @@ export const normalizeSentryEvent = (payload: unknown, fallbackEventId?: string)
       }]
     }),
     tags,
+    breadcrumbs,
+    context: safeContext(event),
     ...(fingerprint?.length ? { customFingerprint: fingerprint } : {}),
   }
 }

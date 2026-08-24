@@ -34,6 +34,9 @@ export const issues = pgTable(
     eventCount: integer('event_count').notNull().default(0),
     firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull(),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+    statusChangedAt: timestamp('status_changed_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    regressedAt: timestamp('regressed_at', { withTimezone: true }),
   },
   (table) => [
     uniqueIndex('issues_project_fingerprint_uidx').on(table.projectId, table.fingerprint),
@@ -58,6 +61,8 @@ export const events = pgTable(
     receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
     stacktrace: jsonb('stacktrace'),
     tags: jsonb('tags'),
+    breadcrumbs: jsonb('breadcrumbs'),
+    context: jsonb('context'),
   },
   (table) => [
     uniqueIndex('events_project_event_id_uidx').on(table.projectId, table.eventId),

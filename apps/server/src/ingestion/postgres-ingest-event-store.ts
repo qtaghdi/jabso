@@ -6,7 +6,11 @@ import type {
 } from '../../../../domains/ingestion/shared/public.js'
 
 type ProjectRow = { id: string }
-type IssueRow = { id: string; event_count: number }
+type IssueRow = {
+  id: string
+  event_count: number
+  status: 'unresolved' | 'resolved' | 'ignored'
+}
 type EventRow = { id: string }
 
 export class PostgresIngestEventStore implements IngestEventStore {
@@ -31,7 +35,7 @@ export class PostgresIngestEventStore implements IngestEventStore {
         ) values ($1, $2, $3, $4, $5, 0, $6, $6)
         on conflict (project_id, fingerprint) do update
           set title = excluded.title, exception_type = excluded.exception_type, level = excluded.level
-        returning id, event_count`,
+        returning id, event_count, status`,
         [
           input.projectId,
           fingerprint,
@@ -47,8 +51,8 @@ export class PostgresIngestEventStore implements IngestEventStore {
       const eventResult = await transaction.query<EventRow>(
         `insert into events (
           event_id, project_id, issue_id, message, exception_type, level, platform, environment,
-          release, occurred_at, stacktrace, tags
-        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb)
+          release, occurred_at, stacktrace, tags, breadcrumbs, context
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb)
         on conflict (project_id, event_id) do nothing
         returning id`,
         [
@@ -64,6 +68,8 @@ export class PostgresIngestEventStore implements IngestEventStore {
           input.occurredAt ?? null,
           JSON.stringify(input.stacktrace),
           JSON.stringify(input.tags),
+          JSON.stringify(input.breadcrumbs),
+          JSON.stringify(input.context),
         ],
       )
 
@@ -72,7 +78,11 @@ export class PostgresIngestEventStore implements IngestEventStore {
           `update issues set
             event_count = event_count + 1,
             first_seen_at = least(first_seen_at, $2),
-            last_seen_at = greatest(last_seen_at, $2)
+            last_seen_at = greatest(last_seen_at, $2),
+            status = case when status = 'resolved' then 'unresolved'::issue_status else status end,
+            status_changed_at = case when status = 'resolved' then $2 else status_changed_at end,
+            regressed_at = case when status = 'resolved' then $2 else regressed_at end,
+            resolved_at = case when status = 'resolved' then null else resolved_at end
           where id = $1`,
           [issue.id, occurredAt],
         )
