@@ -7,6 +7,15 @@ const project = {
   dsnProjectId: '42',
   publicKey: 'public-test-key',
 }
+const adminToken = 'phase-three-admin-token'
+const sourceMap = JSON.stringify({
+  version: 3,
+  file: 'app.min.js',
+  sources: ['src/app.ts'],
+  sourcesContent: ['export const explode = () => { throw new Error("private source") }'],
+  names: ['explode'],
+  mappings: 'AAAAA',
+})
 
 const envelope = (event: Record<string, unknown>) => {
   const payload = JSON.stringify(event)
@@ -19,7 +28,7 @@ const fixture = async () => {
     'insert into projects (id, name, slug, dsn_project_id, public_key) values ($1, $2, $3, $4, $5)',
     [project.id, 'Test project', 'test-project', project.dsnProjectId, project.publicKey],
   )
-  const app = await buildServer({ database: executor })
+  const app = await buildServer({ adminToken, database: executor })
   return { app, database }
 }
 
@@ -234,6 +243,220 @@ describe('Jabso server', () => {
     expect(detail.json()).toMatchObject({ status: 'unresolved', resolvedAt: null })
     expect(detail.json<{ regressedAt: string; occurrences: unknown[] }>().regressedAt).toBeTruthy()
     expect(detail.json<{ occurrences: unknown[] }>().occurrences).toHaveLength(2)
+    await app.close()
+    await database.close()
+  })
+
+  it('backfills late source maps while preserving original frames and private source content', async () => {
+    const { app, database } = await fixture()
+    const ingestion = await app.inject({
+      method: 'POST',
+      url: `/api/${project.dsnProjectId}/envelope?sentry_key=${project.publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({
+        event_id: 'late-map-event',
+        message: 'Minified failure',
+        release: 'web@2.0.0',
+        dist: 'browser',
+        stacktrace: {
+          frames: [{
+            filename: 'https://cdn.example.com/assets/app.min.js?build=2',
+            function: 'a',
+            lineno: 1,
+            colno: 0,
+            in_app: true,
+          }],
+        },
+      }),
+    })
+    expect(ingestion.statusCode).toBe(200)
+    expect((await database.query<{ status: string }>(
+      'select symbolication_status as status from events where event_id = $1',
+      ['late-map-event'],
+    )).rows[0]?.status).toBe('missing')
+
+    const unauthorized = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%402.0.0/artifacts?dist=browser&artifact_path=${encodeURIComponent('/assets/app.min.js.map')}`,
+      headers: { 'content-type': 'application/octet-stream' },
+      payload: sourceMap,
+    })
+    expect(unauthorized.statusCode).toBe(403)
+
+    const upload = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%402.0.0/artifacts?dist=browser&artifact_path=${encodeURIComponent('/assets/app.min.js.map')}`,
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/octet-stream',
+      },
+      payload: sourceMap,
+    })
+    expect(upload.statusCode).toBe(200)
+    expect(upload.json()).toMatchObject({
+      artifactPath: '/assets/app.min.js.map',
+      processedEventCount: 1,
+      completedEventCount: 1,
+      pendingEventCount: 0,
+    })
+
+    const issueList = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+    })
+    const issueId = issueList.json<{ items: Array<{ id: string }> }>().items[0]?.id
+    const detail = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues/${issueId}?sentry_key=${project.publicKey}`,
+    })
+    expect(detail.json()).toMatchObject({
+      releaseHistory: [{ release: 'web@2.0.0', dist: 'browser', eventCount: 1 }],
+      latestEvent: {
+        dist: 'browser',
+        stacktrace: [{ filename: 'src/app.ts', function: 'explode', line: 1, column: 0 }],
+        originalStacktrace: [{
+          filename: 'https://cdn.example.com/assets/app.min.js?build=2',
+          function: 'a',
+          line: 1,
+          column: 0,
+        }],
+        symbolication: { status: 'completed', errorCode: null },
+      },
+    })
+    expect(detail.body).not.toContain('private source')
+
+    const releases = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/releases?sentry_key=${project.publicKey}`,
+    })
+    expect(releases.json()).toMatchObject({
+      items: [{ version: 'web@2.0.0', dist: 'browser', artifactCount: 1, eventCount: 1 }],
+    })
+    await app.close()
+    await database.close()
+  })
+
+  it('rejects unsafe or malformed source map uploads', async () => {
+    const { app, database } = await fixture()
+    const headers = {
+      authorization: `Bearer ${adminToken}`,
+      'content-type': 'application/octet-stream',
+    }
+    const unsafePath = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%403.0.0/artifacts?artifact_path=${encodeURIComponent('../private.map')}`,
+      headers,
+      payload: sourceMap,
+    })
+    expect(unsafePath.statusCode).toBe(400)
+    expect(unsafePath.json()).toMatchObject({ error: 'invalid_path' })
+
+    const malformed = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%403.0.0/artifacts?artifact_path=${encodeURIComponent('/assets/app.min.js.map')}`,
+      headers,
+      payload: '{"version":3}',
+    })
+    expect(malformed.statusCode).toBe(400)
+    expect(malformed.json()).toMatchObject({ error: 'invalid_source_map' })
+
+    const oversized = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%403.0.0/artifacts?artifact_path=${encodeURIComponent('/assets/oversized.js.map')}`,
+      headers,
+      payload: Buffer.alloc(5 * 1024 * 1024 + 1, 0x61),
+    })
+    expect(oversized.statusCode).toBe(413)
+    expect((await database.query<{ count: number }>(
+      'select count(*)::int as count from source_map_artifacts',
+    )).rows[0]?.count).toBe(0)
+    await app.close()
+    await database.close()
+  })
+
+  it('symbolicates new events only with artifacts from the same project and release', async () => {
+    const { app, database } = await fixture()
+    await database.query(
+      `insert into projects (id, name, slug, dsn_project_id, public_key)
+       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', 'Other project', 'other-project', '84', 'other-key')`,
+    )
+    const upload = await app.inject({
+      method: 'PUT',
+      url: `/api/${project.dsnProjectId}/releases/web%404.0.0/artifacts?dist=browser&artifact_path=${encodeURIComponent('/assets/app.min.js.map')}`,
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/octet-stream',
+      },
+      payload: sourceMap,
+    })
+    expect(upload.statusCode).toBe(200)
+
+    const send = (projectId: string, publicKey: string, eventId: string) => app.inject({
+      method: 'POST',
+      url: `/api/${projectId}/envelope?sentry_key=${publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({
+        event_id: eventId,
+        message: 'Project-scoped map',
+        release: 'web@4.0.0',
+        dist: 'browser',
+        stacktrace: { frames: [{ filename: 'https://cdn.example.com/assets/app.min.js', lineno: 1, colno: 0 }] },
+      }),
+    })
+    expect((await send(project.dsnProjectId, project.publicKey, 'mapped-project-event')).statusCode).toBe(200)
+    expect((await send('84', 'other-key', 'isolated-project-event')).statusCode).toBe(200)
+
+    const statuses = await database.query<{ event_id: string; status: string }>(
+      `select event_id, symbolication_status as status from events
+       where event_id in ('mapped-project-event', 'isolated-project-event') order by event_id`,
+    )
+    expect(statuses.rows).toEqual([
+      { event_id: 'isolated-project-event', status: 'missing' },
+      { event_id: 'mapped-project-event', status: 'completed' },
+    ])
+    await app.close()
+    await database.close()
+  })
+
+  it('tracks release-specific regressions after an issue is resolved', async () => {
+    const { app, database } = await fixture()
+    const send = (eventId: string, release: string, timestamp: string) => app.inject({
+      method: 'POST',
+      url: `/api/${project.dsnProjectId}/envelope?sentry_key=${project.publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({
+        event_id: eventId,
+        timestamp,
+        message: 'Release regression',
+        fingerprint: ['release-regression'],
+        release,
+        dist: 'browser',
+      }),
+    })
+    await send('release-before', 'web@1.0.0', '2026-08-21T00:00:00.000Z')
+    const list = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+    })
+    const issueId = list.json<{ items: Array<{ id: string }> }>().items[0]?.id
+    await app.inject({
+      method: 'PATCH',
+      url: `/api/${project.dsnProjectId}/issues/${issueId}/status?sentry_key=${project.publicKey}`,
+      payload: { status: 'resolved' },
+    })
+    await send('release-after', 'web@2.0.0', '2026-08-22T00:00:00.000Z')
+
+    const regressions = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/releases/web%402.0.0/regressions?sentry_key=${project.publicKey}&dist=browser`,
+    })
+    expect(regressions.statusCode).toBe(200)
+    expect(regressions.json()).toMatchObject({
+      items: [{ issueId, title: 'Release regression', dist: 'browser' }],
+    })
+    const regression = regressions.json<{ items: Array<{ previousResolvedAt: string; regressedAt: string }> }>().items[0]
+    expect(regression?.previousResolvedAt).toBeTruthy()
+    expect(regression?.regressedAt).toBe('2026-08-22T00:00:00.000Z')
     await app.close()
     await database.close()
   })

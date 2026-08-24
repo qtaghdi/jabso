@@ -7,6 +7,7 @@ import {
   parseSentryEnvelope,
   SentryEnvelopeParseError,
 } from '@jabso/sentry-compat'
+import { normalizeArtifactPath, validateSourceMap } from '@jabso/symbolication'
 import { createIngestEventImplementation } from '../../../domains/ingestion/server/public.js'
 import {
   createGetIssueImplementation,
@@ -14,19 +15,36 @@ import {
   createSearchIssuesImplementation,
   createUpdateIssueStatusImplementation,
 } from '../../../domains/issue/server/public.js'
+import {
+  createGetReleaseRegressionsImplementation,
+  createListReleasesImplementation,
+  createRetryReleaseSymbolicationImplementation,
+  createUploadSourceMapImplementation,
+} from '../../../domains/release/server/public.js'
+import { maxSourceMapBytes } from '../../../domains/release/shared/public.js'
 import { BoundraRuntimeError, executeContract } from 'boundra'
 import Fastify from 'fastify'
+import { timingSafeEqual } from 'node:crypto'
 import { gunzipSync, inflateSync } from 'node:zlib'
 import { createBoundraErrorRecorder, toBoundraDiagnosticInput } from './boundra-diagnostics.js'
 import { PostgresIngestEventStore } from './ingestion/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-store.js'
+import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
 
 const compressedBodyLimit = 1024 * 1024
 const decodedBodyLimit = 5 * 1024 * 1024
 
 export type BuildServerOptions = {
+  adminToken?: string
   allowedOrigin?: string
   database?: SqlExecutor
+}
+
+const hasValidAdminToken = (authorization: string | undefined, expected: string | undefined) => {
+  if (!authorization?.startsWith('Bearer ') || !expected) return false
+  const actualBytes = Buffer.from(authorization.slice('Bearer '.length))
+  const expectedBytes = Buffer.from(expected)
+  return actualBytes.length === expectedBytes.length && timingSafeEqual(actualBytes, expectedBytes)
 }
 
 const decodeBody = (body: Buffer, contentEncoding: string | undefined) => {
@@ -51,6 +69,12 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const getIssue = createGetIssueImplementation(issueStore)
   const getIssueFacets = createGetIssueFacetsImplementation(issueStore)
   const updateIssueStatus = createUpdateIssueStatusImplementation(issueStore)
+  const releaseStore = new PostgresReleaseStore(database)
+  const listReleases = createListReleasesImplementation(releaseStore)
+  const getReleaseRegressions = createGetReleaseRegressionsImplementation(releaseStore)
+  const uploadSourceMap = createUploadSourceMapImplementation(releaseStore)
+  const retryReleaseSymbolication = createRetryReleaseSymbolicationImplementation(releaseStore)
+  const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
 
   const app = Fastify({
     bodyLimit: compressedBodyLimit,
@@ -69,6 +93,9 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       await recordBoundraError(toBoundraDiagnosticInput(error))
       return reply.code(400).send({ error: error.code, message: error.message })
     }
+    if (error instanceof SourceMapUploadError) {
+      return reply.code(400).send({ error: error.code, message: error.message })
+    }
     request.log.error({ err: error }, 'request failed')
     return reply.send(error)
   })
@@ -76,6 +103,11 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.addContentTypeParser(
     ['application/x-sentry-envelope', 'text/plain'],
     { parseAs: 'buffer', bodyLimit: compressedBodyLimit },
+    (_request, body, done) => done(null, body),
+  )
+  app.addContentTypeParser(
+    'application/octet-stream',
+    { parseAs: 'buffer', bodyLimit: maxSourceMapBytes },
     (_request, body, done) => done(null, body),
   )
 
@@ -168,6 +200,86 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     return result ? reply.send(result) : reply.code(404).send({ error: 'issue not found' })
   })
 
+  app.get<{
+    Params: { projectId: string }
+    Querystring: { sentry_key?: string; limit?: string }
+  }>('/api/:projectId/releases', async (request, reply) => {
+    const project = request.query.sentry_key
+      ? await store.findProject(request.params.projectId, request.query.sentry_key)
+      : undefined
+    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    return reply.send(await executeContract(listReleases, {
+      projectId: project.id,
+      limit: request.query.limit ? Number(request.query.limit) : undefined,
+    }))
+  })
+
+  app.get<{
+    Params: { projectId: string; version: string }
+    Querystring: { sentry_key?: string; dist?: string; limit?: string }
+  }>('/api/:projectId/releases/:version/regressions', async (request, reply) => {
+    const project = request.query.sentry_key
+      ? await store.findProject(request.params.projectId, request.query.sentry_key)
+      : undefined
+    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    return reply.send(await executeContract(getReleaseRegressions, {
+      projectId: project.id,
+      release: request.params.version,
+      dist: request.query.dist,
+      limit: request.query.limit ? Number(request.query.limit) : undefined,
+    }))
+  })
+
+  app.put<{
+    Params: { projectId: string; version: string }
+    Querystring: { artifact_path?: string; dist?: string; deployed_at?: string }
+  }>('/api/:projectId/releases/:version/artifacts', { bodyLimit: maxSourceMapBytes }, async (request, reply) => {
+    if (!hasValidAdminToken(request.headers.authorization, adminToken)) {
+      return reply.code(403).send({ error: 'invalid administrator credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!Buffer.isBuffer(request.body) || !request.query.artifact_path) {
+      return reply.code(400).send({ error: 'source map body and artifact_path are required' })
+    }
+    const artifactPath = normalizeArtifactPath(request.query.artifact_path)
+    if (!artifactPath || !artifactPath.endsWith('.map')) {
+      return reply.code(400).send({ error: 'invalid_path', message: 'Source map artifact path is invalid' })
+    }
+    const content = request.body.toString('utf8')
+    try {
+      validateSourceMap(content)
+    } catch {
+      return reply.code(400).send({ error: 'invalid_source_map', message: 'Source map content is invalid' })
+    }
+    const result = await executeContract(uploadSourceMap, {
+      projectId: project.id,
+      version: request.params.version,
+      dist: request.query.dist,
+      artifactPath,
+      content,
+      deployedAt: request.query.deployed_at,
+    })
+    return reply.send(result)
+  })
+
+  app.post<{
+    Params: { projectId: string; version: string }
+    Querystring: { dist?: string; limit?: string }
+  }>('/api/:projectId/releases/:version/symbolicate', async (request, reply) => {
+    if (!hasValidAdminToken(request.headers.authorization, adminToken)) {
+      return reply.code(403).send({ error: 'invalid administrator credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
+    return reply.send(await executeContract(retryReleaseSymbolication, {
+      projectId: project.id,
+      version: request.params.version,
+      dist: request.query.dist,
+      limit: request.query.limit ? Number(request.query.limit) : undefined,
+    }))
+  })
+
   app.post<{ Params: { projectId: string }; Querystring: { sentry_key?: string } }>(
     '/api/:projectId/envelope',
     async (request, reply) => {
@@ -191,6 +303,11 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
           if (item.header.type !== 'event') continue
           const normalized = normalizeSentryEvent(decodeJsonItem(item), headerEventId)
           await executeContract(ingestEvent, { ...normalized, projectId: project.id })
+          try {
+            await releaseStore.symbolicateEvent(project.id, normalized.eventId)
+          } catch (error) {
+            request.log.warn({ err: error, eventId: normalized.eventId }, 'event symbolication failed')
+          }
           acceptedEventId = normalized.eventId
         }
 

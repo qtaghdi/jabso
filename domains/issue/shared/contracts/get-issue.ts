@@ -20,9 +20,16 @@ const latestEventSchema = z.object({
   platform: z.string().nullable(),
   environment: z.string().nullable(),
   release: z.string().nullable(),
+  dist: z.string().nullable(),
   occurredAt: z.iso.datetime().nullable(),
   receivedAt: z.iso.datetime(),
-  stacktrace: z.array(stackFrameSchema),
+  stacktrace: z.array(stackFrameSchema).max(200),
+  originalStacktrace: z.array(stackFrameSchema).max(200),
+  symbolication: z.object({
+    status: z.enum(['not_applicable', 'pending', 'completed', 'missing', 'failed']),
+    errorCode: z.string().nullable(),
+    mappedAt: z.iso.datetime().nullable(),
+  }),
   tags: z.record(z.string(), z.string()),
   breadcrumbs: z.array(z.object({
     timestamp: z.iso.datetime().optional(),
@@ -58,6 +65,15 @@ export const getIssueResultSchema = z.object({
   regressedAt: z.iso.datetime().nullable(),
   latestEvent: latestEventSchema.nullable(),
   occurrences: z.array(occurrenceSchema).max(25),
+  releaseHistory: z.array(z.object({
+    release: z.string(),
+    dist: z.string(),
+    eventCount: z.number().int().nonnegative(),
+    firstSeenAt: z.iso.datetime(),
+    lastSeenAt: z.iso.datetime(),
+    previousResolvedAt: z.iso.datetime().nullable(),
+    regressedAt: z.iso.datetime().nullable(),
+  })).max(25),
 }).nullable();
 
 export type GetIssueQueryInput = InferSchema<typeof getIssueInputSchema>;
