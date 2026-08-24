@@ -4,7 +4,7 @@
 
 Jabso는 개인 프로젝트에서 발생한 브라우저·서버 오류를 한곳에 모으고, 비슷한 오류를 issue로 묶어 조사할 수 있게 만드는 토이 프로젝트입니다. 장기적으로는 MCP를 통해 코딩 에이전트가 오류, stack trace, release 문맥을 직접 조회하도록 만드는 것을 목표로 합니다.
 
-현재 Phase 2까지 완료했습니다. Sentry Browser SDK가 보내는 error envelope를 canonical event로 정규화하고 같은 오류를 PostgreSQL issue로 묶으며, 웹에서 필터·occurrence·안전한 문맥·resolved/ignored/regression workflow를 사용할 수 있습니다. Session Replay 실험은 보존만 하며 제품 runtime에서는 제외합니다.
+현재 Phase 3까지 완료했습니다. Sentry Browser SDK가 보내는 error envelope를 PostgreSQL issue로 묶고, release/dist에 맞는 source map으로 production stack을 원본 frame으로 변환합니다. 웹에서는 필터·occurrence·안전한 문맥·lifecycle과 함께 mapped/original stack, release별 first seen과 regression을 확인할 수 있습니다.
 
 ## Product direction
 
@@ -26,8 +26,9 @@ Jabso는 Sentry의 모든 기능을 복제하는 프로젝트가 아닙니다. �
 | Server | Fastify, Node.js 24 |
 | Architecture and contracts | Boundra + Zod |
 | Database | PostgreSQL + Drizzle |
+| Symbolication | `@jridgewell/trace-mapping` behind `@jabso/symbolication` |
 | Logging | Pino |
-| Tests | Vitest, Playwright |
+| Tests | Vitest + browser smoke verification |
 | MCP | Official TypeScript SDK, Streamable HTTP |
 | Client SDK | Sentry SDK compatibility first |
 
@@ -84,6 +85,7 @@ domains/
 packages/
 ├─ sentry-compat/          # byte-safe envelope parser
 ├─ diagnostics/            # isolated Boundra diagnostics
+├─ symbolication/          # source-map validation and frame mapping
 ├─ db/                     # Drizzle schema and connection
 └─ config/                 # shared TypeScript config
 
@@ -111,6 +113,10 @@ Phase 1.5 조회 경로는 동일한 Boundra issue query를 Fastify read API가 
 
 Phase 2는 status/level/environment/release/last-seen 필터와 안정적인 복합 cursor pagination, 최근 occurrence 이력, lifecycle 변경을 완성합니다. resolved issue에 새 event가 들어오면 unresolved로 다시 열고 regression 시각을 기록하며, ignored issue는 자동으로 다시 열지 않습니다.
 
+Phase 3은 release/dist별 source map을 single-owner 관리자 token으로 업로드하고 PostgreSQL에 저장합니다. event ingestion은 symbolication 실패와 분리되며, map이 늦게 도착하면 upload 또는 retry endpoint가 최대 100개씩 backfill합니다. UI/API에는 map 원문과 `sourcesContent`를 노출하지 않고, 로컬 home directory가 포함된 mapped source path도 scrub합니다.
+
+Source map upload와 retry 사용법, 제한, 보존 정책은 [source map artifact guide](docs/source-map-artifacts.md)를 참고하세요.
+
 Breadcrumb는 최근 50개의 timestamp/category/level/message만 저장합니다. context는 browser/runtime/OS/device family allowlist만 보존하고, tag key의 user/email/token/session/cookie/IP 계열 값은 수집 단계에서 제외합니다. raw request, user identity, breadcrumb data 객체는 저장하지 않습니다.
 
 ```bash
@@ -131,11 +137,11 @@ pnpm boundra:check
 2. ~~Phase 1 — Fastify ingestion, canonical event, PostgreSQL grouping~~
 3. ~~Phase 1.5 — Boundra read path와 Next.js inbox shell~~
 4. ~~Phase 2 — 필터, cursor, occurrence, safe context와 issue lifecycle~~
-5. **Phase 3 — release, source map artifact와 stack symbolication**
-6. Phase 4 — 읽기 전용 MCP 도구
+5. ~~Phase 3 — release, source map artifact와 stack symbolication~~
+6. **Phase 4 — 읽기 전용 MCP 도구**
 7. Later — 운영 안전장치, retention, Session Replay 재도입
 
-다음 Phase 3은 release/dist 모델, 관리자 전용 source map upload, artifact storage adapter, exact path matching, original/symbolicated frame 보존, late-upload backfill과 release별 regression을 구현합니다. 별도 queue나 완성형 CLI, Debug ID matching, source code snippet 노출은 이번 phase에 포함하지 않습니다.
+다음 Phase 4는 Phase 1.5~3의 Boundra query handler를 재사용하는 읽기 전용 MCP adapter입니다. MCP가 DB나 source map 원문에 직접 접근하지 않게 하고 project-scoped token, bounded result, audit log를 먼저 적용합니다.
 
 phase 범위와 완료 이력의 단일 기준 문서는 [HTML implementation plan](docs/implementation-plan.html)입니다. 별도의 Markdown plan은 두지 않습니다.
 

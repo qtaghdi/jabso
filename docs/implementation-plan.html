@@ -91,7 +91,7 @@
       <h1><span>Jabso</span><br />Implementation Plan</h1>
       <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
     </div>
-    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-24<br />Status: Phase 2 complete · Phase 3 next<br />Scope: MVP → MCP</div>
+    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-24<br />Status: Phase 3 complete · Phase 4 next<br />Scope: MVP → MCP</div>
   </section>
 
   <h2>현재 위치</h2>
@@ -100,8 +100,8 @@
     <div class="status-step done"><strong>Phase 1</strong><span class="small">수집·저장<br />완료</span></div>
     <div class="status-step done"><strong>Phase 1.5</strong><span class="small">조회 기반<br />완료</span></div>
     <div class="status-step done"><strong>Phase 2</strong><span class="small">Issue workflow<br />완료</span></div>
-    <div class="status-step next"><strong>Phase 3</strong><span class="small">Source map<br />다음</span></div>
-    <div class="status-step planned"><strong>Phase 4</strong><span class="small">Read-only MCP<br />예정</span></div>
+    <div class="status-step done"><strong>Phase 3</strong><span class="small">Source map<br />완료</span></div>
+    <div class="status-step next"><strong>Phase 4</strong><span class="small">Read-only MCP<br />다음</span></div>
     <div class="status-step planned"><strong>Later</strong><span class="small">운영·Replay<br />보류</span></div>
   </div>
   <div class="decision" style="margin-top:16px"><strong>기준 문서:</strong> phase 범위와 완료 이력은 이 HTML 한 곳에서 관리한다. README는 현재 제품 상태를 요약하고, 별도의 Markdown 구현 플랜은 만들지 않는다.</div>
@@ -158,6 +158,7 @@ domains/
 packages/
 ├── sentry-compat/           # binary envelope parser
 ├── diagnostics/             # isolated Boundra error recording
+├── symbolication/           # source map validation and frame mapping
 ├── db/                      # Drizzle schema and migrations
 └── config/                  # shared tooling config
 
@@ -224,16 +225,16 @@ spikes/
   </div>
   <p class="small">완료 근거: status/level/environment/release/last-seen 필터, 양방향 cursor, occurrence history, 안전한 breadcrumb/context, resolved·ignored·reopen 흐름이 구현됐다. resolved issue의 새 event는 regression으로 기록하고 ignored issue는 자동 재개하지 않는다.</p>
 
-  <h2><span class="badge next-badge">다음</span><span class="badge p1">P1</span><span class="badge phase">Phase 3</span>Source map과 release</h2>
+  <h2><span class="badge done-badge">완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 3</span>Source map과 release</h2>
   <div class="decision"><strong>Phase 3 목표:</strong> production의 minified frame을 원본 파일·함수·라인으로 변환하고, 어떤 release에서 처음 발생하거나 다시 발생했는지 UI와 이후 MCP가 같은 문맥으로 조회하게 한다.</div>
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
-      <h3>현재 출발점</h3>
+      <h3>구현 상태</h3>
       <ul>
-        <li><code>events.release</code> 문자열과 원본 <code>stacktrace</code>는 이미 저장</li>
-        <li>release filter와 전역 regression 시각은 Phase 2에서 구현</li>
-        <li><code>release</code> domain과 <code>get-release-regressions</code> 계약은 scaffold 상태</li>
-        <li>release·artifact 테이블, upload API, symbolication 구현은 아직 없음</li>
+        <li><code>releases</code>, <code>source_map_artifacts</code>, <code>issue_releases</code> migration 완료</li>
+        <li>관리자 token 기반 upload/retry와 공개 release/regression query 완료</li>
+        <li><code>@jabso/symbolication</code>의 exact path mapping과 local path scrubbing 완료</li>
+        <li>mapped/original frame과 release history UI 완료</li>
       </ul>
     </div>
     <div class="card">
@@ -253,7 +254,7 @@ spikes/
     <tbody>
       <tr><td>3.1</td><td>Release model</td><td><code>project + version + normalized dist</code>를 고유 키로 두고 deploy 시각과 생성 시각을 저장</td><td>release 생성·조회 계약, migration, project isolation test</td></tr>
       <tr><td>3.2</td><td>Artifact upload</td><td>public DSN key 대신 single-owner 관리자 token 사용. 경로·MIME·압축 해제 후 크기·파일 수 제한</td><td>source map 저장과 replace/idempotency 정책 검증</td></tr>
-      <tr><td>3.3</td><td>Artifact storage</td><td>MVP는 PostgreSQL <code>bytea</code>에 bounded artifact를 저장하되 <code>SourceMapArtifactStore</code> adapter 뒤에 격리</td><td>추가 서비스 없이 durable 저장, checksum과 byte size 검증</td></tr>
+      <tr><td>3.3</td><td>Artifact storage</td><td>MVP는 PostgreSQL <code>bytea</code>에 bounded artifact를 저장하고 <code>PostgresReleaseStore</code> adapter 안에 격리</td><td>추가 서비스 없이 durable 저장, checksum과 byte size 검증</td></tr>
       <tr><td>3.4</td><td>Symbolication</td><td>release/dist와 정규화된 artifact path를 exact match. 실패는 intake 성공을 뒤집지 않음</td><td>고정 fixture의 minified 위치가 기대한 원본 frame으로 변환</td></tr>
       <tr><td>3.5</td><td>Retry/backfill</td><td>별도 queue 인프라 없이 pending 상태를 남기고 upload/retry 시 bounded batch 재처리</td><td>event가 map보다 먼저 도착해도 나중에 복구 가능</td></tr>
       <tr><td>3.6</td><td>UI + regression</td><td>symbolicated frame을 기본 표시하되 original toggle 제공. release별 first seen·regressed in 표시</td><td>issue detail만으로 원본/변환/release 이력 확인</td></tr>
@@ -262,7 +263,7 @@ spikes/
 
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
-      <h3>데이터 모델 초안</h3>
+      <h3>구현 데이터 모델</h3>
       <ul>
         <li><code>releases</code>: project, version, dist, deployedAt</li>
         <li><code>source_map_artifacts</code>: release, path, checksum, content, byteSize</li>
@@ -282,9 +283,9 @@ spikes/
     </div>
   </div>
   <div class="note" style="margin-top:16px"><strong>Phase 3 비범위:</strong> 완성형 배포 CLI, Debug ID 기반 matching, source code snippet 노출, 외부 queue/worker, source map 공개 다운로드는 먼저 넣지 않는다. 특히 <code>sourcesContent</code>는 소스 유출 위험이 있어 UI/MCP 응답에 기본 포함하지 않는다.</div>
-  <p class="small">Exit criteria: release에 map을 업로드한 뒤 minified 오류를 보내면 issue detail에 변환된 파일·함수·라인이 표시되고 원본 frame도 확인할 수 있다. map 누락·오류·후발 업로드는 event 수집을 실패시키지 않으며, release별 first seen과 regression query가 project scope 안에서 동작한다.</p>
+  <p class="small">완료 근거: map 선·후발 업로드, exact project/release/dist 격리, 원본 frame 보존, private source 비노출, malformed/traversal 거부, bounded backfill, release regression을 통합 테스트로 검증했다. 전체 24 tests와 Boundra 77-file boundary check, production build가 통과한다.</p>
 
-  <h2><span class="badge planned-badge">예정</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
+  <h2><span class="badge next-badge">다음</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
   <div class="grid-2">
     <div class="card">
       <h3>첫 도구</h3>
@@ -338,6 +339,7 @@ spikes/
       <tr><td>Phase 1</td><td>Sentry-compatible error를 안전하게 수집하고 같은 오류를 issue로 grouping</td><td>Fastify ingestion, canonical event, PostgreSQL transaction, idempotency</td></tr>
       <tr><td>Phase 1.5</td><td>UI와 향후 MCP가 재사용할 project-scoped read path 확보</td><td>Boundra queries, Fastify read API, Next.js inbox/detail</td></tr>
       <tr><td>Phase 2</td><td>개인 프로젝트 오류를 실제로 분류하고 조사할 수 있는 workflow 완성</td><td>filters, cursors, occurrences, safe context, lifecycle, regression</td></tr>
+      <tr><td>Phase 3</td><td>minified production stack을 원본 위치로 변환하고 release별 발생·회귀 문맥 확보</td><td>artifact upload, PostgreSQL storage, symbolication, backfill, release history UI</td></tr>
     </tbody>
   </table>
 
@@ -360,19 +362,19 @@ spikes/
       <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/routes/sentry-envelope.ts</code></li>
       <li><code>packages/sentry-compat/src/parse-envelope.ts</code></li>
       <li><code>apps/server/src/issues/postgres-issue-query-store.ts</code></li>
-      <li><code>packages/db/src/schema.ts</code>, migrations <code>0000</code>–<code>0002</code></li>
+      <li><code>packages/db/src/schema.ts</code>, migrations <code>0000</code>–<code>0003</code></li>
       <li><code>domains/ingestion</code>, <code>domains/issue</code>, <code>domains/project</code>, <code>domains/release</code></li>
       <li><code>apps/web/app/page.tsx</code>, <code>apps/web/app/issues/[issue-id]/page.tsx</code></li>
     </ul>
   </details>
-  <details open><summary>Phase 3에서 추가·변경할 곳</summary>
+  <details open><summary>Phase 3 구현 파일</summary>
     <ul>
       <li><code>domains/release</code>: create/list release, artifact metadata, regression query 구현</li>
       <li><code>packages/db/src/schema.ts</code>: releases, artifacts, issue-release aggregate와 event symbolication 상태</li>
       <li><code>packages/symbolication</code>: path normalization, map lookup, frame mapping</li>
-      <li><code>apps/server/src/routes</code>: 관리자 전용 artifact upload/retry adapter</li>
+      <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/releases/postgres-release-store.ts</code>: 관리자 upload/retry와 저장 adapter</li>
       <li><code>apps/web/app/issues/[issue-id]</code>: mapped/original frame과 release 이력 UI</li>
-      <li><code>fixtures/source-maps</code>: 소스가 제거된 minified/map golden fixture</li>
+      <li><code>apps/server/test/app.test.ts</code>: late upload, isolation, privacy, regression integration story</li>
     </ul>
   </details>
   <details><summary>폐기 또는 격리</summary>
@@ -430,7 +432,7 @@ spikes/
       <tr><td>1. Ingestion MVP</td><td>완료</td><td>—</td><td>issue grouping과 DB 저장</td></tr>
       <tr><td>1.5. Read path</td><td>완료</td><td>—</td><td>공유 query와 inbox shell</td></tr>
       <tr><td>2. Issue workflow</td><td>완료</td><td>—</td><td>UI에서 오류 조사·상태 관리</td></tr>
-      <tr><td>3. Source maps</td><td>Large</td><td>높음</td><td>production stack symbolication</td></tr>
+      <tr><td>3. Source maps</td><td>완료</td><td>—</td><td>production stack symbolication</td></tr>
       <tr><td>4. Read-only MCP</td><td>Medium</td><td>중간</td><td>agent가 project-scoped 조회</td></tr>
       <tr><td>Later. Replay</td><td>XL</td><td>높음</td><td>privacy-safe replay 연결</td></tr>
     </tbody>
