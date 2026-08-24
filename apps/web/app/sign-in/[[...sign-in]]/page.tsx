@@ -1,4 +1,5 @@
 import { SignIn } from '@clerk/nextjs'
+import { AuthSignalField } from '@/components/auth-signal-field'
 import { SessionExpiredToast } from '@/components/session-expired-toast'
 
 type SignInPageProps = {
@@ -13,16 +14,14 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
       {reason === 'session-expired' ? <SessionExpiredToast /> : null}
       <section className="auth-intro">
         <a className="wordmark auth-wordmark" href="/">Jabso</a>
-        <div>
-          <p className="eyebrow">Personal error inbox</p>
-          <h1>Catch the failures<br />that matter.</h1>
-          <p>One quiet place for the errors your projects cannot ignore.</p>
+        <div className="auth-signal-field">
+          <AuthSignalField />
         </div>
+        <p className="auth-signal-caption"><strong>24 events</strong> grouped into <strong>1 issue</strong></p>
       </section>
       <section className="auth-card-wrap">
         <div className="auth-form-shell">
           <header className="auth-form-header">
-            <p className="eyebrow">Private instance</p>
             <h2>Sign in to Jabso</h2>
             <p>Use the GitHub account connected to this instance.</p>
           </header>
@@ -30,8 +29,10 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
             forceRedirectUrl="/"
             appearance={{
               elements: {
+                rootBox: 'clerk-root-box',
                 cardBox: 'clerk-card-box',
                 card: 'clerk-card',
+                main: 'clerk-main',
                 header: 'clerk-header',
                 socialButtonsBlockButton: 'clerk-social-button',
                 socialButtonsBlockButtonText: 'clerk-social-button-text',
