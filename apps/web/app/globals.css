@@ -8,6 +8,7 @@
   --accent: #d83b20;
   --accent-soft: #fff4f1;
   --focus: #155fd1;
+  --warning: #e99800;
   --sidebar-width: 220px;
 }
 
@@ -90,6 +91,13 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .filter-bar button { min-height: 44px; padding: 0 18px; border: 1px solid #20242a; border-radius: 5px; background: #20242a; color: white; font-size: 13px; font-weight: 680; cursor: pointer; }
 .filter-bar button:hover { background: #000; }
 
+.compact-page-header { margin-bottom: 26px; }
+.phase-two-filters { display: grid; grid-template-columns: minmax(220px, 1.6fr) repeat(5, minmax(130px, 0.75fr)) auto auto; gap: 10px; margin-bottom: 28px; }
+.phase-two-filters label:first-child { max-width: none; }
+.phase-two-filters select { min-width: 0; }
+.phase-two-filters .clear-filter { display: grid; min-height: 44px; padding: 0 15px; place-items: center; border: 1px solid #cbd2da; border-radius: 5px; font-size: 13px; font-weight: 650; text-decoration: none; }
+.phase-two-filters .clear-filter:hover { background: var(--surface); }
+
 .issue-table-wrap { border-top: 1px solid var(--border); }
 .issue-table, .stack-table { width: 100%; border-collapse: collapse; }
 .issue-table th, .stack-table th { padding: 15px 16px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: 0.02em; text-align: left; }
@@ -112,6 +120,26 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .issue-row-action svg, .back-link svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .table-caption { margin: 20px 8px 0; color: var(--muted); font-size: 13px; }
 
+.phase-two-table { min-width: 1120px; }
+.phase-two-table th:nth-child(2) { width: auto; }
+.phase-two-table th:nth-child(3) { width: 28%; }
+.phase-two-table td { padding-block: 18px; }
+.phase-two-table th:first-child, .phase-two-table td:first-child { color: #3f4650; font-weight: 570; }
+.phase-two-table .issue-title-cell > span { display: block; color: var(--muted); font-size: 12px; }
+.phase-two-table .issue-title-cell a { margin-top: 3px; font-size: 14px; }
+.status-mark { display: inline-block; width: 9px; height: 9px; margin-right: 9px; border: 1px solid #7a8490; border-radius: 50%; }
+.status-unresolved .status-mark, .status-mark.status-unresolved { border-color: var(--accent); background: var(--accent); }
+.status-resolved .status-mark, .status-mark.status-resolved { background: #7a8490; }
+.status-ignored .status-mark, .status-mark.status-ignored { border-style: dashed; }
+.regression-label { display: inline-flex; align-items: center; gap: 7px; color: #8b5a00; font-weight: 650; }
+.regression-label > span { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); }
+.pagination-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 22px 0; }
+.pagination-bar p { margin: 0; color: var(--muted); font-size: 13px; }
+.pagination-bar a { display: inline-flex; width: fit-content; min-height: 40px; align-items: center; gap: 8px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 5px; font-size: 13px; font-weight: 650; text-decoration: none; }
+.pagination-bar a:last-child { justify-self: end; }
+.pagination-bar a:hover { background: var(--surface); }
+.pagination-bar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+
 .empty-state { max-width: 620px; padding: 54px 0; border-block: 1px solid var(--border); }
 .empty-state h2 { margin: 0; font-size: 21px; letter-spacing: -0.02em; }
 .empty-state p, .muted-copy { color: var(--muted); }
@@ -121,6 +149,17 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .back-link:hover { text-decoration: underline; }
 .issue-detail-header { padding-bottom: 26px; border-bottom: 1px solid var(--border); }
 .issue-detail-header h1 { max-width: 940px; }
+.issue-title-row { display: flex; justify-content: space-between; gap: 28px; align-items: flex-start; }
+.issue-title-row > div:first-child p { margin: 7px 0 0; color: var(--muted); }
+.status-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.current-status { display: inline-flex; min-height: 40px; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; font-weight: 650; }
+.current-status > span { width: 8px; height: 8px; border-radius: 50%; background: #7a8490; }
+.current-status.status-unresolved > span { background: var(--accent); }
+.current-status.status-ignored > span { background: transparent; border: 1px dashed #7a8490; }
+.status-action { min-height: 40px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 5px; background: white; color: var(--text); font-size: 13px; font-weight: 650; cursor: pointer; }
+.status-action:hover:not(:disabled) { border-color: var(--text); background: var(--surface); }
+.status-action:disabled { color: #9aa1aa; cursor: default; }
+.status-action-active { background: var(--surface); }
 
 .issue-facts { display: flex; flex-wrap: wrap; margin: 28px 0 0; }
 .issue-facts div { display: flex; align-items: center; gap: 14px; padding: 0 28px; border-left: 1px solid var(--border); }
@@ -155,6 +194,23 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .tags-section dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 34px; margin: 0; }
 .tags-section dl div { display: grid; grid-template-columns: minmax(80px, 0.6fr) 1fr; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 
+.history-table-wrap { overflow-x: auto; }
+.history-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+.history-table th { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 650; text-align: left; }
+.history-table td { padding: 12px; border-bottom: 1px solid var(--border); color: #3f4650; font-size: 13px; }
+.history-table th:first-child, .history-table td:first-child { padding-left: 0; }
+.context-columns { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; border-bottom: 1px solid var(--border); }
+.context-columns .detail-section { border-bottom: 0; }
+.safe-context-section { padding-left: 36px; border-left: 1px solid var(--border); }
+.breadcrumbs-section ol { margin: 0; padding: 0; list-style: none; }
+.breadcrumbs-section li { display: grid; grid-template-columns: 150px 90px minmax(0, 1fr); gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.breadcrumbs-section time, .breadcrumbs-section li > span { color: var(--muted); }
+.breadcrumbs-section p { margin: 0; overflow-wrap: anywhere; }
+.safe-context-section dl { margin: 0; }
+.safe-context-section dl div { display: grid; grid-template-columns: minmax(100px, 0.7fr) 1.3fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.safe-context-section dt { color: var(--muted); font-size: 12px; }
+.safe-context-section dd { margin: 0; overflow-wrap: anywhere; font-size: 13px; }
+
 .smoke-test-panel { max-width: 720px; margin-bottom: 24px; padding: 28px 0; border-block: 1px solid var(--border); }
 .smoke-test-panel p { margin-top: 0; color: var(--muted); }
 .smoke-test-panel button, .route-state button { padding: 10px 16px; border: 1px solid #20242a; border-radius: 5px; background: #20242a; color: white; font-size: 13px; font-weight: 680; cursor: pointer; }
@@ -185,6 +241,10 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .occurrence-grid { grid-template-columns: repeat(2, 1fr); gap: 22px 0; }
   .occurrence-grid div:nth-child(3) { padding-left: 0; border-left: 0; }
   .tags-section dl { grid-template-columns: repeat(2, 1fr); }
+  .phase-two-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .phase-two-filters .filter-search { grid-column: 1 / -1; }
+  .context-columns { grid-template-columns: 1fr; gap: 0; }
+  .safe-context-section { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); }
 }
 
 @media (max-width: 620px) {
@@ -208,4 +268,11 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .occurrence-grid div, .occurrence-grid div:nth-child(3) { padding: 0; border: 0; }
   .tags-section dl { grid-template-columns: 1fr; }
   .route-state { margin: 6vh auto; padding: 24px; }
+  .phase-two-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phase-two-filters .filter-search { grid-column: 1 / -1; }
+  .phase-two-filters button, .phase-two-filters .clear-filter { width: 100%; }
+  .issue-title-row { display: block; }
+  .status-actions { justify-content: flex-start; margin-top: 22px; }
+  .breadcrumbs-section li { grid-template-columns: 1fr auto; }
+  .breadcrumbs-section p { grid-column: 1 / -1; }
 }

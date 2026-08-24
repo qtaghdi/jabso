@@ -10,6 +10,7 @@ export type IssueSummary = {
   eventCount: number
   firstSeenAt: string
   lastSeenAt: string
+  regressedAt: string | null
   environment: string | null
   release: string | null
 }
@@ -24,6 +25,16 @@ export type StackFrame = {
 
 export type IssueDetail = Omit<IssueSummary, 'environment' | 'release'> & {
   fingerprint: string
+  statusChangedAt: string
+  resolvedAt: string | null
+  occurrences: Array<{
+    eventId: string
+    level: string
+    environment: string | null
+    release: string | null
+    occurredAt: string | null
+    receivedAt: string
+  }>
   latestEvent: {
     eventId: string
     message: string | null
@@ -35,12 +46,26 @@ export type IssueDetail = Omit<IssueSummary, 'environment' | 'release'> & {
     receivedAt: string
     stacktrace: StackFrame[]
     tags: Record<string, string>
+    breadcrumbs: Array<{
+      timestamp?: string
+      category: string
+      level?: string
+      message?: string
+    }>
+    context: Record<string, string>
   } | null
 }
 
 type IssueList = {
   items: IssueSummary[]
   nextCursor: string | null
+  previousCursor: string | null
+}
+
+export type IssueFacets = {
+  levels: string[]
+  environments: string[]
+  releases: string[]
 }
 
 const getApiConfig = () => ({
@@ -49,30 +74,62 @@ const getApiConfig = () => ({
   projectKey: process.env.JABSO_PROJECT_KEY ?? '0123456789abcdef0123456789abcdef',
 })
 
-const request = async <Result>(path: string): Promise<Result | null> => {
+const request = async <Result>(path: string, init?: RequestInit): Promise<Result | null> => {
   const { baseUrl, projectId, projectKey } = getApiConfig()
   const separator = path.includes('?') ? '&' : '?'
   const response = await fetch(
     `${baseUrl}/api/${encodeURIComponent(projectId)}${path}${separator}sentry_key=${encodeURIComponent(projectKey)}`,
-    { cache: 'no-store' },
+    { cache: 'no-store', ...init },
   )
   if (response.status === 404) return null
   if (!response.ok) throw new Error(`Jabso API request failed with status ${response.status}`)
   return response.json() as Promise<Result>
 }
 
-type IssueFilters = {
+export type IssueFilters = {
   query?: string
+  status?: IssueSummary['status']
+  level?: string
   environment?: string
+  release?: string
+  period?: '24h' | '7d' | '30d'
+  cursor?: string
+  direction?: 'next' | 'previous'
 }
 
+const periodMilliseconds = { '24h': 86_400_000, '7d': 604_800_000, '30d': 2_592_000_000 }
+
 export const listIssues = async (filters: IssueFilters = {}) => {
-  const parameters = new URLSearchParams({ status: 'unresolved', limit: '50' })
+  const parameters = new URLSearchParams({ limit: '25' })
   if (filters.query) parameters.set('query', filters.query)
+  if (filters.status) parameters.set('status', filters.status)
+  if (filters.level) parameters.set('level', filters.level)
   if (filters.environment) parameters.set('environment', filters.environment)
-  return (await request<IssueList>(`/issues?${parameters}`)) ?? { items: [], nextCursor: null }
+  if (filters.release) parameters.set('release', filters.release)
+  if (filters.period) parameters.set('last_seen_after', new Date(Date.now() - periodMilliseconds[filters.period]).toISOString())
+  if (filters.cursor) parameters.set('cursor', filters.cursor)
+  if (filters.direction) parameters.set('direction', filters.direction)
+  return (await request<IssueList>(`/issues?${parameters}`)) ?? {
+    items: [],
+    nextCursor: null,
+    previousCursor: null,
+  }
 }
+
+export const getIssueFacets = cache(async () =>
+  (await request<IssueFacets>('/issues/facets')) ?? { levels: [], environments: [], releases: [] },
+)
 
 export const getIssue = cache(async (issueId: string) =>
   request<IssueDetail>(`/issues/${encodeURIComponent(issueId)}`),
 )
+
+export const updateIssueStatus = async (issueId: string, status: IssueSummary['status']) =>
+  request<{ issueId: string; status: IssueSummary['status']; changedAt: string }>(
+    `/issues/${encodeURIComponent(issueId)}/status`,
+    {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status }),
+    },
+  )
