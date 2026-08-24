@@ -65,6 +65,57 @@ describe('Jabso server', () => {
     await database.close()
   })
 
+  it('creates and lists projects with dashboard credentials', async () => {
+    const { app, database } = await fixture()
+    const unauthorized = await app.inject({
+      method: 'POST',
+      url: '/api/projects',
+      payload: { name: 'Unauthorized project' },
+    })
+    expect(unauthorized.statusCode).toBe(403)
+
+    const createdResponse = await app.inject({
+      method: 'POST',
+      url: '/api/projects',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: { name: 'Checkout web' },
+    })
+    expect(createdResponse.statusCode).toBe(201)
+    const created = createdResponse.json<{
+      dsnProjectId: string
+      id: string
+      name: string
+      publicKey: string
+      slug: string
+    }>()
+    expect(created).toMatchObject({ name: 'Checkout web' })
+    expect(created.dsnProjectId).toMatch(/^\d+$/)
+    expect(created.publicKey).toMatch(/^[a-f0-9]{32}$/)
+
+    const projectsResponse = await app.inject({
+      method: 'GET',
+      url: '/api/projects',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(projectsResponse.statusCode).toBe(200)
+    const projects = projectsResponse.json<{ items: Array<{ id: string; name: string }>; nextCursor: string | null }>()
+    expect(projects.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: created.id, name: 'Checkout web' }),
+      expect.objectContaining({ id: project.id }),
+    ]))
+    expect(projects.nextCursor).toBeNull()
+
+    const ingestionResponse = await app.inject({
+      method: 'POST',
+      url: `/api/${created.dsnProjectId}/envelope?sentry_key=${created.publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({ event_id: 'new-project-event', message: 'Connected project' }),
+    })
+    expect(ingestionResponse.statusCode).toBe(200)
+    await app.close()
+    await database.close()
+  })
+
   it('groups three equivalent errors into one issue and keeps all events', async () => {
     const { app, database } = await fixture()
     for (const [index, userId] of ['123456', '987654', '555555'].entries()) {

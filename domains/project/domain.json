@@ -15,7 +15,8 @@
     ],
     "shared": [
       "./shared/public.ts",
-      "./shared/contracts/list-projects.ts"
+      "./shared/contracts/list-projects.ts",
+      "./shared/contracts/create-project.ts"
     ]
   },
   "version": "0.1.0"
