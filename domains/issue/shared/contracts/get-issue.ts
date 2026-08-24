@@ -24,6 +24,22 @@ const latestEventSchema = z.object({
   receivedAt: z.iso.datetime(),
   stacktrace: z.array(stackFrameSchema),
   tags: z.record(z.string(), z.string()),
+  breadcrumbs: z.array(z.object({
+    timestamp: z.iso.datetime().optional(),
+    category: z.string(),
+    level: z.string().optional(),
+    message: z.string().optional(),
+  })),
+  context: z.record(z.string(), z.string()),
+});
+
+const occurrenceSchema = z.object({
+  eventId: z.string(),
+  level: z.string(),
+  environment: z.string().nullable(),
+  release: z.string().nullable(),
+  occurredAt: z.iso.datetime().nullable(),
+  receivedAt: z.iso.datetime(),
 });
 
 export const getIssueResultSchema = z.object({
@@ -37,7 +53,11 @@ export const getIssueResultSchema = z.object({
   eventCount: z.number().int().nonnegative(),
   firstSeenAt: z.iso.datetime(),
   lastSeenAt: z.iso.datetime(),
+  statusChangedAt: z.iso.datetime(),
+  resolvedAt: z.iso.datetime().nullable(),
+  regressedAt: z.iso.datetime().nullable(),
   latestEvent: latestEventSchema.nullable(),
+  occurrences: z.array(occurrenceSchema).max(25),
 }).nullable();
 
 export type GetIssueQueryInput = InferSchema<typeof getIssueInputSchema>;

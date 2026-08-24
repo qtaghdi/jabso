@@ -47,6 +47,18 @@ describe('Jabso server', () => {
             value: `Could not load user ${userId}`,
             stacktrace: { frames: [{ filename: 'src/user.ts', function: 'loadUser', lineno: 12, in_app: true }] },
           }] },
+          environment: 'production',
+          release: 'web@1.2.3',
+          breadcrumbs: [{
+            timestamp: `2026-08-21T00:00:0${index}.000Z`,
+            category: 'fetch',
+            message: `GET /users/${userId}?token=must-not-survive`,
+          }],
+          contexts: {
+            browser: { name: 'Chrome', version: '140' },
+            device: { family: 'Desktop', serial: 'must-not-be-stored' },
+          },
+          tags: { runtime: 'browser', user_email: 'must-not-be-stored@example.com' },
           user: { email: 'must-not-be-stored@example.com' },
         }),
       })
@@ -56,7 +68,7 @@ describe('Jabso server', () => {
     const issues = await database.query<{ event_count: number }>('select event_count from issues')
     const events = await database.query<{ event_id: string }>('select event_id from events order by event_id')
     const sensitiveColumns = await database.query<{ column_name: string }>(
-      "select column_name from information_schema.columns where table_name = 'events' and column_name in ('raw_payload', 'context')",
+      "select column_name from information_schema.columns where table_name = 'events' and column_name in ('raw_payload', 'user', 'request')",
     )
     expect(issues.rows).toEqual([{ event_count: 3 }])
     expect(events.rows).toHaveLength(3)
@@ -80,10 +92,14 @@ describe('Jabso server', () => {
       eventCount: 3,
       latestEvent: {
         exceptionType: 'TypeError',
-        environment: null,
+        environment: 'production',
         stacktrace: [{ filename: 'src/user.ts', function: 'loadUser', line: 12, inApp: true }],
+        tags: { runtime: 'browser' },
+        context: { 'browser.name': 'Chrome', 'browser.version': '140', 'device.family': 'Desktop' },
       },
     })
+    const detail = detailResponse.json<{ latestEvent: { breadcrumbs: Array<{ message: string }> } }>()
+    expect(detail.latestEvent.breadcrumbs[0]?.message).toBe('GET /users/555555?token=<redacted>')
     await app.close()
     await database.close()
   })
@@ -129,13 +145,95 @@ describe('Jabso server', () => {
       url: '/api/84/issues?sentry_key=other-key',
     })
     expect(isolatedResponse.statusCode).toBe(200)
-    expect(isolatedResponse.json()).toEqual({ items: [], nextCursor: null })
+    expect(isolatedResponse.json()).toEqual({ items: [], nextCursor: null, previousCursor: null })
 
     const missingResponse = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues/018f47a2-5d1d-7e19-aab8-6f8cc59d9aff?sentry_key=${project.publicKey}`,
     })
     expect(missingResponse.statusCode).toBe(404)
+    await app.close()
+    await database.close()
+  })
+
+  it('filters and paginates issues with stable cursors', async () => {
+    const { app, database } = await fixture()
+    for (const index of [0, 1, 2]) {
+      await app.inject({
+        method: 'POST',
+        url: `/api/${project.dsnProjectId}/envelope?sentry_key=${project.publicKey}`,
+        headers: { 'content-type': 'application/x-sentry-envelope' },
+        payload: envelope({
+          event_id: `page-${index}`,
+          timestamp: `2026-08-21T00:00:0${index}.000Z`,
+          message: `Page failure ${index}`,
+          level: index === 1 ? 'warning' : 'error',
+          environment: index === 2 ? 'staging' : 'production',
+          release: `web@1.0.${index}`,
+          fingerprint: [`page-${index}`],
+        }),
+      })
+    }
+
+    const first = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&limit=2`,
+    })
+    const firstPage = first.json<{ items: Array<{ title: string }>; nextCursor: string; previousCursor: null }>()
+    expect(firstPage.items.map((item) => item.title)).toEqual(['Page failure 2', 'Page failure 1'])
+    expect(firstPage.previousCursor).toBeNull()
+
+    const second = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&limit=2&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
+    })
+    const secondPage = second.json<{ items: Array<{ title: string }>; previousCursor: string }>()
+    expect(secondPage.items.map((item) => item.title)).toEqual(['Page failure 0'])
+    expect(secondPage.previousCursor).toBeTruthy()
+
+    const filtered = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}&level=warning&environment=production&release=web%401.0.1`,
+    })
+    expect(filtered.json<{ items: Array<{ title: string }> }>().items.map((item) => item.title)).toEqual(['Page failure 1'])
+    await app.close()
+    await database.close()
+  })
+
+  it('updates lifecycle status and reopens resolved issues as regressions', async () => {
+    const { app, database } = await fixture()
+    const send = (eventId: string) => app.inject({
+      method: 'POST',
+      url: `/api/${project.dsnProjectId}/envelope?sentry_key=${project.publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({
+        event_id: eventId,
+        timestamp: eventId === 'before' ? '2026-08-21T00:00:00.000Z' : '2026-08-22T00:00:00.000Z',
+        message: 'Lifecycle failure',
+        fingerprint: ['lifecycle-failure'],
+      }),
+    })
+    await send('before')
+    const list = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
+    })
+    const issueId = list.json<{ items: Array<{ id: string }> }>().items[0]?.id
+    const resolved = await app.inject({
+      method: 'PATCH',
+      url: `/api/${project.dsnProjectId}/issues/${issueId}/status?sentry_key=${project.publicKey}`,
+      payload: { status: 'resolved' },
+    })
+    expect(resolved.json()).toMatchObject({ issueId, status: 'resolved' })
+
+    await send('after')
+    const detail = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues/${issueId}?sentry_key=${project.publicKey}`,
+    })
+    expect(detail.json()).toMatchObject({ status: 'unresolved', resolvedAt: null })
+    expect(detail.json<{ regressedAt: string; occurrences: unknown[] }>().regressedAt).toBeTruthy()
+    expect(detail.json<{ occurrences: unknown[] }>().occurrences).toHaveLength(2)
     await app.close()
     await database.close()
   })

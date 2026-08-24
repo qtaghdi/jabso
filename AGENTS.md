@@ -49,6 +49,8 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Project keys used by SDKs are identifiers, not administrator secrets; still validate project ID, key, origin, rate limit, and body size at ingestion.
 - New persisted payloads require an explicit retention and PII-scrubbing decision.
 - Session Replay masking must default to safe settings when Replay is eventually reintroduced.
+- Breadcrumb persistence is limited to timestamp, category, level, and scrubbed message. Never persist breadcrumb data objects.
+- Safe context uses an explicit browser/runtime/OS/device-family allowlist. Reject user identity, IP, auth, cookie, session, token, and raw request fields.
 
 ## Package and runtime policy
 
@@ -80,6 +82,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Drizzle schema changes require a generated migration in the same change. Never edit an already-applied migration; create a new one.
 - Repository methods return contract-ready plain objects with ISO timestamp strings. Do not leak driver rows, clients, or transactions across boundaries.
 - A new persisted field must document why it is needed, its PII risk, and its retention behavior. Raw event payloads stay prohibited.
+- Resolving an issue records `resolved_at`. A later event reopens only resolved issues and records `regressed_at`; ignored issues remain ignored.
 
 ## Web conventions
 

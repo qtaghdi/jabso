@@ -109,6 +109,10 @@ Phase 1 수집 경로는 raw envelope만 Fastify에서 다루고, 정규화된 e
 
 Phase 1.5 조회 경로는 동일한 Boundra issue query를 Fastify read API가 실행하고 Next.js Server Component가 소비합니다. 웹 앱은 PostgreSQL에 직접 접근하지 않으며 현재 조회 API는 로컬 프로젝트 key로만 보호되므로 외부 배포 전 관리자 인증이 필요합니다.
 
+Phase 2는 status/level/environment/release/last-seen 필터와 안정적인 복합 cursor pagination, 최근 occurrence 이력, lifecycle 변경을 완성합니다. resolved issue에 새 event가 들어오면 unresolved로 다시 열고 regression 시각을 기록하며, ignored issue는 자동으로 다시 열지 않습니다.
+
+Breadcrumb는 최근 50개의 timestamp/category/level/message만 저장합니다. context는 browser/runtime/OS/device family allowlist만 보존하고, tag key의 user/email/token/session/cookie/IP 계열 값은 수집 단계에서 제외합니다. raw request, user identity, breadcrumb data 객체는 저장하지 않습니다.
+
 ```bash
 pnpm lint
 pnpm typecheck
@@ -127,7 +131,7 @@ pnpm boundra:check
 2. ~~pnpm/Turborepo 모노레포와 Boundra 경계 구성~~
 3. ~~Fastify collector에서 canonical event 변환과 PostgreSQL 영속성~~
 4. ~~error normalization과 issue grouping~~
-5. ~~Next.js issue inbox와 상세 화면~~
+5. ~~Next.js issue inbox, lifecycle, occurrence history와 안전한 문맥~~
 6. source map과 release 문맥
 7. 읽기 전용 MCP 도구
 8. 운영 안전장치와 retention

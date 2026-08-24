@@ -1,67 +1,106 @@
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { formatCount, formatDateTime } from '@/lib/format'
-import { listIssues } from '@/lib/jabso-api'
+import { getIssueFacets, listIssues, type IssueFilters, type IssueSummary } from '@/lib/jabso-api'
 
 export const dynamic = 'force-dynamic'
 
-type IssuesPageProps = {
-  searchParams: Promise<{ query?: string; environment?: string }>
-}
+type IssuesPageProps = { searchParams: Promise<IssueFilters> }
 
 const ViewIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7.5 4.5 5 5-5 5" /></svg>
 )
 
+const statusLabel: Record<IssueSummary['status'], string> = {
+  unresolved: 'Unresolved',
+  resolved: 'Resolved',
+  ignored: 'Ignored',
+}
+
+const pageHref = (filters: IssueFilters, cursor: string, direction: 'next' | 'previous') => {
+  const parameters = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters)) {
+    if (value && key !== 'cursor' && key !== 'direction') parameters.set(key, value)
+  }
+  parameters.set('cursor', cursor)
+  parameters.set('direction', direction)
+  return `/?${parameters}`
+}
+
 const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
   const filters = await searchParams
-  const { items } = await listIssues(filters)
+  const [{ items, nextCursor, previousCursor }, facets] = await Promise.all([
+    listIssues(filters),
+    getIssueFacets(),
+  ])
+
   return (
     <AppShell>
-      <header className="page-header">
+      <header className="page-header compact-page-header">
         <h1>Issues</h1>
-        <p>Errors grouped by a stable stack trace and normalized message.</p>
+        <p>Find the errors that need attention.</p>
       </header>
-      <form className="filter-bar" method="get">
-        <label>
+      <form className="filter-bar phase-two-filters" method="get">
+        <label className="filter-search">
           <span className="sr-only">Filter issues</span>
           <input name="query" type="search" placeholder="Filter issues…" defaultValue={filters.query} />
         </label>
-        <label>
-          <span className="sr-only">Environment</span>
-          <select name="environment" defaultValue={filters.environment ?? ''}>
-            <option value="">All environments</option>
-            <option value="production">Production</option>
-            <option value="staging">Staging</option>
-          </select>
-        </label>
+        <label><span className="sr-only">Status</span><select name="status" defaultValue={filters.status ?? ''}>
+          <option value="">All statuses</option>
+          <option value="unresolved">Unresolved</option>
+          <option value="resolved">Resolved</option>
+          <option value="ignored">Ignored</option>
+        </select></label>
+        <label><span className="sr-only">Level</span><select name="level" defaultValue={filters.level ?? ''}>
+          <option value="">All levels</option>
+          {facets.levels.map((level) => <option key={level} value={level}>{level}</option>)}
+        </select></label>
+        <label><span className="sr-only">Environment</span><select name="environment" defaultValue={filters.environment ?? ''}>
+          <option value="">All environments</option>
+          {facets.environments.map((environment) => <option key={environment} value={environment}>{environment}</option>)}
+        </select></label>
+        <label><span className="sr-only">Release</span><select name="release" defaultValue={filters.release ?? ''}>
+          <option value="">All releases</option>
+          {facets.releases.map((release) => <option key={release} value={release}>{release}</option>)}
+        </select></label>
+        <label><span className="sr-only">Last seen</span><select name="period" defaultValue={filters.period ?? ''}>
+          <option value="">Any time</option>
+          <option value="24h">Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select></label>
         <button type="submit">Apply</button>
+        <Link className="clear-filter" href="/">Clear</Link>
       </form>
       {items.length === 0 ? (
         <section className="empty-state">
-          <h2>No unresolved issues</h2>
-          <p>Send an error from the SDK smoke test and it will appear here.</p>
+          <h2>No matching issues</h2>
+          <p>Clear the filters or send an error from the SDK smoke test.</p>
           <Link className="text-link" href="/smoke-test">Open SDK smoke test</Link>
         </section>
       ) : (
         <div className="issue-table-wrap">
-          <table className="issue-table">
-            <thead><tr><th scope="col">Severity</th><th scope="col">Error</th><th scope="col">Events</th><th scope="col">Environment</th><th scope="col">Release</th><th scope="col">Last seen</th><th scope="col"><span className="sr-only">Open issue</span></th></tr></thead>
-            <tbody>
-              {items.map((issue) => (
-                <tr key={issue.id}>
-                  <td data-label="Severity"><span className="severity-mark" aria-hidden="true" /><span className="severity-label">{issue.exceptionType ?? issue.level}</span></td>
-                  <td data-label="Error" className="issue-title-cell"><Link href={`/issues/${issue.id}`}>{issue.title}</Link><code>{issue.id.slice(-12)}</code></td>
-                  <td data-label="Events">{formatCount(issue.eventCount)}</td>
-                  <td data-label="Environment">{issue.environment ?? '—'}</td>
-                  <td data-label="Release"><code>{issue.release ?? '—'}</code></td>
-                  <td data-label="Last seen">{formatDateTime(issue.lastSeenAt)}</td>
-                  <td className="issue-row-action"><Link href={`/issues/${issue.id}`} aria-label={`Open ${issue.title}`}><ViewIcon /></Link></td>
-                </tr>
-              ))}
-            </tbody>
+          <table className="issue-table phase-two-table">
+            <thead><tr><th scope="col">Status</th><th scope="col">Level</th><th scope="col">Exception type / title</th><th scope="col">Events</th><th scope="col">Environment</th><th scope="col">Release</th><th scope="col">Regression</th><th scope="col">Last seen</th><th scope="col"><span className="sr-only">Open issue</span></th></tr></thead>
+            <tbody>{items.map((issue) => (
+              <tr key={issue.id}>
+                <td data-label="Status"><span className={`status-mark status-${issue.status}`} aria-hidden="true" />{statusLabel[issue.status]}</td>
+                <td data-label="Level"><span className="severity-label">{issue.level}</span></td>
+                <td data-label="Error" className="issue-title-cell"><span>{issue.exceptionType ?? 'Error'}</span><Link href={`/issues/${issue.id}`}>{issue.title}</Link></td>
+                <td data-label="Events">{formatCount(issue.eventCount)}</td>
+                <td data-label="Environment">{issue.environment ?? '—'}</td>
+                <td data-label="Release"><code>{issue.release ?? '—'}</code></td>
+                <td data-label="Regression">{issue.regressedAt ? <span className="regression-label"><span />Yes</span> : '—'}</td>
+                <td data-label="Last seen">{formatDateTime(issue.lastSeenAt)}</td>
+                <td className="issue-row-action"><Link href={`/issues/${issue.id}`} aria-label={`Open ${issue.title}`}><ViewIcon /></Link></td>
+              </tr>
+            ))}</tbody>
           </table>
-          <p className="table-caption">Showing {items.length} unresolved {items.length === 1 ? 'issue' : 'issues'}</p>
+          <div className="pagination-bar">
+            {previousCursor ? <Link href={pageHref(filters, previousCursor, 'previous')}>Previous</Link> : <span />}
+            <p>Showing {items.length} {items.length === 1 ? 'issue' : 'issues'}</p>
+            {nextCursor ? <Link href={pageHref(filters, nextCursor, 'next')}>Next <ViewIcon /></Link> : <span />}
+          </div>
         </div>
       )}
     </AppShell>

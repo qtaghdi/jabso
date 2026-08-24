@@ -1,20 +1,19 @@
 import type { SqlExecutor } from '@jabso/db'
 import type { IssueQueryStore } from '../../../../domains/issue/server/public.js'
 import type {
+  GetIssueFacetsQueryResult,
   GetIssueQueryInput,
   GetIssueQueryResult,
   SearchIssuesQueryInput,
   SearchIssuesQueryResult,
+  UpdateIssueStatusMutationInput,
+  UpdateIssueStatusMutationResult,
 } from '../../../../domains/issue/shared/public.js'
 
 type Timestamp = string | Date
-type StackFrame = {
-  filename?: string
-  function?: string
-  line?: number
-  column?: number
-  inApp?: boolean
-}
+type IssueStatus = 'unresolved' | 'resolved' | 'ignored'
+type StackFrame = { filename?: string; function?: string; line?: number; column?: number; inApp?: boolean }
+type Breadcrumb = { timestamp?: string; category: string; level?: string; message?: string }
 
 type IssueSummaryRow = {
   id: string
@@ -22,16 +21,19 @@ type IssueSummaryRow = {
   title: string
   exception_type: string | null
   level: string
-  status: 'unresolved' | 'resolved' | 'ignored'
+  status: IssueStatus
   event_count: number
   first_seen_at: Timestamp
   last_seen_at: Timestamp
+  regressed_at: Timestamp | null
   environment: string | null
   release: string | null
 }
 
 type IssueDetailRow = IssueSummaryRow & {
   fingerprint: string
+  status_changed_at: Timestamp
+  resolved_at: Timestamp | null
   event_id: string | null
   event_message: string | null
   event_exception_type: string | null
@@ -40,10 +42,38 @@ type IssueDetailRow = IssueSummaryRow & {
   received_at: Timestamp | null
   stacktrace: StackFrame[] | null
   tags: Record<string, string> | null
+  breadcrumbs: Breadcrumb[] | null
+  context: Record<string, string> | null
 }
+
+type OccurrenceRow = {
+  event_id: string
+  level: string
+  environment: string | null
+  release: string | null
+  occurred_at: Timestamp | null
+  received_at: Timestamp
+}
+
+type FacetRow = { value: string }
+type Cursor = { lastSeenAt: string; id: string }
 
 const toIsoString = (value: Timestamp) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString()
+
+const encodeCursor = (row: Pick<IssueSummaryRow, 'id' | 'last_seen_at'>) =>
+  Buffer.from(JSON.stringify({ lastSeenAt: toIsoString(row.last_seen_at), id: row.id })).toString('base64url')
+
+const decodeCursor = (value: string | undefined): Cursor | null => {
+  if (!value) return null
+  try {
+    const cursor = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as Partial<Cursor>
+    if (!cursor.lastSeenAt || !cursor.id || !Number.isFinite(new Date(cursor.lastSeenAt).getTime())) return null
+    return { lastSeenAt: cursor.lastSeenAt, id: cursor.id }
+  } catch {
+    return null
+  }
+}
 
 const mapIssueSummary = (row: IssueSummaryRow) => ({
   id: row.id,
@@ -55,95 +85,126 @@ const mapIssueSummary = (row: IssueSummaryRow) => ({
   eventCount: row.event_count,
   firstSeenAt: toIsoString(row.first_seen_at),
   lastSeenAt: toIsoString(row.last_seen_at),
+  regressedAt: row.regressed_at ? toIsoString(row.regressed_at) : null,
   environment: row.environment,
   release: row.release,
 })
 
+const baseSearchSql = `select
+  issue.id, issue.project_id, issue.title, issue.exception_type, issue.level, issue.status,
+  issue.event_count, issue.first_seen_at, issue.last_seen_at, issue.regressed_at,
+  latest.environment, latest.release
+from issues as issue
+left join lateral (
+  select event.environment, event.release from events as event
+  where event.issue_id = issue.id order by event.received_at desc, event.id desc limit 1
+) as latest on true
+where issue.project_id = $1
+  and ($2::text is null or issue.status::text = $2)
+  and ($3::text is null or issue.level = $3)
+  and ($4::text is null or issue.title ilike '%' || $4 || '%' or issue.exception_type ilike '%' || $4 || '%')
+  and ($5::text is null or latest.environment = $5)
+  and ($6::text is null or latest.release = $6)
+  and ($7::timestamptz is null or issue.last_seen_at >= $7)
+  and ($8::timestamptz is null or (issue.last_seen_at, issue.id)`
+
+const nextSearchSql = `${baseSearchSql} < ($8, $9::uuid))
+order by issue.last_seen_at desc, issue.id desc limit $10`
+
+const previousSearchSql = `${baseSearchSql} > ($8, $9::uuid))
+order by issue.last_seen_at asc, issue.id asc limit $10`
+
+const mapOccurrence = (row: OccurrenceRow) => ({
+  eventId: row.event_id,
+  level: row.level,
+  environment: row.environment,
+  release: row.release,
+  occurredAt: row.occurred_at ? toIsoString(row.occurred_at) : null,
+  receivedAt: toIsoString(row.received_at),
+})
+
 export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQueryStore => ({
   search: async (input: SearchIssuesQueryInput): Promise<SearchIssuesQueryResult> => {
-    const result = await database.query<IssueSummaryRow>(
-      `select
-        issue.id,
-        issue.project_id,
-        issue.title,
-        issue.exception_type,
-        issue.level,
-        issue.status,
-        issue.event_count,
-        issue.first_seen_at,
-        issue.last_seen_at,
-        latest.environment,
-        latest.release
-      from issues as issue
-      left join lateral (
-        select event.environment, event.release
-        from events as event
-        where event.issue_id = issue.id
-        order by event.received_at desc, event.id desc
-        limit 1
-      ) as latest on true
-      where issue.project_id = $1
-        and ($2::text is null or issue.status::text = $2)
-        and ($3::text is null or issue.title ilike '%' || $3 || '%')
-        and ($4::text is null or latest.environment = $4)
-        and ($5::text is null or latest.release = $5)
-        and ($6::timestamptz is null or issue.last_seen_at < $6)
-      order by issue.last_seen_at desc, issue.id desc
-      limit $7`,
-      [
-        input.projectId,
-        input.status ?? null,
-        input.query ?? null,
-        input.environment ?? null,
-        input.release ?? null,
-        input.cursor ?? null,
-        input.limit + 1,
-      ],
-    )
-    const hasNextPage = result.rows.length > input.limit
-    const items = result.rows.slice(0, input.limit).map(mapIssueSummary)
+    const cursor = decodeCursor(input.cursor)
+    const isPrevious = input.direction === 'previous'
+    const result = await database.query<IssueSummaryRow>(isPrevious ? previousSearchSql : nextSearchSql, [
+      input.projectId,
+      input.status ?? null,
+      input.level ?? null,
+      input.query ?? null,
+      input.environment ?? null,
+      input.release ?? null,
+      input.lastSeenAfter ?? null,
+      cursor?.lastSeenAt ?? null,
+      cursor?.id ?? null,
+      input.limit + 1,
+    ])
+    const hasMore = result.rows.length > input.limit
+    const pageRows = result.rows.slice(0, input.limit)
+    if (isPrevious) pageRows.reverse()
+    const items = pageRows.map(mapIssueSummary)
+    const firstRow = pageRows[0]
+    const lastRow = pageRows.at(-1)
     return {
       items,
-      nextCursor: hasNextPage ? items.at(-1)?.lastSeenAt ?? null : null,
+      previousCursor: isPrevious
+        ? hasMore && firstRow ? encodeCursor(firstRow) : null
+        : cursor && firstRow ? encodeCursor(firstRow) : null,
+      nextCursor: isPrevious
+        ? cursor && lastRow ? encodeCursor(lastRow) : null
+        : hasMore && lastRow ? encodeCursor(lastRow) : null,
+    }
+  },
+
+  facets: async (input): Promise<GetIssueFacetsQueryResult> => {
+    const [levels, environments, releases] = await Promise.all([
+      database.query<FacetRow>(
+        'select distinct level as value from issues where project_id = $1 order by value limit 50',
+        [input.projectId],
+      ),
+      database.query<FacetRow>(
+        'select distinct environment as value from events where project_id = $1 and environment is not null order by value limit 100',
+        [input.projectId],
+      ),
+      database.query<FacetRow>(
+        'select distinct release as value from events where project_id = $1 and release is not null order by value desc limit 100',
+        [input.projectId],
+      ),
+    ])
+    return {
+      levels: levels.rows.map((row) => row.value),
+      environments: environments.rows.map((row) => row.value),
+      releases: releases.rows.map((row) => row.value),
     }
   },
 
   get: async (input: GetIssueQueryInput): Promise<GetIssueQueryResult> => {
-    const result = await database.query<IssueDetailRow>(
-      `select
-        issue.id,
-        issue.project_id,
-        issue.fingerprint,
-        issue.title,
-        issue.exception_type,
-        issue.level,
-        issue.status,
-        issue.event_count,
-        issue.first_seen_at,
-        issue.last_seen_at,
-        latest.event_id,
-        latest.message as event_message,
-        latest.exception_type as event_exception_type,
-        latest.platform,
-        latest.environment,
-        latest.release,
-        latest.occurred_at,
-        latest.received_at,
-        latest.stacktrace,
-        latest.tags
-      from issues as issue
-      left join lateral (
-        select event.*
-        from events as event
-        where event.issue_id = issue.id
-        order by event.received_at desc, event.id desc
-        limit 1
-      ) as latest on true
-      where issue.project_id = $1 and issue.id = $2
-      limit 1`,
-      [input.projectId, input.issueId],
-    )
-    const row = result.rows[0]
+    const [detail, occurrences] = await Promise.all([
+      database.query<IssueDetailRow>(
+        `select
+          issue.id, issue.project_id, issue.fingerprint, issue.title, issue.exception_type,
+          issue.level, issue.status, issue.event_count, issue.first_seen_at, issue.last_seen_at,
+          issue.status_changed_at, issue.resolved_at, issue.regressed_at,
+          latest.event_id, latest.message as event_message,
+          latest.exception_type as event_exception_type, latest.platform, latest.environment,
+          latest.release, latest.occurred_at, latest.received_at, latest.stacktrace, latest.tags,
+          latest.breadcrumbs, latest.context
+        from issues as issue
+        left join lateral (
+          select event.* from events as event where event.issue_id = issue.id
+          order by event.received_at desc, event.id desc limit 1
+        ) as latest on true
+        where issue.project_id = $1 and issue.id = $2 limit 1`,
+        [input.projectId, input.issueId],
+      ),
+      database.query<OccurrenceRow>(
+        `select event_id, level, environment, release, occurred_at, received_at
+         from events where project_id = $1 and issue_id = $2
+         order by received_at desc, id desc limit 25`,
+        [input.projectId, input.issueId],
+      ),
+    ])
+    const row = detail.rows[0]
     if (!row) return null
 
     return {
@@ -157,6 +218,10 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
       eventCount: row.event_count,
       firstSeenAt: toIsoString(row.first_seen_at),
       lastSeenAt: toIsoString(row.last_seen_at),
+      statusChangedAt: toIsoString(row.status_changed_at),
+      resolvedAt: row.resolved_at ? toIsoString(row.resolved_at) : null,
+      regressedAt: row.regressed_at ? toIsoString(row.regressed_at) : null,
+      occurrences: occurrences.rows.map(mapOccurrence),
       latestEvent: row.event_id && row.received_at
         ? {
             eventId: row.event_id,
@@ -169,8 +234,25 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
             receivedAt: toIsoString(row.received_at),
             stacktrace: row.stacktrace ?? [],
             tags: row.tags ?? {},
+            breadcrumbs: row.breadcrumbs ?? [],
+            context: row.context ?? {},
           }
         : null,
     }
+  },
+
+  updateStatus: async (input: UpdateIssueStatusMutationInput): Promise<UpdateIssueStatusMutationResult> => {
+    const changedAt = new Date().toISOString()
+    const result = await database.query<{ id: string; status: IssueStatus }>(
+      `update issues set
+        status = $3::issue_status,
+        status_changed_at = $4::timestamptz,
+        resolved_at = case when $3 = 'resolved' then $4::timestamptz else null end,
+        regressed_at = case when $3 = 'unresolved' then regressed_at else null end
+       where project_id = $1 and id = $2 returning id, status`,
+      [input.projectId, input.issueId, input.status, changedAt],
+    )
+    const issue = result.rows[0]
+    return issue ? { issueId: issue.id, status: issue.status, changedAt } : null
   },
 })
