@@ -5,6 +5,28 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
+    "@jabso/db#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "passThroughEnv": ["DATABASE_URL", "JABSO_DATABASE_URL", "POSTGRES_URL"]
+    },
+    "@jabso/diagnostics#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "passThroughEnv": ["JABSO_BOUNDRA_DIAGNOSTIC_PATH"]
+    },
+    "@jabso/server#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "passThroughEnv": [
+        "DATABASE_URL",
+        "JABSO_ADMIN_TOKEN",
+        "JABSO_ALLOWED_ORIGIN",
+        "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
+        "JABSO_DATABASE_URL",
+        "POSTGRES_URL"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true

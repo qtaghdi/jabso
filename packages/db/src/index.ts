@@ -26,8 +26,11 @@ const postgresExecutor = (sql: postgres.Sql | postgres.TransactionSql): SqlExecu
   return executor
 }
 
-export const createSqlExecutor = (url = process.env.JABSO_DATABASE_URL): SqlExecutor => {
-  if (!url) throw new Error('JABSO_DATABASE_URL is required')
+const getDatabaseUrl = () =>
+  process.env.JABSO_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.POSTGRES_URL
+
+export const createSqlExecutor = (url = getDatabaseUrl()): SqlExecutor => {
+  if (!url) throw new Error('JABSO_DATABASE_URL, DATABASE_URL, or POSTGRES_URL is required')
   const sql = postgres(url, { prepare: false })
   const executor = postgresExecutor(sql)
   executor.transaction = <Result>(callback: (transaction: SqlExecutor) => Promise<Result>) =>
@@ -36,8 +39,8 @@ export const createSqlExecutor = (url = process.env.JABSO_DATABASE_URL): SqlExec
   return executor
 }
 
-export const getDatabase = (url = process.env.JABSO_DATABASE_URL) => {
-  if (!url) throw new Error('JABSO_DATABASE_URL is required')
+export const getDatabase = (url = getDatabaseUrl()) => {
+  if (!url) throw new Error('JABSO_DATABASE_URL, DATABASE_URL, or POSTGRES_URL is required')
   client ??= postgres(url, { prepare: false })
   return drizzle(client, { schema })
 }
