@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { requireOwner } from '@/lib/auth'
+import { SessionExpiryWatcher } from '@/components/session-expiry-watcher'
 
 type AppShellProps = {
   children: ReactNode
@@ -25,6 +26,7 @@ export const AppShell = async ({ children }: AppShellProps) => {
   const ownerName = user.fullName || githubLogin
 
   return <div className="app-shell">
+    <SessionExpiryWatcher />
     <aside className="sidebar">
       <Link className="wordmark" href="/" aria-label="Jabso issue inbox">
         Jabso
