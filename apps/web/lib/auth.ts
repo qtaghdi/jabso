@@ -7,7 +7,9 @@ export const requireOwner = cache(async () => {
   if (!user) redirect('/sign-in')
 
   const expectedLogin = process.env.JABSO_OWNER_GITHUB_LOGIN?.trim() || 'qtaghdi'
-  const githubAccount = user.externalAccounts.find((account) => account.provider === 'github')
+  const githubAccount = user.externalAccounts.find((account) =>
+    account.provider === 'github' || account.provider === 'oauth_github',
+  )
   if (githubAccount?.username?.toLowerCase() !== expectedLogin.toLowerCase()) {
     redirect('/not-authorized')
   }
