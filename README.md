@@ -4,7 +4,7 @@
 
 Jabso는 개인 프로젝트에서 발생한 브라우저·서버 오류를 한곳에 모으고, 비슷한 오류를 issue로 묶어 조사할 수 있게 만드는 토이 프로젝트입니다. 장기적으로는 MCP를 통해 코딩 에이전트가 오류, stack trace, release 문맥을 직접 조회하도록 만드는 것을 목표로 합니다.
 
-현재 Phase 1은 Sentry Browser SDK가 보내는 error envelope를 수신해 canonical event로 정규화하고, fingerprint가 같은 오류를 PostgreSQL의 issue 하나로 묶어 저장합니다. Session Replay 실험은 보존만 하며 제품 runtime에서는 제외합니다.
+현재 Phase 2까지 완료했습니다. Sentry Browser SDK가 보내는 error envelope를 canonical event로 정규화하고 같은 오류를 PostgreSQL issue로 묶으며, 웹에서 필터·occurrence·안전한 문맥·resolved/ignored/regression workflow를 사용할 수 있습니다. Session Replay 실험은 보존만 하며 제품 runtime에서는 제외합니다.
 
 ## Product direction
 
@@ -17,7 +17,7 @@ Jabso는 개인 프로젝트에서 발생한 브라우저·서버 오류를 한�
 
 Jabso는 Sentry의 모든 기능을 복제하는 프로젝트가 아닙니다. 우선 개인 프로젝트에 필요한 **error inbox + issue grouping + MCP context**를 작고 명확하게 구현합니다.
 
-## Planned stack
+## Current stack
 
 | Area | Choice |
 | --- | --- |
@@ -63,7 +63,7 @@ Sentry envelope처럼 raw binary와 외부 규격을 다루는 endpoint는 Fasti
 
 Jabso는 Boundra의 실전 사용처이기도 합니다. Boundra에서 발생한 boundary violation, runtime contract error, host adapter 오류는 일반 사용자 event와 분리된 internal diagnostics로 기록합니다.
 
-이 기록은 일반 Boundra transport를 다시 통과하지 않습니다. 재귀 오류를 막기 위해 직접 diagnostic sink를 사용하고, DB 기록까지 실패하면 로컬 NDJSON 파일로 fallback합니다. 원본 입력이나 secret은 저장하지 않고 Boundra의 safe diagnostic shape만 보존합니다.
+이 기록은 일반 Boundra transport를 다시 통과하지 않습니다. 현재 server는 process-local recursion guard와 권한이 제한된 로컬 NDJSON sink를 사용합니다. DB direct sink와 배포 환경의 durable fallback은 아직 연결하지 않았습니다. 원본 입력이나 secret은 저장하지 않고 Boundra의 safe diagnostic shape만 보존합니다.
 
 자세한 내용은 [Boundra error recording policy](docs/boundra-error-recording.md)를 참고하세요.
 
@@ -127,17 +127,17 @@ pnpm boundra:check
 
 ## Roadmap
 
-1. ~~기존 스파이크 보존과 byte-safe envelope parser 테스트~~
-2. ~~pnpm/Turborepo 모노레포와 Boundra 경계 구성~~
-3. ~~Fastify collector에서 canonical event 변환과 PostgreSQL 영속성~~
-4. ~~error normalization과 issue grouping~~
-5. ~~Next.js issue inbox, lifecycle, occurrence history와 안전한 문맥~~
-6. source map과 release 문맥
-7. 읽기 전용 MCP 도구
-8. 운영 안전장치와 retention
-9. Session Replay 재도입
+1. ~~Phase 0 — 스파이크 보존, 모노레포, parser와 Boundra 기반~~
+2. ~~Phase 1 — Fastify ingestion, canonical event, PostgreSQL grouping~~
+3. ~~Phase 1.5 — Boundra read path와 Next.js inbox shell~~
+4. ~~Phase 2 — 필터, cursor, occurrence, safe context와 issue lifecycle~~
+5. **Phase 3 — release, source map artifact와 stack symbolication**
+6. Phase 4 — 읽기 전용 MCP 도구
+7. Later — 운영 안전장치, retention, Session Replay 재도입
 
-전체 설계와 우선순위는 [implementation plan](docs/implementation-plan.html)에 정리되어 있습니다.
+다음 Phase 3은 release/dist 모델, 관리자 전용 source map upload, artifact storage adapter, exact path matching, original/symbolicated frame 보존, late-upload backfill과 release별 regression을 구현합니다. 별도 queue나 완성형 CLI, Debug ID matching, source code snippet 노출은 이번 phase에 포함하지 않습니다.
+
+phase 범위와 완료 이력의 단일 기준 문서는 [HTML implementation plan](docs/implementation-plan.html)입니다. 별도의 Markdown plan은 두지 않습니다.
 
 ## Status
 

@@ -16,9 +16,9 @@ Jabso는 Boundra를 사용하면서 Boundra 자체의 문제도 실전 환경에
 
 1. Boundra diagnostics never call the public event ingestion endpoint.
 2. Diagnostics never pass through the same failing Boundra contract.
-3. The primary sink writes through a minimal repository or SQL adapter.
+3. The recorder accepts a minimal sink adapter. The current server adapter writes NDJSON locally; a database sink is still pending.
 4. A process-local recursion guard drops nested diagnostic attempts after logging one line to stderr.
-5. If the database is unavailable, diagnostics append to `.jabso-diagnostics/boundra.ndjson` in local development.
+5. Local development writes `.jabso-diagnostics/boundra.ndjson`; when a database sink is added, this file may remain its local fallback.
 6. Production fallback behavior must match the selected deployment runtime; ephemeral local files are not considered durable storage.
 
 ## Safe diagnostic shape
@@ -57,7 +57,7 @@ Do not store:
 
 Boundra runtime errors should use their safe `toJSON()` representation as the source. Stack traces are allowed only after path and secret scrubbing.
 
-## Proposed database table
+## Database table
 
 ```text
 internal_diagnostics
@@ -74,18 +74,20 @@ internal_diagnostics
 └── occurred_at timestamptz
 ```
 
-This table is intentionally separate from customer `events` and `issues`. Internal diagnostics do not affect issue counts, alerts, quotas, or retention calculations.
+The `internal_diagnostics` table exists in the current Drizzle schema and is intentionally separate from customer `events` and `issues`. Internal diagnostics do not affect issue counts, alerts, quotas, or retention calculations. The server does not yet use this table as its primary sink.
 
 ## CI boundary violations
 
 `boundra check-boundaries --format json` should run in CI. Its JSON output is retained as a build artifact. Importing it into Jabso is optional and should be a separate CI integration, not part of the production runtime.
 
-The first implementation only needs:
+Current implementation status:
 
-- structured stderr/Pino output
-- safe serialization test
-- recursion guard test
-- local NDJSON fallback
+- [x] bounded safe serialization
+- [x] process-local recursion guard
+- [x] permission-restricted local NDJSON sink
+- [x] fallback and recursion tests
+- [x] isolated `internal_diagnostics` schema
+- [ ] direct PostgreSQL sink
+- [ ] deployment-specific durable fallback and retention
 
-Direct database persistence can be added when the PostgreSQL schema exists.
-
+Direct database persistence should be added before an external deployment needs durable Boundra diagnostics. It must remain outside the failing public ingestion contract.

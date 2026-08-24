@@ -6,12 +6,13 @@ Jabso is a private toy project for collecting application errors, grouping simil
 
 The current product priority is:
 
-1. Sentry-compatible error ingestion
-2. canonical event normalization and issue fingerprinting
-3. PostgreSQL persistence
-4. issue inbox and source maps
-5. read-only MCP tools
-6. Session Replay later
+1. preserve the completed Sentry-compatible ingestion and issue workflow
+2. release modeling and source-map symbolication
+3. read-only MCP tools over the existing domain queries
+4. operational hardening and retention
+5. Session Replay later
+
+`docs/implementation-plan.html` is the single source of truth for phase scope, completion history, and exit criteria. Keep README as a concise status summary; do not create a duplicate Markdown implementation plan.
 
 Do not broaden a change into APM, metrics, profiling, billing, or Session Replay unless the task explicitly requires it.
 
@@ -83,6 +84,15 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Repository methods return contract-ready plain objects with ISO timestamp strings. Do not leak driver rows, clients, or transactions across boundaries.
 - A new persisted field must document why it is needed, its PII risk, and its retention behavior. Raw event payloads stay prohibited.
 - Resolving an issue records `resolved_at`. A later event reopens only resolved issues and records `regressed_at`; ignored issues remain ignored.
+
+## Release and source-map conventions
+
+- A release is project-scoped. Artifact lookup must require an exact project, release, optional dist, and normalized artifact path match; do not use fuzzy cross-release fallback.
+- Source-map upload uses an administrator credential, never the public DSN key. Bound decompressed size, file count, path length, and processing time.
+- Preserve original stack frames. Store symbolicated frames and symbolication status separately so a missing or malformed map never makes ingestion fail.
+- For the toy-project MVP, store bounded artifact bytes, metadata, and checksums in PostgreSQL behind a `SourceMapArtifactStore` adapter. Do not add object storage until measured size or deployment constraints justify it.
+- Treat source maps and `sourcesContent` as private source code. Do not expose their raw contents through UI, logs, public APIs, diagnostics, or MCP responses.
+- Until measured load requires a worker, use bounded retry/backfill over persisted pending state. Do not add Redis or a queue only for Phase 3.
 
 ## Web conventions
 
