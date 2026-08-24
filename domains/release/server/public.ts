@@ -1,1 +1,7 @@
-export * from './release-operations.js'
+export {
+  createGetReleaseRegressionsImplementation,
+  createListReleasesImplementation,
+  createRetryReleaseSymbolicationImplementation,
+  createUploadSourceMapImplementation,
+  type ReleaseStore,
+} from './release-operations.js'

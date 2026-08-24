@@ -1,2 +1,5 @@
-export * from './ingest-event.js'
-export * from './fingerprint.js'
+export {
+  createIngestEventImplementation,
+  type IngestEventStore,
+} from './ingest-event.js'
+export { fingerprintEvent } from './fingerprint.js'
