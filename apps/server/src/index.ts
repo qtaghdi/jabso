@@ -1,4 +1,7 @@
-import { buildServer } from './app.js'
+// Vercel requires the Fastify entrypoint to import the framework directly.
+import 'fastify'
+
+import { buildServer } from './jabso-app.js'
 
 const app = await buildServer()
 
