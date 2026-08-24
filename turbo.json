@@ -9,10 +9,12 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
       "passThroughEnv": [
+        "DATABASE_URL",
         "JABSO_ADMIN_TOKEN",
         "JABSO_ALLOWED_ORIGIN",
         "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
-        "JABSO_DATABASE_URL"
+        "JABSO_DATABASE_URL",
+        "POSTGRES_URL"
       ]
     },
     "dev": {
