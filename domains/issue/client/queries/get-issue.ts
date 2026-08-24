@@ -3,7 +3,7 @@ import type { BoundraCallOptions, BoundraClient } from "boundra";
 import {
   getIssueQuery,
   type GetIssueQueryInput,
-} from "../../shared/contracts/get-issue";
+} from '../../shared/contracts/get-issue.js'
 
 export const getIssue = (
   client: BoundraClient,

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { IngestEventMutationInput } from "../shared/contracts/ingest-event";
+import type { IngestEventMutationInput } from '../shared/contracts/ingest-event.js'
 
 const normalizeMessage = (message: string) => {
   return message

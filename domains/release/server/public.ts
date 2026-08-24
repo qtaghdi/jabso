@@ -1,1 +1,1 @@
-export * from './release-operations'
+export * from './release-operations.js'

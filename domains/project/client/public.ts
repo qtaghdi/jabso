@@ -1,1 +1,1 @@
-export * from "./queries/list-projects";
+export * from './queries/list-projects.js'

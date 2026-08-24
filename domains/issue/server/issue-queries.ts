@@ -4,23 +4,23 @@ import {
   getIssueFacetsQuery,
   type GetIssueFacetsQueryInput,
   type GetIssueFacetsQueryResult,
-} from "../shared/contracts/get-issue-facets";
+} from '../shared/contracts/get-issue-facets.js'
 
 import {
   getIssueQuery,
   type GetIssueQueryInput,
   type GetIssueQueryResult,
-} from "../shared/contracts/get-issue";
+} from '../shared/contracts/get-issue.js'
 import {
   searchIssuesQuery,
   type SearchIssuesQueryInput,
   type SearchIssuesQueryResult,
-} from "../shared/contracts/search-issues";
+} from '../shared/contracts/search-issues.js'
 import {
   updateIssueStatusMutation,
   type UpdateIssueStatusMutationInput,
   type UpdateIssueStatusMutationResult,
-} from "../shared/contracts/update-issue-status";
+} from '../shared/contracts/update-issue-status.js'
 
 export type IssueQueryStore = {
   search(input: SearchIssuesQueryInput): Promise<SearchIssuesQueryResult>;

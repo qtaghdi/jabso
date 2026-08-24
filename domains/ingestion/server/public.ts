@@ -1,2 +1,2 @@
-export * from "./ingest-event";
-export * from "./fingerprint";
+export * from './ingest-event.js'
+export * from './fingerprint.js'

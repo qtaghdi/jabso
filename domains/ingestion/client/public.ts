@@ -1,1 +1,1 @@
-export * from "./mutations/ingest-event";
+export * from './mutations/ingest-event.js'

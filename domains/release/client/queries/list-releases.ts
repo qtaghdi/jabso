@@ -2,7 +2,7 @@ import type { BoundraCallOptions, BoundraClient } from 'boundra'
 import {
   listReleasesQuery,
   type ListReleasesQueryInput,
-} from '../../shared/contracts/list-releases'
+} from '../../shared/contracts/list-releases.js'
 
 export const listReleases = (
   client: BoundraClient,

@@ -3,7 +3,7 @@ import type { BoundraCallOptions, BoundraClient } from "boundra";
 import {
   ingestEventMutation,
   type IngestEventMutationInput,
-} from "../../shared/contracts/ingest-event";
+} from '../../shared/contracts/ingest-event.js'
 
 export const ingestEvent = (
   client: BoundraClient,
