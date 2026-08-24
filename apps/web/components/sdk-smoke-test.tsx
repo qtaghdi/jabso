@@ -2,6 +2,7 @@
 
 import { captureException, init } from '@sentry/browser'
 import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 const dsn = process.env.NEXT_PUBLIC_JABSO_DSN
   ?? 'http://0123456789abcdef0123456789abcdef@localhost:4000/1'
@@ -25,9 +26,9 @@ export const SdkSmokeTest = () => {
       <p>
         Send a real browser exception through the installed Sentry SDK, then return to the issue inbox.
       </p>
-      <button type="button" onClick={captureTestError}>
+      <Button type="button" onClick={captureTestError}>
         Capture test error
-      </button>
+      </Button>
       <pre aria-live="polite">{messages.join('\n')}</pre>
     </section>
   )

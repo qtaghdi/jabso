@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { CopyButton } from '@/components/copy-button'
+import { Button } from '@/components/ui/button'
 import { formatCount, formatDateTime, formatLocation } from '@/lib/format'
 import { getIssue, type StackFrame } from '@/lib/jabso-api'
 import { changeIssueStatus } from './actions'
@@ -32,7 +33,7 @@ const StatusButton = ({ issueId, status, label, active }: {
   <form action={changeIssueStatus}>
     <input type="hidden" name="issue-id" value={issueId} />
     <input type="hidden" name="status" value={status} />
-    <button className={active ? 'status-action status-action-active' : 'status-action'} type="submit" disabled={active}>{label}</button>
+    <Button className={active ? 'status-action-active' : undefined} variant="secondary" type="submit" disabled={active}>{label}</Button>
   </form>
 )
 

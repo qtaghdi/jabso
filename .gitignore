@@ -6,6 +6,7 @@ node_modules
 *.tsbuildinfo
 .turbo
 .pnpm-store
+.vercel
 coverage
 dist
 *.log

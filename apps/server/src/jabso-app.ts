@@ -1,5 +1,7 @@
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
 import { createSqlExecutor, type SqlExecutor } from '@jabso/db'
 import {
   decodeJsonItem,
@@ -29,6 +31,7 @@ import { gunzipSync, inflateSync } from 'node:zlib'
 import { createBoundraErrorRecorder, toBoundraDiagnosticInput } from './boundra-diagnostics.js'
 import { PostgresIngestEventStore } from './ingestion/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-store.js'
+import { openApiDocument } from './openapi-document.js'
 import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
 
 const compressedBodyLimit = 1024 * 1024
@@ -38,9 +41,10 @@ export type BuildServerOptions = {
   adminToken?: string
   allowedOrigin?: string
   database?: SqlExecutor
+  dashboardToken?: string
 }
 
-const hasValidAdminToken = (authorization: string | undefined, expected: string | undefined) => {
+const hasValidBearerToken = (authorization: string | undefined, expected: string | undefined) => {
   if (!authorization?.startsWith('Bearer ') || !expected) return false
   const actualBytes = Buffer.from(authorization.slice('Bearer '.length))
   const expectedBytes = Buffer.from(expected)
@@ -75,6 +79,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const uploadSourceMap = createUploadSourceMapImplementation(releaseStore)
   const retryReleaseSymbolication = createRetryReleaseSymbolicationImplementation(releaseStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
+  const dashboardToken = options.dashboardToken ?? process.env.JABSO_DASHBOARD_TOKEN
 
   const app = Fastify({
     bodyLimit: compressedBodyLimit,
@@ -84,6 +89,18 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     },
   })
 
+  await app.register(swagger, {
+    mode: 'static',
+    specification: { document: openApiDocument },
+  })
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+      deepLinking: true,
+      docExpansion: 'list',
+    },
+    staticCSP: true,
+  })
   await app.register(cors, { origin: allowedOrigin })
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' })
   const recordBoundraError = createBoundraErrorRecorder()
@@ -124,7 +141,6 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.get<{
     Params: { projectId: string }
     Querystring: {
-      sentry_key?: string
       query?: string
       status?: 'unresolved' | 'resolved' | 'ignored'
       level?: string
@@ -136,10 +152,11 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       limit?: string
     }
   }>('/api/:projectId/issues', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
 
     const result = await executeContract(searchIssues, {
       projectId: project.id,
@@ -158,23 +175,25 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
 
   app.get<{
     Params: { projectId: string }
-    Querystring: { sentry_key?: string }
+    Querystring: Record<string, never>
   }>('/api/:projectId/issues/facets', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
     return reply.send(await executeContract(getIssueFacets, { projectId: project.id }))
   })
 
   app.get<{
     Params: { projectId: string; issueId: string }
-    Querystring: { sentry_key?: string }
+    Querystring: Record<string, never>
   }>('/api/:projectId/issues/:issueId', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
 
     const result = await executeContract(getIssue, {
       projectId: project.id,
@@ -185,13 +204,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
 
   app.patch<{
     Params: { projectId: string; issueId: string }
-    Querystring: { sentry_key?: string }
+    Querystring: Record<string, never>
     Body: { status?: 'unresolved' | 'resolved' | 'ignored' }
   }>('/api/:projectId/issues/:issueId/status', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
     const result = await executeContract(updateIssueStatus, {
       projectId: project.id,
       issueId: request.params.issueId,
@@ -202,12 +222,13 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
 
   app.get<{
     Params: { projectId: string }
-    Querystring: { sentry_key?: string; limit?: string }
+    Querystring: { limit?: string }
   }>('/api/:projectId/releases', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
     return reply.send(await executeContract(listReleases, {
       projectId: project.id,
       limit: request.query.limit ? Number(request.query.limit) : undefined,
@@ -216,12 +237,13 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
 
   app.get<{
     Params: { projectId: string; version: string }
-    Querystring: { sentry_key?: string; dist?: string; limit?: string }
+    Querystring: { dist?: string; limit?: string }
   }>('/api/:projectId/releases/:version/regressions', async (request, reply) => {
-    const project = request.query.sentry_key
-      ? await store.findProject(request.params.projectId, request.query.sentry_key)
-      : undefined
-    if (!project) return reply.code(403).send({ error: 'invalid project credentials' })
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await store.findProjectByDsnProjectId(request.params.projectId)
+    if (!project) return reply.code(404).send({ error: 'project not found' })
     return reply.send(await executeContract(getReleaseRegressions, {
       projectId: project.id,
       release: request.params.version,
@@ -234,7 +256,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string; version: string }
     Querystring: { artifact_path?: string; dist?: string; deployed_at?: string }
   }>('/api/:projectId/releases/:version/artifacts', { bodyLimit: maxSourceMapBytes }, async (request, reply) => {
-    if (!hasValidAdminToken(request.headers.authorization, adminToken)) {
+    if (!hasValidBearerToken(request.headers.authorization, adminToken)) {
       return reply.code(403).send({ error: 'invalid administrator credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
@@ -267,7 +289,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string; version: string }
     Querystring: { dist?: string; limit?: string }
   }>('/api/:projectId/releases/:version/symbolicate', async (request, reply) => {
-    if (!hasValidAdminToken(request.headers.authorization, adminToken)) {
+    if (!hasValidBearerToken(request.headers.authorization, adminToken)) {
       return reply.code(403).send({ error: 'invalid administrator credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)

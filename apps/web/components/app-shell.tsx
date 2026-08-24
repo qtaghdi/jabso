@@ -1,5 +1,7 @@
+import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { requireOwner } from '@/lib/auth'
 
 type AppShellProps = {
   children: ReactNode
@@ -18,8 +20,11 @@ const ProjectIcon = () => (
   </svg>
 )
 
-export const AppShell = ({ children }: AppShellProps) => (
-  <div className="app-shell">
+export const AppShell = async ({ children }: AppShellProps) => {
+  const { githubLogin, user } = await requireOwner()
+  const ownerName = user.fullName || githubLogin
+
+  return <div className="app-shell">
     <aside className="sidebar">
       <Link className="wordmark" href="/" aria-label="Jabso issue inbox">
         Jabso
@@ -35,10 +40,13 @@ export const AppShell = ({ children }: AppShellProps) => (
         </span>
       </nav>
       <div className="sidebar-footer">
-        <Link href="/smoke-test">SDK smoke test</Link>
-        <span>Local project</span>
+        <div className="owner-summary">
+          <UserButton appearance={{ elements: { avatarBox: 'owner-avatar' } }} />
+          <span><strong>{ownerName}</strong><small>@{githubLogin}</small></span>
+        </div>
+        <div className="project-summary"><span>Project</span><strong>Jabso</strong></div>
       </div>
     </aside>
     <main className="main-content">{children}</main>
   </div>
-)
+}
