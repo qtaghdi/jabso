@@ -39,7 +39,6 @@ const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
   ])
   const dsn = process.env.NEXT_PUBLIC_JABSO_DSN
     ?? 'http://0123456789abcdef0123456789abcdef@localhost:4000/1'
-  const docsUrl = `${(process.env.JABSO_API_URL ?? 'http://localhost:4000').replace(/\/$/, '')}/docs/`
 
   return (
     <AppShell>
@@ -84,7 +83,7 @@ const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
           <h2>No matching issues</h2>
           <p>Clear the filters or send an error from the SDK smoke test.</p>
           <Link className="text-link" href="/smoke-test">Open SDK smoke test</Link>
-        </section> : <GettingStarted docsUrl={docsUrl} dsn={dsn} />
+        </section> : <GettingStarted dsn={dsn} />
       ) : (
         <div className="issue-table-wrap">
           <table className="issue-table phase-two-table">

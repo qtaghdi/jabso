@@ -1,7 +1,6 @@
-import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { requireOwner } from '@/lib/auth'
+import { OwnerSummary } from '@/components/owner-summary'
 import { SessionExpiryWatcher } from '@/components/session-expiry-watcher'
 
 type AppShellProps = {
@@ -15,17 +14,8 @@ const IssueIcon = () => (
   </svg>
 )
 
-const ProjectIcon = () => (
-  <svg aria-hidden="true" viewBox="0 0 24 24">
-    <path d="M3.5 7.5h17v12h-17zM3.5 7.5l3-3h5l2 3" />
-  </svg>
-)
-
-export const AppShell = async ({ children }: AppShellProps) => {
-  const { githubLogin, user } = await requireOwner()
-  const ownerName = user.fullName || githubLogin
-
-  return <div className="app-shell">
+export const AppShell = ({ children }: AppShellProps) => (
+  <div className="app-shell">
     <SessionExpiryWatcher />
     <aside className="sidebar">
       <Link className="wordmark" href="/" aria-label="Jabso issue inbox">
@@ -36,19 +26,11 @@ export const AppShell = async ({ children }: AppShellProps) => {
           <IssueIcon />
           Issues
         </Link>
-        <span className="nav-item nav-item-disabled" aria-disabled="true">
-          <ProjectIcon />
-          Projects
-        </span>
       </nav>
       <div className="sidebar-footer">
-        <div className="owner-summary">
-          <UserButton appearance={{ elements: { avatarBox: 'owner-avatar' } }} />
-          <span><strong>{ownerName}</strong><small>@{githubLogin}</small></span>
-        </div>
-        <div className="project-summary"><span>Project</span><strong>Jabso</strong></div>
+        <OwnerSummary />
       </div>
     </aside>
     <main className="main-content">{children}</main>
   </div>
-}
+)
