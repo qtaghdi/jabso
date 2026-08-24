@@ -158,6 +158,24 @@ describe('Jabso server', () => {
     expect(events.rows).toHaveLength(3)
     expect(sensitiveColumns.rows).toEqual([])
 
+    const jsonTypes = await database.query<{
+      breadcrumbs_type: string
+      context_type: string
+      stacktrace_type: string
+      tags_type: string
+    }>(`select
+      jsonb_typeof(stacktrace) as stacktrace_type,
+      jsonb_typeof(tags) as tags_type,
+      jsonb_typeof(breadcrumbs) as breadcrumbs_type,
+      jsonb_typeof(context) as context_type
+      from events order by received_at desc limit 1`)
+    expect(jsonTypes.rows[0]).toEqual({
+      stacktrace_type: 'array',
+      tags_type: 'object',
+      breadcrumbs_type: 'array',
+      context_type: 'object',
+    })
+
     const issueResponse = await app.inject({
       method: 'GET',
       url: `/api/${project.dsnProjectId}/issues?sentry_key=${project.publicKey}`,
@@ -167,6 +185,12 @@ describe('Jabso server', () => {
     const issueList = issueResponse.json<{ items: Array<{ id: string; eventCount: number; exceptionType: string }> }>()
     expect(issueList.items).toHaveLength(1)
     expect(issueList.items[0]).toMatchObject({ eventCount: 3, exceptionType: 'TypeError' })
+
+    await database.query(`update events set
+      stacktrace = to_jsonb(stacktrace::text),
+      tags = to_jsonb(tags::text),
+      breadcrumbs = to_jsonb(breadcrumbs::text),
+      context = to_jsonb(context::text)`)
 
     const detailResponse = await app.inject({
       method: 'GET',
@@ -371,6 +395,10 @@ describe('Jabso server', () => {
       'select symbolication_status as status from events where event_id = $1',
       ['late-map-event'],
     )).rows[0]?.status).toBe('missing')
+    await database.query(
+      'update events set stacktrace = to_jsonb(stacktrace::text) where event_id = $1',
+      ['late-map-event'],
+    )
 
     const unauthorized = await app.inject({
       method: 'PUT',
@@ -396,6 +424,10 @@ describe('Jabso server', () => {
       completedEventCount: 1,
       pendingEventCount: 0,
     })
+    expect((await database.query<{ type: string }>(
+      'select jsonb_typeof(symbolicated_stacktrace) as type from events where event_id = $1',
+      ['late-map-event'],
+    )).rows[0]?.type).toBe('array')
 
     const issueList = await app.inject({
       method: 'GET',

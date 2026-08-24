@@ -41,14 +41,14 @@ type IssueDetailRow = IssueSummaryRow & {
   dist: string | null
   occurred_at: Timestamp | null
   received_at: Timestamp | null
-  stacktrace: StackFrame[] | null
-  symbolicated_stacktrace: StackFrame[] | null
+  stacktrace: unknown
+  symbolicated_stacktrace: unknown
   symbolication_status: 'not_applicable' | 'pending' | 'completed' | 'missing' | 'failed'
   symbolication_error_code: string | null
   symbolicated_at: Timestamp | null
-  tags: Record<string, string> | null
-  breadcrumbs: Breadcrumb[] | null
-  context: Record<string, string> | null
+  tags: unknown
+  breadcrumbs: unknown
+  context: unknown
 }
 
 type OccurrenceRow = {
@@ -75,6 +75,59 @@ type Cursor = { lastSeenAt: string; id: string }
 
 const toIsoString = (value: Timestamp) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString()
+
+const parseStoredJson = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value
+  try {
+    return JSON.parse(value) as unknown
+  } catch {
+    return null
+  }
+}
+
+const toStackFrames = (value: unknown): StackFrame[] => {
+  const parsed = parseStoredJson(value)
+  if (!Array.isArray(parsed)) return []
+  return parsed.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== 'object') return []
+    const frame = candidate as Record<string, unknown>
+    return [{
+      ...(typeof frame.filename === 'string' ? { filename: frame.filename } : {}),
+      ...(typeof frame.function === 'string' ? { function: frame.function } : {}),
+      ...(typeof frame.line === 'number' && Number.isInteger(frame.line) && frame.line >= 0 ? { line: frame.line } : {}),
+      ...(typeof frame.column === 'number' && Number.isInteger(frame.column) && frame.column >= 0 ? { column: frame.column } : {}),
+      ...(typeof frame.inApp === 'boolean' ? { inApp: frame.inApp } : {}),
+    }]
+  }).slice(0, 200)
+}
+
+const toStringRecord = (value: unknown): Record<string, string> => {
+  const parsed = parseStoredJson(value)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+  return Object.fromEntries(
+    Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
+}
+
+const toBreadcrumbs = (value: unknown): Breadcrumb[] => {
+  const parsed = parseStoredJson(value)
+  if (!Array.isArray(parsed)) return []
+  return parsed.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== 'object') return []
+    const breadcrumb = candidate as Record<string, unknown>
+    if (typeof breadcrumb.category !== 'string') return []
+    const timestamp = typeof breadcrumb.timestamp === 'string'
+      && Number.isFinite(new Date(breadcrumb.timestamp).getTime())
+      ? new Date(breadcrumb.timestamp).toISOString()
+      : undefined
+    return [{
+      category: breadcrumb.category,
+      ...(timestamp ? { timestamp } : {}),
+      ...(typeof breadcrumb.level === 'string' ? { level: breadcrumb.level } : {}),
+      ...(typeof breadcrumb.message === 'string' ? { message: breadcrumb.message } : {}),
+    }]
+  }).slice(0, 50)
+}
 
 const encodeCursor = (row: Pick<IssueSummaryRow, 'id' | 'last_seen_at'>) =>
   Buffer.from(JSON.stringify({ lastSeenAt: toIsoString(row.last_seen_at), id: row.id })).toString('base64url')
@@ -272,16 +325,16 @@ export const createPostgresIssueQueryStore = (database: SqlExecutor): IssueQuery
             dist: row.dist,
             occurredAt: row.occurred_at ? toIsoString(row.occurred_at) : null,
             receivedAt: toIsoString(row.received_at),
-            stacktrace: row.symbolicated_stacktrace ?? row.stacktrace ?? [],
-            originalStacktrace: row.stacktrace ?? [],
+            stacktrace: toStackFrames(row.symbolicated_stacktrace ?? row.stacktrace),
+            originalStacktrace: toStackFrames(row.stacktrace),
             symbolication: {
               status: row.symbolication_status,
               errorCode: row.symbolication_error_code,
               mappedAt: row.symbolicated_at ? toIsoString(row.symbolicated_at) : null,
             },
-            tags: row.tags ?? {},
-            breadcrumbs: row.breadcrumbs ?? [],
-            context: row.context ?? {},
+            tags: toStringRecord(row.tags),
+            breadcrumbs: toBreadcrumbs(row.breadcrumbs),
+            context: toStringRecord(row.context),
           }
         : null,
     }

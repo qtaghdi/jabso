@@ -75,8 +75,8 @@ export class PostgresIngestEventStore implements IngestEventStore {
           event_id, project_id, issue_id, message, exception_type, level, platform, environment,
           release, dist, release_id, occurred_at, stacktrace, symbolication_status, tags, breadcrumbs, context
         ) values (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb,
-          $14::symbolication_status, $15::jsonb, $16::jsonb, $17::jsonb
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::text::jsonb,
+          $14::symbolication_status, $15::text::jsonb, $16::text::jsonb, $17::text::jsonb
         )
         on conflict (project_id, event_id) do nothing
         returning id`,

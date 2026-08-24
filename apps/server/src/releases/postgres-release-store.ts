@@ -41,7 +41,7 @@ type ArtifactRow = {
 type EventRow = {
   id: string
   release_id: string | null
-  stacktrace: StackFrame[] | null
+  stacktrace: unknown
 }
 
 type RegressionRow = {
@@ -59,6 +59,19 @@ const toIsoString = (value: Timestamp) =>
   value instanceof Date ? value.toISOString() : new Date(value).toISOString()
 
 const decodeArtifact = (content: Uint8Array) => new TextDecoder('utf-8', { fatal: true }).decode(content)
+
+const toStackFrames = (value: unknown): StackFrame[] => {
+  let parsed = value
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed) as unknown
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(parsed)) return []
+  return parsed.filter((frame): frame is StackFrame => Boolean(frame) && typeof frame === 'object').slice(0, 200)
+}
 
 const emptyRetryResult = (): RetryReleaseSymbolicationMutationResult => ({
   releaseId: null,
@@ -188,7 +201,11 @@ export class PostgresReleaseStore implements ReleaseStore {
 
       await transaction.query(
         `update events set symbolication_status = 'pending', symbolication_error_code = null
-         where release_id = $1 and jsonb_array_length(coalesce(stacktrace, '[]'::jsonb)) > 0`,
+         where release_id = $1 and jsonb_array_length(case
+           when stacktrace is null then '[]'::jsonb
+           when jsonb_typeof(stacktrace) = 'string' then (stacktrace #>> '{}')::jsonb
+           else stacktrace
+         end) > 0`,
         [release.id],
       )
       return { releaseId: release.id, artifactId: artifact.id }
@@ -268,7 +285,7 @@ export class PostgresReleaseStore implements ReleaseStore {
     projectId: string,
     event: EventRow,
   ): Promise<SymbolicationStatus> {
-    const frames = event.stacktrace ?? []
+    const frames = toStackFrames(event.stacktrace)
     if (!event.release_id || frames.length === 0) {
       await this.updateSymbolication(projectId, event.id, 'not_applicable', null, null)
       return 'not_applicable'
@@ -324,7 +341,7 @@ export class PostgresReleaseStore implements ReleaseStore {
     await this.database.query(
       `update events set
         symbolication_status = $3::symbolication_status,
-        symbolicated_stacktrace = $4::jsonb,
+        symbolicated_stacktrace = $4::text::jsonb,
         symbolication_error_code = $5,
         symbolicated_at = case when $3 = 'completed' then now() else null end
        where project_id = $1 and id = $2`,
