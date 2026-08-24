@@ -5,6 +5,16 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
+    "@jabso/server#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "passThroughEnv": [
+        "JABSO_ADMIN_TOKEN",
+        "JABSO_ALLOWED_ORIGIN",
+        "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
+        "JABSO_DATABASE_URL"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true
