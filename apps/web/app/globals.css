@@ -145,11 +145,21 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 }
 .ui-button-primary { border-color: #20242a; background: #20242a; color: #fff; }
 .ui-button-primary:hover { background: #000; }
+.ui-button-danger { border-color: #a72a1a; background: #a72a1a; color: #fff; }
+.ui-button-danger:hover { border-color: #861f13; background: #861f13; }
 .ui-button-secondary { border-color: #cbd2da; background: #fff; color: var(--text); }
 .ui-button-secondary:hover { border-color: #949ca6; background: var(--surface); }
 .ui-button-ghost { min-height: 34px; padding-inline: 10px; background: transparent; color: #4e5864; }
 .ui-button-ghost:hover { background: var(--surface-strong); color: var(--text); }
 .ui-button:disabled { opacity: 0.48; cursor: default; }
+.ui-button-spinner { width: 13px; height: 13px; border: 1.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ui-button-spin 650ms linear infinite; }
+@keyframes ui-button-spin { to { transform: rotate(360deg); } }
+
+.ui-input { display: grid; gap: 7px; min-width: 0; }
+.ui-input input { width: 100%; min-height: 44px; padding: 0 13px; border: 1px solid #cbd2da; border-radius: 8px; background: #fff; color: var(--text); font: inherit; font-size: 13px; }
+.ui-input input:focus, .ui-input input:focus-visible, .ui-select select:focus, .ui-select select:focus-visible { border-color: #17191d; outline: 3px solid rgb(23 25 29 / 10%); outline-offset: 0; }
+.ui-input-error input { border-color: var(--accent); }
+.ui-input-error .ui-field-message { color: var(--accent); }
 
 .ui-select { display: grid; gap: 7px; min-width: 0; }
 .ui-field-label { color: #3f4650; font-size: 12px; font-weight: 650; }
@@ -251,15 +261,10 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .getting-started-actions > span { color: var(--muted); font-size: 12px; }
 .setup-note { max-width: 720px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 
-.project-create-section { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr); gap: 48px; padding: 30px 0 36px; border-block: 1px solid var(--border); }
+.project-create-section { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 48px; padding: 30px 0 36px; border-block: 1px solid var(--border); }
 .project-create-section h2, .project-list-section h2 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
 .project-create-section p { max-width: 440px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
-.project-create-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
-.project-create-form label { display: grid; gap: 7px; }
-.project-create-form label > span { color: #3f4650; font-size: 12px; font-weight: 650; }
-.project-create-form input { width: 100%; min-height: 44px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 5px; background: #fff; color: var(--text); }
-.project-create-form input[aria-invalid="true"] { border-color: var(--accent); }
-.project-create-form > small { grid-column: 1 / -1; color: var(--accent); font-size: 11px; }
+.project-create-button { min-width: 132px; }
 .project-list-section { padding-top: 34px; }
 .project-list-section .section-heading-row { align-items: end; margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 .project-list-title-group { display: flex; align-items: baseline; gap: 10px; }
@@ -290,23 +295,37 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .project-list-loading .skeleton-block { height: 86px; border-radius: 0; }
 .inline-error { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border); }
 .inline-error p { margin: 0; color: var(--accent); }
-.repository-dialog-backdrop { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(17 19 22 / 52%); }
-.repository-dialog { width: min(560px, 100%); max-height: calc(100vh - 48px); padding: 26px; overflow-y: auto; border: 1px solid #cbd2da; border-radius: 12px; background: #fff; box-shadow: 0 24px 70px rgb(17 19 22 / 24%); }
-.repository-dialog > header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
-.repository-dialog > header p { margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
-.repository-dialog h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
-.repository-dialog-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: #17191d; color: white; }
-.repository-dialog-icon svg { width: 22px; height: 22px; fill: currentColor; }
-.repository-dialog-close { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 24px; line-height: 1; }
-.repository-dialog-close:hover { background: var(--surface); color: var(--text); }
-.repository-dialog-copy { margin: 20px 0; color: var(--muted); font-size: 13px; }
+.project-list-error { margin: 12px 0 0; }
+.ui-dialog { width: min(560px, calc(100% - 48px)); max-height: calc(100vh - 48px); padding: 0; overflow: auto; border: 1px solid #cbd2da; border-radius: 12px; background: #fff; color: var(--text); box-shadow: 0 24px 70px rgb(17 19 22 / 24%); }
+.ui-dialog::backdrop { background: rgb(17 19 22 / 52%); backdrop-filter: blur(2px); }
+.ui-dialog-sm { width: min(460px, calc(100% - 48px)); }
+.ui-dialog-surface { padding: 26px; }
+.ui-dialog-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.ui-dialog-header > div > p { margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.ui-dialog-header h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+.ui-dialog-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: #17191d; color: white; }
+.ui-dialog-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+.ui-dialog-icon .github-icon { fill: currentColor; stroke: none; }
+.ui-dialog-close { display: grid; width: 32px; height: 32px; padding: 0; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
+.ui-dialog-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.ui-dialog-close:hover { background: var(--surface); color: var(--text); }
+.ui-dialog-close:focus-visible { outline: 3px solid rgb(23 25 29 / 12%); outline-offset: 1px; }
+.ui-dialog-description { margin: 20px 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.ui-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+.project-dialog-form { display: grid; gap: 18px; }
+.project-source-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.project-source-fieldset legend { margin-bottom: 7px; color: #3f4650; font-size: 12px; font-weight: 650; }
+.project-source-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.project-source-option { display: grid; min-width: 0; grid-template-columns: auto minmax(0, 1fr); gap: 9px; padding: 13px; border: 1px solid #cbd2da; border-radius: 9px; background: #fff; cursor: pointer; }
+.project-source-option:hover { border-color: #949ca6; }
+.project-source-option-active { border-color: #17191d; background: var(--surface); box-shadow: 0 0 0 1px #17191d; }
+.project-source-option input { width: 15px; height: 15px; margin: 2px 0 0; accent-color: #17191d; }
+.project-source-option span { display: grid; min-width: 0; gap: 4px; }
+.project-source-option strong { font-size: 13px; }
+.project-source-option small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.project-dialog-loading .skeleton-block { height: 70px; }
 .repository-dialog-loading .skeleton-block { height: 132px; }
 .repository-connection-form { display: grid; gap: 18px; }
-.repository-connection-form .ui-select, .repository-root-field { display: grid; gap: 7px; }
-.repository-root-field > span { color: #3f4650; font-size: 12px; font-weight: 650; }
-.repository-root-field > span small { margin-left: 5px; color: var(--muted); font-weight: 500; }
-.repository-root-field input { min-height: 44px; padding: 0 13px; border: 1px solid #cbd2da; border-radius: 6px; }
-.repository-root-field > small { color: var(--muted); font-size: 11px; }
 .repository-dialog-actions { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-top: 4px; }
 .repository-dialog-actions .ui-button-ghost { justify-self: start; color: #a72a1a; }
 .form-error { margin: 0; color: var(--accent); font-size: 12px; }
@@ -556,6 +575,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .getting-started-actions > span { text-align: center; }
   .getting-started-heading { display: grid; }
   .project-create-section { grid-template-columns: 1fr; gap: 24px; }
+  .project-create-button { width: 100%; }
   .project-list-section .section-heading-row { align-items: stretch; flex-direction: column; }
   .project-picker { width: 100%; }
   .project-row { grid-template-columns: 1fr; gap: 14px; }
@@ -564,6 +584,9 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 }
 
 @media (max-width: 520px) {
+  .ui-dialog, .ui-dialog-sm { width: calc(100% - 24px); max-height: calc(100vh - 24px); }
+  .ui-dialog-surface { padding: 20px; }
+  .project-source-options { grid-template-columns: 1fr; }
   .auth-page { grid-template-columns: 104px minmax(0, 1fr); }
   .auth-intro { gap: 12px; padding: 20px 10px 22px; }
   .auth-wordmark .jabso-mark { width: 24px; height: 24px; }

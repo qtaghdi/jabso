@@ -2,13 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { CopyCodeButton } from '@/components/copy-code-button'
+import { ProjectCreateDialog } from '@/components/project-create-dialog'
 import { RepositoryConnectionDialog } from '@/components/repository-connection-dialog'
+import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import {
-  createDashboardProject,
   dashboardQueryKeys,
   deleteDashboardProject,
   projectsQueryOptions,
@@ -24,7 +25,8 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
   const router = useRouter()
   const queryClient = useQueryClient()
   const projectsQuery = useQuery({ ...projectsQueryOptions(), initialData })
-  const [name, setName] = useState('')
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [deleteProject, setDeleteProject] = useState<DashboardProject | null>(null)
   const [repositoryProject, setRepositoryProject] = useState<DashboardProject | null>(null)
 
   const syncProjects = (data: NonNullable<typeof projectsQuery.data>) => {
@@ -33,14 +35,6 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
     queryClient.removeQueries({ queryKey: ['dashboard', 'issue'] })
   }
 
-  const createMutation = useMutation({
-    mutationFn: createDashboardProject,
-    onSuccess: (data) => {
-      syncProjects(data)
-      setName('')
-      router.push('/')
-    },
-  })
   const selectMutation = useMutation({
     mutationFn: selectDashboardProject,
     onSuccess: (data) => {
@@ -50,24 +44,17 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
   })
   const deleteMutation = useMutation({
     mutationFn: deleteDashboardProject,
-    onSuccess: syncProjects,
+    onSuccess: (data) => {
+      syncProjects(data)
+      setDeleteProject(null)
+    },
   })
 
-  const submitProject = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const projectName = name.trim()
-    if (projectName) createMutation.mutate(projectName)
-  }
-
-  const removeProject = (projectId: string, projectName: string) => {
-    const confirmed = window.confirm(
-      `Remove ${projectName} from Jabso? New events will be rejected. Existing issue data is retained for recovery.`,
-    )
-    if (confirmed) deleteMutation.mutate(projectId)
-  }
-
   const items = projectsQuery.data?.items ?? []
-  const mutationError = createMutation.error ?? selectMutation.error ?? deleteMutation.error
+  const created = (data: ProjectsResponse) => {
+    syncProjects(data)
+    router.push('/')
+  }
 
   return (
     <>
@@ -78,26 +65,11 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
       <section className="project-create-section" aria-labelledby="create-project-title">
         <div>
           <h2 id="create-project-title">New project</h2>
-          <p>Use a short application name. Jabso generates the project ID and public key.</p>
+          <p>Create a standalone DSN or connect a public GitHub repository during setup.</p>
         </div>
-        <form className="project-create-form" onSubmit={submitProject}>
-          <label>
-            <span>Project name</span>
-            <input
-              maxLength={80}
-              name="name"
-              autoComplete="off"
-              onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Checkout web…"
-              required
-              value={name}
-            />
-          </label>
-          <Button disabled={createMutation.isPending} type="submit">
-            {createMutation.isPending ? 'Creating…' : 'Create project'}
-          </Button>
-          {mutationError ? <small role="alert">{mutationError.message}</small> : null}
-        </form>
+        <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
+          Create project
+        </Button>
       </section>
       <section className="project-list-section" aria-labelledby="project-list-title">
         <div className="section-heading-row">
@@ -116,6 +88,7 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
             {items.map((project) => <option key={project.id} value={project.dsnProjectId}>{project.name}</option>)}
           </Select> : null}
         </div>
+        {selectMutation.error ? <p className="form-error project-list-error" role="alert">{selectMutation.error.message}</p> : null}
         {projectsQuery.isPending ? (
           <div className="project-list-loading" role="status">
             <span className="skeleton-block" />
@@ -132,7 +105,6 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
         ) : (
           <div className="project-list">
             {items.map((project) => {
-              const deleting = deleteMutation.isPending && deleteMutation.variables === project.id
               return (
                 <article className="project-row" key={project.id}>
                   <div className="project-row-heading">
@@ -162,11 +134,14 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
                     <Button
                       className="project-delete-button"
                       disabled={deleteMutation.isPending || selectMutation.isPending}
-                      onClick={() => removeProject(project.id, project.name)}
+                      onClick={() => {
+                        deleteMutation.reset()
+                        setDeleteProject(project)
+                      }}
                       type="button"
                       variant="ghost"
                     >
-                      {deleting ? 'Removing…' : 'Delete'}
+                      Delete
                     </Button>
                   </div>
                 </article>
@@ -175,6 +150,17 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
           </div>
         )}
       </section>
+      {createDialogOpen ? <ProjectCreateDialog close={() => setCreateDialogOpen(false)} onCreated={created} /> : null}
+      {deleteProject ? <AlertDialog
+        cancel={() => {
+          if (!deleteMutation.isPending) setDeleteProject(null)
+        }}
+        confirm={() => deleteMutation.mutate(deleteProject.id)}
+        description={`New events for ${deleteProject.name} will be rejected. Existing issue data is retained for recovery.`}
+        error={deleteMutation.error?.message}
+        pending={deleteMutation.isPending}
+        title={`Delete ${deleteProject.name}?`}
+      /> : null}
       {repositoryProject ? <RepositoryConnectionDialog close={() => setRepositoryProject(null)} key={repositoryProject.id} project={repositoryProject} /> : null}
     </>
   )
