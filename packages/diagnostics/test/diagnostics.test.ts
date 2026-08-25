@@ -6,7 +6,7 @@ describe('Boundra diagnostics', () => {
     const diagnostic = createBoundraDiagnostic({
       kind: 'runtime_contract',
       message: 'x'.repeat(3_000),
-      boundraVersion: '0.2.2',
+      boundraVersion: '0.3.0',
       issues: [{ path: Array.from({ length: 30 }, (_, index) => index), message: 'y'.repeat(800) }],
     })
     expect(diagnostic.message.length).toBeLessThanOrEqual(2_001)
@@ -23,7 +23,7 @@ describe('Boundra diagnostics', () => {
       fallback,
     })
     await expect(
-      record({ kind: 'host_adapter', message: 'failed', boundraVersion: '0.2.2' }),
+      record({ kind: 'host_adapter', message: 'failed', boundraVersion: '0.3.0' }),
     ).resolves.toBe(true)
     expect(fallback).toHaveBeenCalledOnce()
   })
@@ -33,12 +33,12 @@ describe('Boundra diagnostics', () => {
     const holder: { record?: ReturnType<typeof createDiagnosticRecorder> } = {}
     const record = createDiagnosticRecorder({
       primary: async () => {
-        await holder.record?.({ kind: 'unexpected', message: 'nested', boundraVersion: '0.2.2' })
+        await holder.record?.({ kind: 'unexpected', message: 'nested', boundraVersion: '0.3.0' })
       },
       onDropped: dropped,
     })
     holder.record = record
-    await record({ kind: 'runtime_contract', message: 'outer', boundraVersion: '0.2.2' })
+    await record({ kind: 'runtime_contract', message: 'outer', boundraVersion: '0.3.0' })
     expect(dropped).toHaveBeenCalledOnce()
   })
 })

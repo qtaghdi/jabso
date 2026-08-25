@@ -8,4 +8,4 @@ allowBuilds:
   sharp: true
 
 minimumReleaseAgeExclude:
-  - boundra@0.2.2
+  - boundra@0.3.0

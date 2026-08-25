@@ -18,8 +18,8 @@ importers:
         specifier: 24.13.3
         version: 24.13.3
       boundra:
-        specifier: 0.2.2
-        version: 0.2.2
+        specifier: 0.3.0
+        version: 0.3.0
       eslint:
         specifier: 10.8.1
         version: 10.8.1
@@ -66,8 +66,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/symbolication
       boundra:
-        specifier: 0.2.2
-        version: 0.2.2
+        specifier: 0.3.0
+        version: 0.3.0
       fastify:
         specifier: 5.12.1
         version: 5.12.1
@@ -1699,8 +1699,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  boundra@0.2.2:
-    resolution: {integrity: sha512-iWhSFouSvVTvdC5KLTU68y8rKXtlptuL7akZRhHbA0RcAMo4vmxHsG7NROY8qhGbK5oQR6zfHuHipSQpzZliQQ==}
+  boundra@0.3.0:
+    resolution: {integrity: sha512-VShSOSFtnXO4ZHjJh1Jx26flGC34fRwrT9BPTiBBJAz9AxBx51MihJ9a7vSApC1Gcl5hnSh7+AcWiH1aThHBdg==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -3876,7 +3876,7 @@ snapshots:
 
   baseline-browser-mapping@2.11.15: {}
 
-  boundra@0.2.2: {}
+  boundra@0.3.0: {}
 
   brace-expansion@5.0.9:
     dependencies:
