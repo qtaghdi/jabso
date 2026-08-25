@@ -1,5 +1,5 @@
-import { SignIn } from '@clerk/nextjs'
 import { AuthSignalField } from '@/components/auth-signal-field'
+import { JabsoSignIn } from '@/components/jabso-sign-in'
 import { JabsoWordmark } from '@/components/jabso-wordmark'
 import { SessionExpiredToast } from '@/components/session-expired-toast'
 
@@ -26,27 +26,7 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
             <h2>Sign in to Jabso</h2>
             <p>Use the GitHub account connected to this instance.</p>
           </header>
-          <SignIn
-            forceRedirectUrl="/"
-            appearance={{
-              elements: {
-                rootBox: 'clerk-root-box',
-                cardBox: 'clerk-card-box',
-                card: 'clerk-card',
-                main: 'clerk-main',
-                header: 'clerk-header',
-                socialButtonsBlockButton: 'clerk-social-button',
-                socialButtonsBlockButtonText: 'clerk-social-button-text',
-                socialButtonsProviderIcon: 'clerk-social-icon',
-                lastAuthenticationStrategyBadge: 'clerk-last-used-badge',
-                dividerLine: 'clerk-divider-line',
-                dividerText: 'clerk-divider-text',
-                formFieldInput: 'clerk-input',
-                formButtonPrimary: 'clerk-primary-button',
-                footer: 'clerk-footer',
-              },
-            }}
-          />
+          <JabsoSignIn />
         </div>
       </section>
     </main>
