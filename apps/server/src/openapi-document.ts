@@ -20,6 +20,14 @@ const projectIdParameter: OpenAPIV3.ParameterObject = {
   schema: { type: 'string' },
 }
 
+const projectUuidParameter: OpenAPIV3.ParameterObject = {
+  name: 'projectId',
+  in: 'path',
+  required: true,
+  description: 'Internal project UUID.',
+  schema: { type: 'string', format: 'uuid' },
+}
+
 const issueIdParameter: OpenAPIV3.ParameterObject = {
   name: 'issueId',
   in: 'path',
@@ -52,6 +60,7 @@ export const openApiDocument: OpenAPIV3.Document = {
   tags: [
     { name: 'System', description: 'Collector health and database readiness.' },
     { name: 'Ingestion', description: 'Sentry-compatible event ingestion.' },
+    { name: 'Projects', description: 'Dashboard project creation, listing, and removal.' },
     { name: 'Issues', description: 'Issue search, detail, facets, and status workflow.' },
     { name: 'Releases', description: 'Release visibility and source-map symbolication.' },
   ],
@@ -74,6 +83,57 @@ export const openApiDocument: OpenAPIV3.Document = {
         responses: {
           '200': response('The collector can query PostgreSQL.', { $ref: '#/components/schemas/Readiness' }),
           '500': response('The database readiness check failed.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/projects': {
+      get: {
+        tags: ['Projects'],
+        summary: 'List active projects',
+        operationId: 'listProjects',
+        security: dashboardSecurity,
+        parameters: [
+          { name: 'cursor', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 } },
+        ],
+        responses: {
+          '200': response('A bounded page of non-deleted projects.', { $ref: '#/components/schemas/ProjectList' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+      post: {
+        tags: ['Projects'],
+        summary: 'Create a project',
+        operationId: 'createProject',
+        security: dashboardSecurity,
+        requestBody: {
+          required: true,
+          content: jsonContent({
+            type: 'object',
+            required: ['name'],
+            properties: { name: { type: 'string', minLength: 1, maxLength: 80 } },
+            additionalProperties: false,
+          }),
+        },
+        responses: {
+          '201': response('The project was created.', { $ref: '#/components/schemas/Project' }),
+          '400': response('The project name is invalid.', { $ref: '#/components/schemas/Error' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/projects/{projectId}': {
+      delete: {
+        tags: ['Projects'],
+        summary: 'Remove a project',
+        description: 'Soft-deletes the project. Existing issues, events, releases, and artifacts remain stored for recovery, while new ingestion and dashboard reads are disabled.',
+        operationId: 'deleteProject',
+        security: dashboardSecurity,
+        parameters: [projectUuidParameter],
+        responses: {
+          '200': response('The project was soft-deleted.', { $ref: '#/components/schemas/ProjectDeletion' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+          '404': response('The active project does not exist.', { $ref: '#/components/schemas/Error' }),
         },
       },
     },
@@ -304,6 +364,34 @@ export const openApiDocument: OpenAPIV3.Document = {
         type: 'object',
         properties: { id: { type: 'string' } },
         required: ['id'],
+      },
+      Project: {
+        type: 'object',
+        required: ['id', 'name', 'slug', 'dsnProjectId', 'publicKey', 'createdAt'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          slug: { type: 'string' },
+          dsnProjectId: { type: 'string' },
+          publicKey: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      ProjectList: {
+        type: 'object',
+        required: ['items', 'nextCursor'],
+        properties: {
+          items: { type: 'array', maxItems: 100, items: { $ref: '#/components/schemas/Project' } },
+          nextCursor: { type: 'string', format: 'uuid', nullable: true },
+        },
+      },
+      ProjectDeletion: {
+        type: 'object',
+        required: ['deleted', 'id'],
+        properties: {
+          deleted: { type: 'boolean' },
+          id: { type: 'string', format: 'uuid' },
+        },
       },
       IssueStatus: {
         type: 'string',

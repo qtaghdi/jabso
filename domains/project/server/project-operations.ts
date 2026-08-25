@@ -6,6 +6,11 @@ import {
   type CreateProjectMutationResult,
 } from '../shared/contracts/create-project.js'
 import {
+  deleteProjectMutation,
+  type DeleteProjectMutationInput,
+  type DeleteProjectMutationResult,
+} from '../shared/contracts/delete-project.js'
+import {
   listProjectsQuery,
   type ListProjectsQueryInput,
   type ListProjectsQueryResult,
@@ -17,6 +22,7 @@ export type ProjectStore = {
     publicKey: string
     slug: string
   }): Promise<CreateProjectMutationResult>
+  delete(input: DeleteProjectMutationInput): Promise<DeleteProjectMutationResult>
   list(input: ListProjectsQueryInput): Promise<ListProjectsQueryResult>
 }
 
@@ -44,3 +50,6 @@ export const createCreateProjectImplementation = (store: ProjectStore) =>
       slug: projectSlug(input.name, dsnProjectId.slice(-6)),
     })
   })
+
+export const createDeleteProjectImplementation = (store: ProjectStore) =>
+  implementMutation(deleteProjectMutation, (input) => store.delete(input))

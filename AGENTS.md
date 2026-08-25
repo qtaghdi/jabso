@@ -44,6 +44,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Run `pnpm boundra:check` after changing imports, manifests, public APIs, or domain dependencies.
 - Boundra runtime failures must go through `@jabso/diagnostics`; never report them through the failing public ingestion contract.
 - Diagnostics may store Boundra's safe `toJSON()` shape, but never original inputs, causes, tokens, cookies, request bodies, or environment variables.
+- Record every newly discovered Boundra package defect, boundary problem, contract mismatch, or diagnostic failure under `docs/boundra-report/` in the same change that investigates or fixes it. Update its index, state whether the problem is an upstream Boundra candidate or a Jabso integration issue, and never paste raw event data or secrets into a report.
 
 ## Data and privacy
 

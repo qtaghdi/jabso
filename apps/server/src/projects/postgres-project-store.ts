@@ -31,11 +31,21 @@ export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore 
     if (!project) throw new Error('project creation did not return a project')
     return toProject(project)
   },
+  delete: async (input) => {
+    const result = await database.query<{ id: string }>(
+      `update projects set deleted_at = now()
+       where id = $1 and deleted_at is null
+       returning id`,
+      [input.id],
+    )
+    return { deleted: result.rows.length > 0, id: input.id }
+  },
   list: async (input) => {
     const result = await database.query<ProjectRow>(
       `select id, name, slug, dsn_project_id, public_key, created_at
        from projects
-       where ($1::uuid is null or (created_at, id) < (
+       where deleted_at is null
+         and ($1::uuid is null or (created_at, id) < (
          select created_at, id from projects where id = $1::uuid
        ))
        order by created_at desc, id desc

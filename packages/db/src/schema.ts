@@ -31,6 +31,7 @@ export const projects = pgTable('projects', {
   dsnProjectId: text('dsn_project_id').notNull().unique(),
   publicKey: text('public_key').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 })
 
 export const releases = pgTable(
