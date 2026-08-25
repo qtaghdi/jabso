@@ -267,19 +267,44 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .project-row-heading > div { min-width: 0; }
 .project-row h3 { margin: 0; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .project-row-heading code { display: block; margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.project-repository-link, .project-repository-empty { display: block; margin-top: 7px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.project-repository-link { color: #075fb7; text-decoration: none; }
+.project-repository-link:hover { text-decoration: underline; }
+.project-repository-empty { color: #929aa4; }
 .active-project-label { padding: 3px 7px; border: 1px solid #9cc8ac; border-radius: 999px; background: #eff8f2; color: #21623b; font-size: 10px; font-weight: 700; }
 .project-dsn { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 10px 10px 13px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
 .project-dsn > span { display: grid; min-width: 0; gap: 3px; }
 .project-dsn > span > span { color: var(--muted); font-size: 9px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
 .project-dsn code { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .project-dsn .copy-icon-button { width: 32px; min-height: 32px; }
-.project-row-actions { display: grid; grid-template-columns: minmax(130px, 1fr) auto; align-items: center; gap: 8px; }
+.project-row-actions { display: grid; grid-template-columns: minmax(130px, 1fr) auto auto; align-items: center; gap: 8px; }
+.project-repository-button { color: #303640; }
 .project-delete-button { color: #a72a1a; }
 .project-delete-button:hover { background: var(--accent-soft); }
 .project-list-loading { display: grid; gap: 1px; }
 .project-list-loading .skeleton-block { height: 86px; border-radius: 0; }
 .inline-error { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border); }
 .inline-error p { margin: 0; color: var(--accent); }
+.repository-dialog-backdrop { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(17 19 22 / 52%); }
+.repository-dialog { width: min(560px, 100%); max-height: calc(100vh - 48px); padding: 26px; overflow-y: auto; border: 1px solid #cbd2da; border-radius: 12px; background: #fff; box-shadow: 0 24px 70px rgb(17 19 22 / 24%); }
+.repository-dialog > header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.repository-dialog > header p { margin: 0 0 2px; color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.repository-dialog h2 { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+.repository-dialog-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: #17191d; color: white; }
+.repository-dialog-icon svg { width: 22px; height: 22px; fill: currentColor; }
+.repository-dialog-close { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 24px; line-height: 1; }
+.repository-dialog-close:hover { background: var(--surface); color: var(--text); }
+.repository-dialog-copy { margin: 20px 0; color: var(--muted); font-size: 13px; }
+.repository-dialog-loading .skeleton-block { height: 132px; }
+.repository-connection-form { display: grid; gap: 18px; }
+.repository-connection-form .ui-select, .repository-root-field { display: grid; gap: 7px; }
+.repository-root-field > span { color: #3f4650; font-size: 12px; font-weight: 650; }
+.repository-root-field > span small { margin-left: 5px; color: var(--muted); font-weight: 500; }
+.repository-root-field input { min-height: 44px; padding: 0 13px; border: 1px solid #cbd2da; border-radius: 6px; }
+.repository-root-field > small { color: var(--muted); font-size: 11px; }
+.repository-dialog-actions { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-top: 4px; }
+.repository-dialog-actions .ui-button-ghost { justify-self: start; color: #a72a1a; }
+.form-error { margin: 0; color: var(--accent); font-size: 12px; }
 .project-empty-state .ui-button { margin-top: 12px; }
 .skeleton-project-create { width: 100%; height: 130px; margin-top: 28px; }
 .skeleton-project-list { display: grid; gap: 1px; margin-top: 34px; }
