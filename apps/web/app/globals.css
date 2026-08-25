@@ -454,6 +454,11 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .skeleton-section-title { width: 180px; height: 22px; margin-bottom: 20px; }
 .skeleton-section-body { width: 100%; height: 110px; }
 .skeleton-smoke-panel { width: min(720px, 100%); height: 190px; }
+.dashboard-page-loading { width: 100%; }
+.dashboard-page-loading .page-header-loading { margin-bottom: 42px; }
+.dashboard-page-loading .skeleton-table { margin-top: 30px; }
+.dashboard-page-loading .skeleton-project-form { width: min(100%, 900px); height: 116px; }
+.dashboard-page-loading .skeleton-code { width: min(100%, 760px); height: 180px; margin-top: 42px; }
 .issues-inline-loading { padding-top: 8px; }
 .issues-inline-loading .skeleton-table { margin-top: 42px; }
 .query-refreshing { opacity: 0.62; transition: opacity 140ms ease; }
