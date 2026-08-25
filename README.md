@@ -1,6 +1,6 @@
 # Jabso
 
-> A small, self-hosted error inbox for personal projects.
+> A small, self-hosted error inbox for individuals and teams.
 
 Jabso collects browser and server errors, groups similar events into issues, and provides the context needed to investigate them. It accepts Sentry-compatible error envelopes, so an existing Sentry SDK can send events to Jabso by changing its DSN.
 
@@ -21,7 +21,7 @@ The project intentionally focuses on a narrow workflow: **error collection, issu
 - Bounded breadcrumbs and allowlisted runtime context
 - Release- and dist-aware source-map upload and stack symbolication
 - Backfilling events when source maps arrive after ingestion
-- A Next.js issue inbox protected by Clerk and a configured GitHub owner
+- A Next.js issue inbox with Clerk personal and organization workspaces
 - Optional metadata links to public GitHub repositories
 - Boundra runtime contracts and isolated internal diagnostics
 
@@ -76,7 +76,7 @@ Raw envelopes are parsed at the Fastify boundary. Only normalized events enter t
 - Node.js 24 or newer
 - pnpm 11 through Corepack
 - Docker with Compose, or an existing PostgreSQL database
-- A Clerk application with GitHub sign-in enabled
+- A Clerk application with GitHub sign-in and Organizations enabled
 
 ### Setup
 
@@ -115,15 +115,16 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `JABSO_DASHBOARD_TOKEN` | Server-only credential for dashboard API access |
 | `JABSO_ADMIN_TOKEN` | Server-only credential for source-map administration |
 | `JABSO_API_URL` | Collector URL used by the Next.js server |
-| `JABSO_OWNER_GITHUB_LOGIN` | The only GitHub login allowed into this private instance |
-| `JABSO_OWNER_CLERK_USER_ID` | Clerk user ID used for fast owner checks without a Clerk Backend API lookup |
+| `JABSO_DEV_CLERK_USER_ID` | Optional Clerk user ID that owns the local seeded project |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk server secret |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
 `JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
-For GitHub authentication, enable GitHub as a social connection in Clerk and set `JABSO_OWNER_GITHUB_LOGIN` and `JABSO_OWNER_CLERK_USER_ID` to the account that owns the instance. If the Clerk user ID is omitted, Jabso safely falls back to checking the GitHub account through Clerk's Backend API, but dashboard navigation incurs an extra network request.
+In Clerk, enable GitHub as a social connection and enable Organizations with **Membership optional**. After sign-in, Jabso asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Clerk user. Team and Organization workspaces both use Clerk Organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active Clerk context and all dashboard API calls are scoped to the corresponding Jabso workspace.
+
+Run `pnpm db:migrate` before deploying this version. Existing projects intentionally remain unassigned and invisible after the migration instead of being claimed by the first user who signs in. Assign legacy rows to a verified workspace with a reviewed, one-time database migration.
 
 ## Send an error
 
@@ -166,7 +167,7 @@ Jabso stores only bounded debugging data needed by the issue workflow.
 - Original stack frames are retained separately from mapped frames.
 - Source-map contents are treated as private source code.
 
-Review these constraints before exposing a Jabso instance beyond a trusted personal environment.
+Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Clerk organization admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
 
 ## Boundra dogfooding
 
@@ -222,7 +223,7 @@ Repository-wide architecture, security, testing, and Git conventions are documen
 - [x] Project-scoped read APIs and the initial issue inbox
 - [x] Filtering, occurrences, safe context, and issue lifecycle
 - [x] Releases, source maps, symbolication, and backfill
-- [x] Owner authentication, onboarding, and shared dashboard UI
+- [x] Clerk authentication, workspace onboarding, tenant isolation, and shared dashboard UI
 - [ ] Read-only MCP tools with project-scoped authorization and audit logs
 - [ ] Operational hardening and retention controls
 - [ ] Session Replay, if the privacy and storage model can support it safely

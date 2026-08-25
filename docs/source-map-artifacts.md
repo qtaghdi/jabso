@@ -10,7 +10,7 @@ Set a long random administrator token. The public Sentry DSN key cannot upload o
 JABSO_ADMIN_TOKEN=replace-with-a-long-random-token
 ```
 
-The first implementation is single-owner: one server token can administer every local Jabso project. Project-scoped agent tokens are a Phase 4 decision.
+Dashboard source-map context is workspace-scoped. The separate administrator token remains required for artifact upload and retry operations; project-scoped agent tokens are a Phase 4 decision.
 
 ## Upload
 
