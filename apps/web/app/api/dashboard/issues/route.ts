@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
 import { getIssuesResponse } from '@/lib/dashboard-data'
 
 export const GET = async (request: Request) => {
-  await requireOwner()
+  await requireWorkspace()
   return NextResponse.json(await getIssuesResponse(new URL(request.url).searchParams))
 }

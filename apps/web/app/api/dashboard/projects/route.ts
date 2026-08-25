@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
 import { createProjectsResponse, getProjectsResponse } from '@/lib/dashboard-data'
 import {
   clearActiveProject,
@@ -11,12 +11,13 @@ import {
 } from '@/lib/projects'
 
 export const GET = async () => {
-  await requireOwner()
+  await requireWorkspace()
   return NextResponse.json(await getProjectsResponse())
 }
 
 export const POST = async (request: Request) => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
+  if (!workspace.canManage) return NextResponse.json({ error: 'administrator role required' }, { status: 403 })
   const body = await request.json() as { name?: unknown }
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   if (!name || name.length > 80) return NextResponse.json({ error: 'invalid project name' }, { status: 400 })
@@ -26,7 +27,7 @@ export const POST = async (request: Request) => {
 }
 
 export const PATCH = async (request: Request) => {
-  await requireOwner()
+  await requireWorkspace()
   const body = await request.json() as { projectId?: unknown }
   if (typeof body.projectId !== 'string') return NextResponse.json({ error: 'invalid project' }, { status: 400 })
   const { items } = await listProjects()
@@ -38,7 +39,8 @@ export const PATCH = async (request: Request) => {
 }
 
 export const DELETE = async (request: Request) => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
+  if (!workspace.canManage) return NextResponse.json({ error: 'administrator role required' }, { status: 403 })
   const body = await request.json() as { projectId?: unknown }
   if (typeof body.projectId !== 'string') return NextResponse.json({ error: 'invalid project' }, { status: 400 })
 

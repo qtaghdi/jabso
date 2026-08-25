@@ -1,10 +1,10 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
 
 export const setSidebarCollapsed = async (collapsed: boolean) => {
-  await requireOwner()
+  await requireWorkspace()
   if (typeof collapsed !== 'boolean') throw new Error('Invalid sidebar preference')
   const cookieStore = await cookies()
   cookieStore.set('jabso-sidebar', collapsed ? 'collapsed' : 'expanded', {

@@ -1,7 +1,8 @@
 import { cache } from 'react'
 import { revalidateTag } from 'next/cache'
-import { requireOwner } from '@/lib/auth'
-import { getActiveProject, getServerApiConfig, type ProjectSummary } from '@/lib/projects'
+import { requireWorkspace } from '@/lib/auth'
+import { getActiveProject, type ProjectSummary } from '@/lib/projects'
+import { getServerApiConfig } from '@/lib/server-api-config'
 
 export type IssueSummary = {
   id: string
@@ -100,12 +101,13 @@ const request = async <Result>(
   projectOverride?: ProjectSummary | null,
   options: RequestOptions = { operation: 'issues.request' },
 ): Promise<Result | null> => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
   const project = projectOverride === undefined ? await getActiveProject() : projectOverride
   if (!project) return null
   const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
   headers.set('authorization', `Bearer ${dashboardToken}`)
+  headers.set('x-jabso-workspace-id', workspace.id)
   const startedAt = performance.now()
   const response = await fetch(
     `${baseUrl}/api/${encodeURIComponent(project.dsnProjectId)}${path}`,

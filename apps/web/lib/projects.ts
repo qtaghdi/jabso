@@ -3,7 +3,8 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { revalidateTag } from 'next/cache'
 import { cache } from 'react'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
+import { getServerApiConfig } from '@/lib/server-api-config'
 
 export type ProjectSummary = {
   createdAt: string
@@ -34,23 +35,6 @@ type ProjectList = {
 const activeProjectCookie = 'jabso-active-project'
 const projectsCacheTag = 'jabso-dashboard-projects'
 
-export const getServerApiConfig = () => {
-  const config = {
-    baseUrl: process.env.JABSO_API_URL?.trim() || 'http://localhost:4000',
-    dashboardToken: process.env.JABSO_DASHBOARD_TOKEN?.trim() || 'replace-with-a-long-random-token',
-  }
-  const missingProductionVariables = process.env.VERCEL === '1'
-    ? [
-        !process.env.JABSO_API_URL?.trim() && 'JABSO_API_URL',
-        !process.env.JABSO_DASHBOARD_TOKEN?.trim() && 'JABSO_DASHBOARD_TOKEN',
-      ].filter(Boolean)
-    : []
-  if (missingProductionVariables.length > 0) {
-    throw new Error(`Jabso web configuration is missing: ${missingProductionVariables.join(', ')}`)
-  }
-  return { ...config, baseUrl: config.baseUrl.replace(/\/$/, '') }
-}
-
 type DashboardRequestOptions = {
   cache?: { revalidate: number; tags: string[] }
   operation: string
@@ -61,10 +45,11 @@ const dashboardRequest = async <Result>(
   init: RequestInit | undefined,
   options: DashboardRequestOptions,
 ): Promise<Result> => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
   const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
   headers.set('authorization', `Bearer ${dashboardToken}`)
+  headers.set('x-jabso-workspace-id', workspace.id)
   const startedAt = performance.now()
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
