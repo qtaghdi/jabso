@@ -56,7 +56,7 @@ Boundra contracts
     |-- event normalization
     |-- issue fingerprinting
     |-- release and symbolication workflows
-    `-- persistence
+    |-- persistence
              |
              v
          PostgreSQL
