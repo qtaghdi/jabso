@@ -69,8 +69,18 @@ describe('Jabso server', () => {
     await database.close()
   })
 
-  it('reports health and database readiness', async () => {
+  it('describes the service and reports health and database readiness', async () => {
     const { app, database } = await fixture()
+    const root = await app.inject({ method: 'GET', url: '/' })
+
+    expect(root.statusCode).toBe(200)
+    expect(root.json()).toEqual({
+      service: 'jabso-server',
+      status: 'ok',
+      message: 'Jabso collector is running.',
+      health: '/health',
+      readiness: '/ready',
+    })
     expect((await app.inject({ method: 'GET', url: '/health' })).json()).toEqual({ status: 'ok' })
     expect((await app.inject({ method: 'GET', url: '/ready' })).json()).toEqual({ status: 'ready' })
     await app.close()

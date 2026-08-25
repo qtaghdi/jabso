@@ -74,6 +74,16 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: 'Releases', description: 'Release visibility and source-map symbolication.' },
   ],
   paths: {
+    '/': {
+      get: {
+        tags: ['System'],
+        summary: 'Describe the collector service',
+        operationId: 'getServiceInfo',
+        responses: {
+          '200': response('The Jabso collector service is running.', { $ref: '#/components/schemas/ServiceInfo' }),
+        },
+      },
+    },
     '/health': {
       get: {
         tags: ['System'],
@@ -431,6 +441,17 @@ export const openApiDocument: OpenAPIV3.Document = {
           message: { type: 'string' },
         },
         required: ['error'],
+      },
+      ServiceInfo: {
+        type: 'object',
+        properties: {
+          service: { type: 'string', enum: ['jabso-server'] },
+          status: { type: 'string', enum: ['ok'] },
+          message: { type: 'string' },
+          health: { type: 'string', enum: ['/health'] },
+          readiness: { type: 'string', enum: ['/ready'] },
+        },
+        required: ['service', 'status', 'message', 'health', 'readiness'],
       },
       Health: {
         type: 'object',
