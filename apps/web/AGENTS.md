@@ -29,6 +29,8 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Do not link Swagger/OpenAPI from the dashboard.
 - Reuse components under `components/ui`; fields must support labels, errors, keyboard focus, and accessible descriptions.
 - Apply shared Button, Select, input, copy, and destructive-action styles consistently across the entire affected workflow. Do not fix one row or one state while leaving equivalent controls visually different.
+- Use the shared `Dialog` and `AlertDialog` primitives for modal flows and destructive confirmation. Never use browser `alert()`, `confirm()`, or `prompt()` in product UI.
+- Keep asynchronous action labels and geometry stable. Do not change `Delete` to `Removing`, `Create` to `Creating`, or otherwise swap the action verb while pending; use the shared spinner, `aria-busy`, and disabled state without changing column width or causing layout shift.
 - Use real framework file paths and runnable snippets in SDK setup. Avoid placeholder names such as `anywhere-in-your-app.ts`.
 - Distinguish the current Sentry-compatible integration from a first-party Jabso SDK in code, documentation, and handoff notes. The smoke test must wait for the SDK transport to flush; calling `captureException` alone is not proof of delivery.
 - GitHub repository discovery currently supports public repositories only. Do not imply that private repositories are available until a least-privilege GitHub App flow is implemented and verified.
