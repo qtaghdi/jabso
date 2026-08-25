@@ -7,6 +7,10 @@ const project = {
   dsnProjectId: '42',
   publicKey: 'public-test-key',
 }
+const workspace = {
+  id: '028f47a2-5d1d-7e19-aab8-6f8cc59d9a01',
+  externalId: 'user:user_test',
+}
 const adminToken = 'phase-three-admin-token'
 const dashboardToken = 'phase-three-dashboard-token'
 const sourceMap = JSON.stringify({
@@ -26,10 +30,18 @@ const envelope = (event: Record<string, unknown>) => {
 const fixture = async () => {
   const { database, executor } = await createTestDatabase()
   await executor.query(
-    'insert into projects (id, name, slug, dsn_project_id, public_key) values ($1, $2, $3, $4, $5)',
-    [project.id, 'Test project', 'test-project', project.dsnProjectId, project.publicKey],
+    `insert into workspaces (id, external_id, kind, name) values ($1, $2, 'personal', 'Test workspace')`,
+    [workspace.id, workspace.externalId],
+  )
+  await executor.query(
+    `insert into projects (id, workspace_id, name, slug, dsn_project_id, public_key)
+     values ($1, $2, $3, $4, $5, $6)`,
+    [project.id, workspace.id, 'Test project', 'test-project', project.dsnProjectId, project.publicKey],
   )
   const app = await buildServer({ adminToken, dashboardToken, database: executor })
+  app.addHook('onRequest', async (request) => {
+    request.headers['x-jabso-workspace-id'] ??= workspace.id
+  })
   return { app, database }
 }
 
@@ -221,6 +233,44 @@ describe('Jabso server', () => {
     await database.close()
   })
 
+  it('isolates projects and issue routes by workspace', async () => {
+    const { app, database } = await fixture()
+    const otherWorkspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a02'
+    await database.query(
+      `insert into workspaces (id, external_id, kind, name)
+       values ($1, 'org:org_other', 'team', 'Other team')`,
+      [otherWorkspaceId],
+    )
+
+    const ownProjects = await app.inject({
+      method: 'GET',
+      url: '/api/projects',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    const otherProjects = await app.inject({
+      method: 'GET',
+      url: '/api/projects',
+      headers: {
+        authorization: `Bearer ${dashboardToken}`,
+        'x-jabso-workspace-id': otherWorkspaceId,
+      },
+    })
+    const crossWorkspaceIssues = await app.inject({
+      method: 'GET',
+      url: `/api/${project.dsnProjectId}/issues`,
+      headers: {
+        authorization: `Bearer ${dashboardToken}`,
+        'x-jabso-workspace-id': otherWorkspaceId,
+      },
+    })
+
+    expect(ownProjects.json<{ items: unknown[] }>().items).toHaveLength(1)
+    expect(otherProjects.json<{ items: unknown[] }>().items).toHaveLength(0)
+    expect(crossWorkspaceIssues.statusCode).toBe(404)
+    await app.close()
+    await database.close()
+  })
+
   it('groups three equivalent errors into one issue and keeps all events', async () => {
     const { app, database } = await fixture()
     for (const [index, userId] of ['123456', '987654', '555555'].entries()) {
@@ -363,8 +413,9 @@ describe('Jabso server', () => {
   it('isolates issue reads by project and returns 404 for missing issues', async () => {
     const { app, database } = await fixture()
     await database.query(
-      `insert into projects (id, name, slug, dsn_project_id, public_key)
-       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', 'Other project', 'other-project', '84', 'other-key')`,
+      `insert into projects (id, workspace_id, name, slug, dsn_project_id, public_key)
+       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', $1, 'Other project', 'other-project', '84', 'other-key')`,
+      [workspace.id],
     )
 
     const isolatedResponse = await app.inject({
@@ -614,8 +665,9 @@ describe('Jabso server', () => {
   it('symbolicates new events only with artifacts from the same project and release', async () => {
     const { app, database } = await fixture()
     await database.query(
-      `insert into projects (id, name, slug, dsn_project_id, public_key)
-       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', 'Other project', 'other-project', '84', 'other-key')`,
+      `insert into projects (id, workspace_id, name, slug, dsn_project_id, public_key)
+       values ('018f47a2-5d1d-7e19-aab8-6f8cc59d9a02', $1, 'Other project', 'other-project', '84', 'other-key')`,
+      [workspace.id],
     )
     const upload = await app.inject({
       method: 'PUT',

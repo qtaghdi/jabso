@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { repositoryConnectionSchema } from './repository-connection.js'
 
 export const createProjectInputSchema = z.object({
+  workspaceId: z.uuid(),
   name: z.string().trim().min(1).max(80),
 })
 

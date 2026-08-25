@@ -45,6 +45,7 @@ import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-sto
 import { openApiDocument } from './openapi-document.js'
 import { createPostgresProjectStore } from './projects/postgres-project-store.js'
 import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
+import { createPostgresWorkspaceStore, type WorkspaceKind } from './workspaces/postgres-workspace-store.js'
 
 const compressedBodyLimit = 1024 * 1024
 const decodedBodyLimit = 5 * 1024 * 1024
@@ -61,6 +62,15 @@ const hasValidBearerToken = (authorization: string | undefined, expected: string
   const actualBytes = Buffer.from(authorization.slice('Bearer '.length))
   const expectedBytes = Buffer.from(expected)
   return actualBytes.length === expectedBytes.length && timingSafeEqual(actualBytes, expectedBytes)
+}
+
+const workspaceIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const externalWorkspaceIdPattern = /^(user|org):[a-zA-Z0-9_-]{3,128}$/
+
+const dashboardWorkspaceId = (headers: Record<string, string | string[] | undefined>, token: string | undefined) => {
+  if (!hasValidBearerToken(headers.authorization as string | undefined, token)) return null
+  const value = headers['x-jabso-workspace-id']
+  return typeof value === 'string' && workspaceIdPattern.test(value) ? value : null
 }
 
 const decodeBody = (body: Buffer, contentEncoding: string | undefined) => {
@@ -91,13 +101,16 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const uploadSourceMap = createUploadSourceMapImplementation(releaseStore)
   const retryReleaseSymbolication = createRetryReleaseSymbolicationImplementation(releaseStore)
   const projectStore = createPostgresProjectStore(database)
+  const workspaceStore = createPostgresWorkspaceStore(database)
   const listProjects = createListProjectsImplementation(projectStore)
   const createProject = createCreateProjectImplementation(projectStore)
   const deleteProject = createDeleteProjectImplementation(projectStore)
   const setProjectRepository = createSetProjectRepositoryImplementation(projectStore)
   const disconnectProjectRepository = createDisconnectProjectRepositoryImplementation(projectStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
-  const dashboardToken = options.dashboardToken ?? process.env.JABSO_DASHBOARD_TOKEN
+  const dashboardToken = options.dashboardToken
+    ?? process.env.JABSO_DASHBOARD_TOKEN
+    ?? (process.env.NODE_ENV === 'production' ? undefined : 'replace-with-a-long-random-token')
 
   const app = Fastify({
     bodyLimit: compressedBodyLimit,
@@ -166,13 +179,44 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     return reply.send({ status: 'ready' })
   })
 
-  app.get<{
-    Querystring: { cursor?: string; limit?: string }
-  }>('/api/projects', async (request, reply) => {
+  app.get<{ Params: { externalId: string } }>('/api/workspaces/:externalId', async (request, reply) => {
     if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
+    const externalId = decodeURIComponent(request.params.externalId)
+    if (!externalWorkspaceIdPattern.test(externalId)) {
+      return reply.code(400).send({ error: 'invalid workspace identity' })
+    }
+    const workspace = await workspaceStore.findByExternalId(externalId)
+    return workspace ? reply.send(workspace) : reply.code(404).send({ error: 'workspace not found' })
+  })
+
+  app.post<{
+    Body: { externalId?: string; kind?: WorkspaceKind; name?: string }
+  }>('/api/workspaces', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const externalId = request.body?.externalId?.trim() ?? ''
+    const kind = request.body?.kind
+    const name = request.body?.name?.trim() ?? ''
+    if (!externalWorkspaceIdPattern.test(externalId)
+      || !kind || !['personal', 'team', 'organization'].includes(kind)
+      || !name || name.length > 80) {
+      return reply.code(400).send({ error: 'invalid workspace' })
+    }
+    return reply.code(201).send(await workspaceStore.upsert({ externalId, kind, name }))
+  })
+
+  app.get<{
+    Querystring: { cursor?: string; limit?: string }
+  }>('/api/projects', async (request, reply) => {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
     return reply.send(await executeContract(listProjects, {
+      workspaceId,
       cursor: request.query.cursor,
       limit: request.query.limit ? Number(request.query.limit) : undefined,
     }))
@@ -181,20 +225,22 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.post<{
     Body: { name?: string }
   }>('/api/projects', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
-    const project = await executeContract(createProject, { name: request.body?.name ?? '' })
+    const project = await executeContract(createProject, { workspaceId, name: request.body?.name ?? '' })
     return reply.code(201).send(project)
   })
 
   app.delete<{
     Params: { projectId: string }
   }>('/api/projects/:projectId', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
-    const result = await executeContract(deleteProject, { id: request.params.projectId })
+    const result = await executeContract(deleteProject, { workspaceId, id: request.params.projectId })
     return result.deleted
       ? reply.send(result)
       : reply.code(404).send({ error: 'project not found' })
@@ -212,10 +258,12 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       url?: string
     }
   }>('/api/projects/:projectId/repository', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const result = await executeContract(setProjectRepository, {
+      workspaceId,
       projectId: request.params.projectId,
       repository: {
         defaultBranch: request.body?.defaultBranch ?? '',
@@ -233,10 +281,11 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.delete<{
     Params: { projectId: string }
   }>('/api/projects/:projectId/repository', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
-    const result = await executeContract(disconnectProjectRepository, { projectId: request.params.projectId })
+    const result = await executeContract(disconnectProjectRepository, { workspaceId, projectId: request.params.projectId })
     return result.disconnected
       ? reply.send(result)
       : reply.code(404).send({ error: 'repository connection not found' })
@@ -256,11 +305,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
       limit?: string
     }
   }>('/api/:projectId/issues', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
 
     const result = await executeContract(searchIssues, {
       projectId: project.id,
@@ -281,11 +333,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string }
     Querystring: Record<string, never>
   }>('/api/:projectId/issues/facets', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
     return reply.send(await executeContract(getIssueFacets, { projectId: project.id }))
   })
 
@@ -293,11 +348,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string; issueId: string }
     Querystring: Record<string, never>
   }>('/api/:projectId/issues/:issueId', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
 
     const result = await executeContract(getIssue, {
       projectId: project.id,
@@ -311,11 +369,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Querystring: Record<string, never>
     Body: { status?: 'unresolved' | 'resolved' | 'ignored' }
   }>('/api/:projectId/issues/:issueId/status', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
     const result = await executeContract(updateIssueStatus, {
       projectId: project.id,
       issueId: request.params.issueId,
@@ -328,11 +389,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string }
     Querystring: { limit?: string }
   }>('/api/:projectId/releases', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
     return reply.send(await executeContract(listReleases, {
       projectId: project.id,
       limit: request.query.limit ? Number(request.query.limit) : undefined,
@@ -343,11 +407,14 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     Params: { projectId: string; version: string }
     Querystring: { dist?: string; limit?: string }
   }>('/api/:projectId/releases/:version/regressions', async (request, reply) => {
-    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+    const workspaceId = dashboardWorkspaceId(request.headers, dashboardToken)
+    if (!workspaceId) {
       return reply.code(403).send({ error: 'invalid dashboard credentials' })
     }
     const project = await store.findProjectByDsnProjectId(request.params.projectId)
-    if (!project) return reply.code(404).send({ error: 'project not found' })
+    if (!project || project.workspace_id !== workspaceId) {
+      return reply.code(404).send({ error: 'project not found' })
+    }
     return reply.send(await executeContract(getReleaseRegressions, {
       projectId: project.id,
       release: request.params.version,

@@ -70,14 +70,14 @@ const toProject = (row: ProjectRow) => ({
 export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore => ({
   create: async (input) => {
     const result = await database.query<ProjectRow>(
-      `insert into projects (name, slug, dsn_project_id, public_key)
-       values ($1, $2, $3, $4)
+      `insert into projects (workspace_id, name, slug, dsn_project_id, public_key)
+       values ($1, $2, $3, $4, $5)
        returning id, name, slug, dsn_project_id, public_key, created_at,
          null::text as repository_external_id, null::text as repository_owner,
          null::text as repository_name, null::text as repository_url,
          null::text as repository_default_branch, null::boolean as repository_private,
          null::text as repository_root_path, null::timestamptz as repository_connected_at`,
-      [input.name, input.slug, input.dsnProjectId, input.publicKey],
+      [input.workspaceId, input.name, input.slug, input.dsnProjectId, input.publicKey],
     )
     const project = result.rows[0]
     if (!project) throw new Error('project creation did not return a project')
@@ -86,18 +86,21 @@ export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore 
   delete: async (input) => {
     const result = await database.query<{ id: string }>(
       `update projects set deleted_at = now()
-       where id = $1 and deleted_at is null
+       where id = $1 and workspace_id = $2 and deleted_at is null
        returning id`,
-      [input.id],
+      [input.id, input.workspaceId],
     )
     return { deleted: result.rows.length > 0, id: input.id }
   },
   disconnectRepository: async (input) => {
     const result = await database.query<{ project_id: string }>(
       `delete from project_repository_connections
-       where project_id = $1
+       using projects
+       where project_repository_connections.project_id = $1
+         and projects.id = project_repository_connections.project_id
+         and projects.workspace_id = $2
        returning project_id`,
-      [input.projectId],
+      [input.projectId, input.workspaceId],
     )
     return { disconnected: result.rows.length > 0, projectId: input.projectId }
   },
@@ -115,13 +118,14 @@ export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore 
          repository.connected_at as repository_connected_at
        from projects as project
        left join project_repository_connections as repository on repository.project_id = project.id
-       where project.deleted_at is null
-         and ($1::uuid is null or (project.created_at, project.id) < (
-         select created_at, id from projects where id = $1::uuid
+       where project.workspace_id = $1
+         and project.deleted_at is null
+         and ($2::uuid is null or (project.created_at, project.id) < (
+         select created_at, id from projects where id = $2::uuid and workspace_id = $1
        ))
        order by project.created_at desc, project.id desc
-       limit $2`,
-      [input.cursor ?? null, input.limit + 1],
+       limit $3`,
+      [input.workspaceId, input.cursor ?? null, input.limit + 1],
     )
     const hasNextPage = result.rows.length > input.limit
     const rows = result.rows.slice(0, input.limit)
@@ -137,8 +141,8 @@ export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore 
          project_id, provider, external_id, owner, name, url,
          default_branch, private, root_path
        )
-       select id, 'github', $2, $3, $4, $5, $6, $7, $8
-       from projects where id = $1 and deleted_at is null
+       select id, 'github', $3, $4, $5, $6, $7, $8, $9
+       from projects where id = $1 and workspace_id = $2 and deleted_at is null
        on conflict (project_id) do update set
          external_id = excluded.external_id,
          owner = excluded.owner,
@@ -152,6 +156,7 @@ export const createPostgresProjectStore = (database: SqlExecutor): ProjectStore 
          private, root_path, connected_at`,
       [
         input.projectId,
+        input.workspaceId,
         repository.externalId,
         repository.owner,
         repository.name,

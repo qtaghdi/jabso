@@ -42,6 +42,14 @@ const releaseVersionParameter: OpenAPIV3.ParameterObject = {
   schema: { type: 'string', maxLength: 250 },
 }
 
+const workspaceHeaderParameter: OpenAPIV3.ParameterObject = {
+  name: 'X-Jabso-Workspace-Id',
+  in: 'header',
+  required: true,
+  description: 'Internal workspace UUID resolved by the trusted Jabso web server.',
+  schema: { type: 'string', format: 'uuid' },
+}
+
 const projectKeySecurity = [{ projectKey: [] }]
 const dashboardSecurity = [{ dashboardToken: [] }]
 const administratorSecurity = [{ administratorToken: [] }]
@@ -61,6 +69,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: 'System', description: 'Collector health and database readiness.' },
     { name: 'Ingestion', description: 'Sentry-compatible event ingestion.' },
     { name: 'Projects', description: 'Dashboard project creation, listing, and removal.' },
+    { name: 'Workspaces', description: 'Internal Clerk identity to Jabso workspace resolution.' },
     { name: 'Issues', description: 'Issue search, detail, facets, and status workflow.' },
     { name: 'Releases', description: 'Release visibility and source-map symbolication.' },
   ],
@@ -86,6 +95,44 @@ export const openApiDocument: OpenAPIV3.Document = {
         },
       },
     },
+    '/api/workspaces/{externalId}': {
+      get: {
+        tags: ['Workspaces'],
+        summary: 'Resolve an external workspace identity',
+        operationId: 'getWorkspaceByExternalId',
+        security: dashboardSecurity,
+        parameters: [{ name: 'externalId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': response('The matching workspace.', { $ref: '#/components/schemas/Workspace' }),
+          '404': response('The workspace is not provisioned.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/workspaces': {
+      post: {
+        tags: ['Workspaces'],
+        summary: 'Provision a workspace',
+        operationId: 'provisionWorkspace',
+        security: dashboardSecurity,
+        requestBody: {
+          required: true,
+          content: jsonContent({
+            type: 'object',
+            required: ['externalId', 'kind', 'name'],
+            properties: {
+              externalId: { type: 'string' },
+              kind: { type: 'string', enum: ['personal', 'team', 'organization'] },
+              name: { type: 'string', minLength: 1, maxLength: 80 },
+            },
+            additionalProperties: false,
+          }),
+        },
+        responses: {
+          '201': response('The workspace was provisioned.', { $ref: '#/components/schemas/Workspace' }),
+          '400': response('The workspace input is invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
     '/api/projects': {
       get: {
         tags: ['Projects'],
@@ -93,6 +140,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         operationId: 'listProjects',
         security: dashboardSecurity,
         parameters: [
+          workspaceHeaderParameter,
           { name: 'cursor', in: 'query', schema: { type: 'string', format: 'uuid' } },
           { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 } },
         ],
@@ -106,6 +154,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'Create a project',
         operationId: 'createProject',
         security: dashboardSecurity,
+        parameters: [workspaceHeaderParameter],
         requestBody: {
           required: true,
           content: jsonContent({
@@ -129,7 +178,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         description: 'Soft-deletes the project. Existing issues, events, releases, and artifacts remain stored for recovery, while new ingestion and dashboard reads are disabled.',
         operationId: 'deleteProject',
         security: dashboardSecurity,
-        parameters: [projectUuidParameter],
+        parameters: [workspaceHeaderParameter, projectUuidParameter],
         responses: {
           '200': response('The project was soft-deleted.', { $ref: '#/components/schemas/ProjectDeletion' }),
           '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
@@ -144,7 +193,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         description: 'Stores server-verified repository metadata and an optional repository-relative root. Credentials and source content are never accepted.',
         operationId: 'setProjectRepository',
         security: dashboardSecurity,
-        parameters: [projectUuidParameter],
+        parameters: [workspaceHeaderParameter, projectUuidParameter],
         requestBody: {
           required: true,
           content: jsonContent({ $ref: '#/components/schemas/RepositoryConnectionInput' }),
@@ -160,7 +209,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'Disconnect a repository',
         operationId: 'disconnectProjectRepository',
         security: dashboardSecurity,
-        parameters: [projectUuidParameter],
+        parameters: [workspaceHeaderParameter, projectUuidParameter],
         responses: {
           '200': response('The repository connection was removed.', { $ref: '#/components/schemas/RepositoryDisconnection' }),
           '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
@@ -203,6 +252,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         operationId: 'searchIssues',
         security: dashboardSecurity,
         parameters: [
+          workspaceHeaderParameter,
           projectIdParameter,
           { name: 'query', in: 'query', schema: { type: 'string', maxLength: 500 } },
           { name: 'status', in: 'query', schema: { $ref: '#/components/schemas/IssueStatus' } },
@@ -226,7 +276,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'List issue filter facets',
         operationId: 'getIssueFacets',
         security: dashboardSecurity,
-        parameters: [projectIdParameter],
+        parameters: [workspaceHeaderParameter, projectIdParameter],
         responses: {
           '200': response('Available levels, environments, and releases.', { $ref: '#/components/schemas/IssueFacets' }),
           '403': response('The project credentials are invalid.', { $ref: '#/components/schemas/Error' }),
@@ -239,7 +289,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'Get issue detail',
         operationId: 'getIssue',
         security: dashboardSecurity,
-        parameters: [projectIdParameter, issueIdParameter],
+        parameters: [workspaceHeaderParameter, projectIdParameter, issueIdParameter],
         responses: {
           '200': response('Issue detail with bounded occurrence and release history.', { $ref: '#/components/schemas/IssueDetail' }),
           '403': response('The project credentials are invalid.', { $ref: '#/components/schemas/Error' }),
@@ -253,7 +303,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'Update issue status',
         operationId: 'updateIssueStatus',
         security: dashboardSecurity,
-        parameters: [projectIdParameter, issueIdParameter],
+        parameters: [workspaceHeaderParameter, projectIdParameter, issueIdParameter],
         requestBody: {
           required: true,
           content: jsonContent({
@@ -277,7 +327,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         summary: 'List releases',
         operationId: 'listReleases',
         security: dashboardSecurity,
-        parameters: [projectIdParameter, {
+        parameters: [workspaceHeaderParameter, projectIdParameter, {
           name: 'limit',
           in: 'query',
           schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
@@ -295,6 +345,7 @@ export const openApiDocument: OpenAPIV3.Document = {
         operationId: 'getReleaseRegressions',
         security: dashboardSecurity,
         parameters: [
+          workspaceHeaderParameter,
           projectIdParameter,
           releaseVersionParameter,
           { name: 'dist', in: 'query', schema: { type: 'string', maxLength: 128, default: '' } },
@@ -390,6 +441,16 @@ export const openApiDocument: OpenAPIV3.Document = {
         type: 'object',
         properties: { status: { type: 'string', enum: ['ready'] } },
         required: ['status'],
+      },
+      Workspace: {
+        type: 'object',
+        required: ['id', 'externalId', 'kind', 'name'],
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          externalId: { type: 'string' },
+          kind: { type: 'string', enum: ['personal', 'team', 'organization'] },
+          name: { type: 'string' },
+        },
       },
       IngestResult: {
         type: 'object',

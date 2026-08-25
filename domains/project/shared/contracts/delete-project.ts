@@ -2,6 +2,7 @@ import { defineMutation, type InferSchema } from 'boundra'
 import { z } from 'zod'
 
 export const deleteProjectInputSchema = z.object({
+  workspaceId: z.uuid(),
   id: z.uuid(),
 })
 
