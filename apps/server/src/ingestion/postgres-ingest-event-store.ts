@@ -20,7 +20,7 @@ export class PostgresIngestEventStore implements IngestEventStore {
 
   async findProject(dsnProjectId: string, publicKey: string) {
     const result = await this.database.query<ProjectRow>(
-      'select id from projects where dsn_project_id = $1 and public_key = $2 limit 1',
+      'select id from projects where dsn_project_id = $1 and public_key = $2 and deleted_at is null limit 1',
       [dsnProjectId, publicKey],
     )
     return result.rows[0]
@@ -28,7 +28,7 @@ export class PostgresIngestEventStore implements IngestEventStore {
 
   async findProjectByDsnProjectId(dsnProjectId: string) {
     const result = await this.database.query<ProjectRow>(
-      'select id from projects where dsn_project_id = $1 limit 1',
+      'select id from projects where dsn_project_id = $1 and deleted_at is null limit 1',
       [dsnProjectId],
     )
     return result.rows[0]

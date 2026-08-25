@@ -25,6 +25,7 @@ import {
 } from '../../../domains/release/server/public.js'
 import {
   createCreateProjectImplementation,
+  createDeleteProjectImplementation,
   createListProjectsImplementation,
 } from '../../../domains/project/server/public.js'
 import { maxSourceMapBytes } from '../../../domains/release/shared/public.js'
@@ -86,6 +87,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const projectStore = createPostgresProjectStore(database)
   const listProjects = createListProjectsImplementation(projectStore)
   const createProject = createCreateProjectImplementation(projectStore)
+  const deleteProject = createDeleteProjectImplementation(projectStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
   const dashboardToken = options.dashboardToken ?? process.env.JABSO_DASHBOARD_TOKEN
 
@@ -166,6 +168,18 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     }
     const project = await executeContract(createProject, { name: request.body?.name ?? '' })
     return reply.code(201).send(project)
+  })
+
+  app.delete<{
+    Params: { projectId: string }
+  }>('/api/projects/:projectId', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const result = await executeContract(deleteProject, { id: request.params.projectId })
+    return result.deleted
+      ? reply.send(result)
+      : reply.code(404).send({ error: 'project not found' })
   })
 
   app.get<{

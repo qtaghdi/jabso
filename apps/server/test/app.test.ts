@@ -112,6 +112,39 @@ describe('Jabso server', () => {
       payload: envelope({ event_id: 'new-project-event', message: 'Connected project' }),
     })
     expect(ingestionResponse.statusCode).toBe(200)
+
+    const unauthorizedDelete = await app.inject({
+      method: 'DELETE',
+      url: `/api/projects/${created.id}`,
+    })
+    expect(unauthorizedDelete.statusCode).toBe(403)
+
+    const deletedResponse = await app.inject({
+      method: 'DELETE',
+      url: `/api/projects/${created.id}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(deletedResponse.statusCode).toBe(200)
+    expect(deletedResponse.json()).toEqual({ deleted: true, id: created.id })
+    expect((await database.query<{ count: number; deletedAt: string | null }>(
+      'select count(*)::int as count, max(deleted_at)::text as "deletedAt" from projects where id = $1',
+      [created.id],
+    )).rows[0]).toMatchObject({ count: 1, deletedAt: expect.any(String) })
+
+    const rejectedIngestion = await app.inject({
+      method: 'POST',
+      url: `/api/${created.dsnProjectId}/envelope?sentry_key=${created.publicKey}`,
+      headers: { 'content-type': 'application/x-sentry-envelope' },
+      payload: envelope({ event_id: 'deleted-project-event', message: 'Must not be accepted' }),
+    })
+    expect(rejectedIngestion.statusCode).toBe(403)
+
+    const missingResponse = await app.inject({
+      method: 'DELETE',
+      url: `/api/projects/${created.id}`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(missingResponse.statusCode).toBe(404)
     await app.close()
     await database.close()
   })
