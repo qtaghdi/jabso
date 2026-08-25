@@ -339,6 +339,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .clerk-social-button:focus-visible { outline: 3px solid rgb(49 118 196 / 24%) !important; outline-offset: 2px !important; }
 .clerk-social-button-text { color: #fff !important; font-size: 14px !important; font-weight: 680 !important; }
 .clerk-social-icon { filter: brightness(0) invert(1); }
+.clerk-last-used-badge { display: none !important; }
 .clerk-divider-line { background: var(--border) !important; }
 .clerk-divider-text { color: #7d8691 !important; font-size: 12px !important; }
 .clerk-input { width: 100% !important; min-height: 50px !important; border: 1px solid #cbd2da !important; border-radius: 8px !important; box-shadow: none !important; }
