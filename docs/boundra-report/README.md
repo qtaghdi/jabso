@@ -8,7 +8,7 @@
 
 | Date | Report | Classification | Status | Upstream candidate |
 | --- | --- | --- | --- | --- |
-| 2026-08-25 | [Production project list contract rejection](./2026-08-25-production-project-list-contract-rejection.md) | Undetermined | Investigating | Undetermined |
+| 2026-08-25 | [Production project list handler failure](./2026-08-25-production-project-list-contract-rejection.md) | Jabso integration | Resolved | No |
 
 ## Recording rule
 

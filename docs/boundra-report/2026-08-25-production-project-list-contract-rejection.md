@@ -1,70 +1,80 @@
-# Production project list contract rejection
+# Production project list handler failure
 
 | Field | Value |
 | --- | --- |
 | First observed | 2026-08-25 |
-| Status | Investigating |
-| Classification | Undetermined |
+| Status | Resolved |
+| Classification | Jabso integration |
 | Boundra version | 0.2.2 |
 | Severity | High |
-| Upstream candidate | Undetermined |
+| Upstream candidate | No |
 
 ## Summary
 
-The production dashboard could not load its project list. The authenticated web proxy returned HTTP 500 while its upstream `GET /api/projects?limit=100` request returned HTTP 400 from the collector. This blocks the dashboard because project selection is required by the Issues and Projects views.
+The production dashboard could not load its project list. Its authenticated web proxy returned HTTP 500 while the upstream collector returned HTTP 400 for `GET /api/projects?limit=100`. The collector's project query referenced a database column introduced by migration `0004`, but that migration had not been applied to the production Neon database.
 
 ## Safe symptom
 
-- Boundary: `list-projects`
-- Collector route: `GET /api/projects`
-- Input: `limit=100`
-- Collector status: `400 Bad Request`
-- Web proxy route: `GET /api/dashboard/projects`
-- Web proxy status: `500 Internal Server Error`
+- Contract: `list-projects`
+- Boundra code: `RUNTIME-003`
+- Boundra phase: `handler`
+- Collector route and status: `GET /api/projects?limit=100`, HTTP 400
+- Web proxy route and status: `GET /api/dashboard/projects`, HTTP 500
 - Production region: Seoul (`icn1`)
-- Boundra error code and rejected field path: not yet captured
+- Diagnostic recorder failure: an empty configured path produced `ENOENT` while opening the sink
 
 No authorization header, dashboard token, DSN, response body, database value, or raw event is included in this report.
 
 ## Reproduction
 
-1. Deploy the current Jabso web and collector applications with production dashboard credentials.
-2. Sign in to the private dashboard as the configured owner.
-3. Open a dashboard page that loads the project list.
-4. Observe the web proxy request to `/api/dashboard/projects` fail with HTTP 500.
-5. Observe the corresponding collector invocation for `/api/projects?limit=100` finish with HTTP 400.
+1. Deploy project-list code that filters on `projects.deleted_at`.
+2. Leave the production database at migration `0003`, without the `deleted_at` column from migration `0004`.
+3. Send an authenticated `GET /api/projects?limit=100` request.
+4. Observe the SQL handler fail and Boundra wrap the dependency error as `RUNTIME-003` in the `handler` phase.
+5. Configure `JABSO_BOUNDRA_DIAGNOSTIC_PATH` as an empty value and observe the NDJSON recorder fail with `ENOENT`.
 
 ## Expected and actual behavior
 
-- Expected: The collector validates the list input and result, then returns a bounded project list with HTTP 200. The web proxy forwards that data to the dashboard.
-- Actual: The collector returns HTTP 400 without an outgoing dependency call, and the web proxy surfaces the upstream failure as HTTP 500.
+- Expected: Database migrations are applied before code that requires them. The collector returns a bounded project list with HTTP 200.
+- Actual: The handler queried a missing `deleted_at` column. Boundra correctly wrapped the handler exception, but Jabso misclassified it as HTTP 400 and its diagnostic recorder discarded the diagnostic because the configured file path was empty.
 
 ## Root cause
 
-The exact contract failure is not yet known because the captured production evidence does not include Boundra's safe error code, contract field path, or expected/received type.
+This was a Jabso deployment and adapter problem, not a Boundra defect.
 
-The collector currently converts every `BoundraRuntimeError` to HTTP 400. That status is appropriate for an invalid request contract but not for a result contract failure caused by server implementation or persisted data. The web adapter then converts any non-success collector response into a generic HTTP 500. This double mapping hides whether the failure is an input rejection, a result rejection, or a Boundra defect.
+Migration `0004_faithful_black_bird.sql` adds `projects.deleted_at`. The project-list store had already deployed a `where deleted_at is null` filter, but the production Neon schema still contained only the pre-migration project columns. Boundra correctly reported the thrown database exception as `RUNTIME-003` with phase `handler`.
 
-Until the safe Boundra diagnostic identifies the rejected stage and field, classify this incident as `Undetermined`. A result-schema mismatch or deployment/schema skew would be a Jabso integration issue; only an isolated incorrect validation by Boundra would be an upstream candidate.
+Two secondary Jabso problems obscured the cause:
+
+- the Fastify error handler returned HTTP 400 for every `BoundraRuntimeError`, including internal handler failures
+- a blank `JABSO_BOUNDRA_DIAGNOSTIC_PATH` was treated as a real path instead of falling back to a writable Vercel location
 
 ## Resolution
 
-Not resolved. Capture the safe diagnostic for this invocation, including only the Boundra code, contract name, validation stage, field path, and expected/received type. Then correct the contract or adapter mismatch and split HTTP handling so client input failures remain 400 while internal result failures return 500.
+- Applied the pending Drizzle migrations to the production Neon database.
+- Executed the real PostgreSQL store and `list-projects` Boundra contract against production data; it returned three projects and a null next cursor.
+- Changed HTTP mapping so input contract failures return 400 while handler and result failures return a generic, non-sensitive 500 response.
+- Added structured safe logging for Boundra code, contract, phase, and normalized issues.
+- Changed a blank diagnostic path to use `/tmp/jabso-boundra.ndjson` on Vercel and the existing local fallback elsewhere.
 
 ## Regression coverage
 
-Existing server integration tests cover project listing and repository connections against the test database, but they did not detect this production-only path. The eventual fix should add:
+- Unit coverage verifies input failures map to 400.
+- Unit coverage verifies handler failures map to 500 without exposing the wrapped database message.
+- Unit coverage verifies blank Vercel diagnostic paths resolve to `/tmp`.
+- `pnpm check` validates runtime behavior and Boundra boundaries.
+- `pnpm build` verifies the production server and dashboard builds.
 
-- a production-schema smoke test for `GET /api/projects?limit=100`
-- an adapter test proving invalid input contracts return 400
-- an adapter test proving result contract failures return 500 without exposing sensitive values
-- a web proxy test preserving a safe upstream error identifier for diagnosis
+Database migrations remain an explicit deployment operation. A future deployment workflow should apply migrations before promoting schema-dependent code.
 
 ## Privacy review
 
-This report contains only route names, status codes, region, package version, and bounded operational metadata. It excludes credentials, request and response bodies, database contents, raw events, and environment variables.
+This report contains only route names, status codes, contract metadata, schema identifiers, and bounded operational facts. It excludes credentials, connection strings, database contents, raw events, and environment variable values.
 
 ## Timeline
 
 - 2026-08-25: Production dashboard request failed with HTTP 500; the corresponding collector request returned HTTP 400.
-- 2026-08-25: Recorded as an investigating incident pending the safe Boundra diagnostic code and field path.
+- 2026-08-25: Runtime logs identified `RUNTIME-003` and a dropped diagnostic caused by an empty file path.
+- 2026-08-25: A read-only schema query confirmed that `projects.deleted_at` was absent from production.
+- 2026-08-25: Applied migration `0004` and verified the production `list-projects` contract returned successfully.
+- 2026-08-25: Added safe logging, correct HTTP status mapping, and a writable Vercel diagnostic fallback.
