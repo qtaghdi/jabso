@@ -34,7 +34,7 @@ Read-only MCP tools are the next planned phase. Session Replay and a first-party
 | Monorepo | pnpm workspaces, Turborepo |
 | Dashboard | Next.js 16, React 19, TanStack Query, Clerk |
 | Collector | Fastify, Node.js 24 |
-| Domain boundaries | Boundra 0.2.2, Zod |
+| Domain boundaries | Boundra 0.3.0, Zod |
 | Database | PostgreSQL, Drizzle ORM |
 | Symbolication | `@jridgewell/trace-mapping` |
 | Logging | Pino |
