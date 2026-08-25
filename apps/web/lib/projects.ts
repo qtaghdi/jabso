@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
+import { revalidateTag } from 'next/cache'
 import { cache } from 'react'
 import { requireOwner } from '@/lib/auth'
 
@@ -31,6 +32,7 @@ type ProjectList = {
 }
 
 const activeProjectCookie = 'jabso-active-project'
+const projectsCacheTag = 'jabso-dashboard-projects'
 
 export const getServerApiConfig = () => {
   const config = {
@@ -49,18 +51,40 @@ export const getServerApiConfig = () => {
   return { ...config, baseUrl: config.baseUrl.replace(/\/$/, '') }
 }
 
-const dashboardRequest = async <Result>(path: string, init?: RequestInit): Promise<Result> => {
+type DashboardRequestOptions = {
+  cache?: { revalidate: number; tags: string[] }
+  operation: string
+}
+
+const dashboardRequest = async <Result>(
+  path: string,
+  init: RequestInit | undefined,
+  options: DashboardRequestOptions,
+): Promise<Result> => {
   await requireOwner()
   const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
   headers.set('authorization', `Bearer ${dashboardToken}`)
-  const response = await fetch(`${baseUrl}${path}`, { cache: 'no-store', ...init, headers })
+  const startedAt = performance.now()
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    headers,
+    ...(options.cache ? { next: options.cache } : { cache: 'no-store' }),
+  })
+  console.info('[jabso-dashboard-upstream]', {
+    durationMs: Math.round(performance.now() - startedAt),
+    operation: options.operation,
+    status: response.status,
+  })
   if (!response.ok) throw new Error(`Jabso API request failed with status ${response.status}`)
   return response.json() as Promise<Result>
 }
 
 export const listProjects = cache(async () =>
-  dashboardRequest<ProjectList>('/api/projects?limit=100'),
+  dashboardRequest<ProjectList>('/api/projects?limit=100', undefined, {
+    cache: { revalidate: 300, tags: [projectsCacheTag] },
+    operation: 'projects.list',
+  }),
 )
 
 export const createProject = async (name: string) =>
@@ -68,11 +92,17 @@ export const createProject = async (name: string) =>
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name }),
+  }, { operation: 'projects.create' }).then((project) => {
+    revalidateTag(projectsCacheTag, { expire: 0 })
+    return project
   })
 
 export const deleteProject = async (id: string) =>
   dashboardRequest<{ deleted: boolean; id: string }>(`/api/projects/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+  }, { operation: 'projects.delete' }).then((result) => {
+    revalidateTag(projectsCacheTag, { expire: 0 })
+    return result
   })
 
 export const setProjectRepository = async (projectId: string, repository: Omit<RepositoryConnection, 'connectedAt'>) =>
@@ -83,13 +113,21 @@ export const setProjectRepository = async (projectId: string, repository: Omit<R
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(repository),
     },
-  )
+    { operation: 'projects.repository.connect' },
+  ).then((result) => {
+    revalidateTag(projectsCacheTag, { expire: 0 })
+    return result
+  })
 
 export const disconnectProjectRepository = async (projectId: string) =>
   dashboardRequest<{ disconnected: boolean; projectId: string }>(
     `/api/projects/${encodeURIComponent(projectId)}/repository`,
     { method: 'DELETE' },
-  )
+    { operation: 'projects.repository.disconnect' },
+  ).then((result) => {
+    revalidateTag(projectsCacheTag, { expire: 0 })
+    return result
+  })
 
 export const getActiveProjectFrom = async (items: ProjectSummary[]) => {
   const selectedId = (await cookies()).get(activeProjectCookie)?.value

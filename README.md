@@ -116,13 +116,14 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `JABSO_ADMIN_TOKEN` | Server-only credential for source-map administration |
 | `JABSO_API_URL` | Collector URL used by the Next.js server |
 | `JABSO_OWNER_GITHUB_LOGIN` | The only GitHub login allowed into this private instance |
+| `JABSO_OWNER_CLERK_USER_ID` | Clerk user ID used for fast owner checks without a Clerk Backend API lookup |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk server secret |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
 `JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
-For GitHub authentication, enable GitHub as a social connection in Clerk and set `JABSO_OWNER_GITHUB_LOGIN` to the account that owns the instance.
+For GitHub authentication, enable GitHub as a social connection in Clerk and set `JABSO_OWNER_GITHUB_LOGIN` and `JABSO_OWNER_CLERK_USER_ID` to the account that owns the instance. If the Clerk user ID is omitted, Jabso safely falls back to checking the GitHub account through Clerk's Backend API, but dashboard navigation incurs an extra network request.
 
 ## Send an error
 

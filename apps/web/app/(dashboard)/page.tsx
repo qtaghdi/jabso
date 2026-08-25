@@ -15,13 +15,28 @@ const toUrlSearchParams = (input: Record<string, string | string[] | undefined>)
   return parameters
 }
 
-const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
+const IssuesPageData = async ({ searchParams }: IssuesPageProps) => {
   const initialData = await getIssuesResponse(toUrlSearchParams(await searchParams))
-  return (
-    <Suspense fallback={<div className="issues-inline-loading" role="status"><span className="skeleton-block skeleton-title" /><span className="sr-only">Loading issues</span></div>}>
-      <IssuesView initialData={initialData} />
-    </Suspense>
-  )
+  return <IssuesView initialData={initialData} />
 }
+
+const IssuesPageLoading = () => (
+  <div className="dashboard-page-loading issues-page-loading" role="status">
+    <div className="page-header-loading">
+      <span className="skeleton-block skeleton-title" />
+      <span className="skeleton-block skeleton-copy" />
+    </div>
+    <div className="skeleton-table">
+      {Array.from({ length: 4 }, (_, index) => <span className="skeleton-block" key={index} />)}
+    </div>
+    <span className="sr-only">Loading issues</span>
+  </div>
+)
+
+const IssuesPage = ({ searchParams }: IssuesPageProps) => (
+  <Suspense fallback={<IssuesPageLoading />}>
+    <IssuesPageData searchParams={searchParams} />
+  </Suspense>
+)
 
 export default IssuesPage

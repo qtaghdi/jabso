@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { revalidateTag } from 'next/cache'
 import { requireOwner } from '@/lib/auth'
 import { getActiveProject, getServerApiConfig, type ProjectSummary } from '@/lib/projects'
 
@@ -86,10 +87,18 @@ export type IssueFacets = {
   releases: string[]
 }
 
+const issueCacheTag = 'jabso-dashboard-issues'
+
+type RequestOptions = {
+  cache?: { revalidate: number; tags: string[] }
+  operation: string
+}
+
 const request = async <Result>(
   path: string,
   init?: RequestInit,
   projectOverride?: ProjectSummary | null,
+  options: RequestOptions = { operation: 'issues.request' },
 ): Promise<Result | null> => {
   await requireOwner()
   const project = projectOverride === undefined ? await getActiveProject() : projectOverride
@@ -97,10 +106,20 @@ const request = async <Result>(
   const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
   headers.set('authorization', `Bearer ${dashboardToken}`)
+  const startedAt = performance.now()
   const response = await fetch(
     `${baseUrl}/api/${encodeURIComponent(project.dsnProjectId)}${path}`,
-    { cache: 'no-store', ...init, headers },
+    {
+      ...init,
+      headers,
+      ...(options.cache ? { next: options.cache } : { cache: 'no-store' }),
+    },
   )
+  console.info('[jabso-dashboard-upstream]', {
+    durationMs: Math.round(performance.now() - startedAt),
+    operation: options.operation,
+    status: response.status,
+  })
   if (response.status === 404) return null
   if (!response.ok) throw new Error(`Jabso API request failed with status ${response.status}`)
   return response.json() as Promise<Result>
@@ -129,7 +148,9 @@ export const listIssues = async (filters: IssueFilters = {}, project?: ProjectSu
   if (filters.period) parameters.set('last_seen_after', new Date(Date.now() - periodMilliseconds[filters.period]).toISOString())
   if (filters.cursor) parameters.set('cursor', filters.cursor)
   if (filters.direction) parameters.set('direction', filters.direction)
-  return (await request<IssueList>(`/issues?${parameters}`, undefined, project)) ?? {
+  return (await request<IssueList>(`/issues?${parameters}`, undefined, project, {
+    operation: 'issues.list',
+  })) ?? {
     items: [],
     nextCursor: null,
     previousCursor: null,
@@ -137,19 +158,30 @@ export const listIssues = async (filters: IssueFilters = {}, project?: ProjectSu
 }
 
 export const getIssueFacets = cache(async (project?: ProjectSummary | null) =>
-  (await request<IssueFacets>('/issues/facets', undefined, project)) ?? { levels: [], environments: [], releases: [] },
+  (await request<IssueFacets>('/issues/facets', undefined, project, {
+    cache: { revalidate: 300, tags: [issueCacheTag] },
+    operation: 'issues.facets',
+  })) ?? { levels: [], environments: [], releases: [] },
 )
 
 export const getIssue = cache(async (issueId: string) =>
-  request<IssueDetail>(`/issues/${encodeURIComponent(issueId)}`),
+  request<IssueDetail>(`/issues/${encodeURIComponent(issueId)}`, undefined, undefined, {
+    cache: { revalidate: 30, tags: [issueCacheTag] },
+    operation: 'issues.detail',
+  }),
 )
 
-export const updateIssueStatus = async (issueId: string, status: IssueSummary['status']) =>
-  request<{ issueId: string; status: IssueSummary['status']; changedAt: string }>(
+export const updateIssueStatus = async (issueId: string, status: IssueSummary['status']) => {
+  const result = await request<{ issueId: string; status: IssueSummary['status']; changedAt: string }>(
     `/issues/${encodeURIComponent(issueId)}/status`,
     {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ status }),
     },
+    undefined,
+    { operation: 'issues.status.update' },
   )
+  revalidateTag(issueCacheTag, { expire: 0 })
+  return result
+}

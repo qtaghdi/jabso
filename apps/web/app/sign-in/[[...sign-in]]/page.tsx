@@ -38,6 +38,7 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
                 socialButtonsBlockButton: 'clerk-social-button',
                 socialButtonsBlockButtonText: 'clerk-social-button-text',
                 socialButtonsProviderIcon: 'clerk-social-icon',
+                lastAuthenticationStrategyBadge: 'clerk-last-used-badge',
                 dividerLine: 'clerk-divider-line',
                 dividerText: 'clerk-divider-text',
                 formFieldInput: 'clerk-input',

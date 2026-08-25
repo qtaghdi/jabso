@@ -20,11 +20,31 @@
       "outputs": ["dist/**"],
       "passThroughEnv": [
         "DATABASE_URL",
+        "HOST",
         "JABSO_ADMIN_TOKEN",
         "JABSO_ALLOWED_ORIGIN",
         "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
         "JABSO_DATABASE_URL",
+        "JABSO_DASHBOARD_TOKEN",
+        "PORT",
         "POSTGRES_URL"
+      ]
+    },
+    "@jabso/web#build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "CLERK_SECRET_KEY",
+        "JABSO_API_URL",
+        "JABSO_DASHBOARD_TOKEN",
+        "JABSO_OWNER_CLERK_USER_ID",
+        "JABSO_OWNER_GITHUB_LOGIN",
+        "JABSO_PROJECT_ID",
+        "JABSO_PROJECT_KEY",
+        "NEXT_PUBLIC_APP_VERSION",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
+        "NEXT_PUBLIC_JABSO_DSN"
       ]
     },
     "dev": {

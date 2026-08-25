@@ -2,7 +2,8 @@
 
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import type { FormEvent } from 'react'
 import { GettingStarted } from '@/components/getting-started'
 import { Button, buttonClassName } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -56,6 +57,7 @@ type IssuesViewProps = {
 }
 
 export const IssuesView = ({ initialData }: IssuesViewProps) => {
+  const router = useRouter()
   const searchParameters = useSearchParams()
   const queryClient = useQueryClient()
   const search = searchParameters.toString()
@@ -66,6 +68,16 @@ export const IssuesView = ({ initialData }: IssuesViewProps) => {
     initialData,
     placeholderData: keepPreviousData,
   })
+
+  const applyFilters = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const parameters = new URLSearchParams()
+    for (const [key, value] of new FormData(event.currentTarget)) {
+      if (typeof value === 'string' && value) parameters.set(key, value)
+    }
+    const nextSearch = parameters.toString()
+    router.push(nextSearch ? `/?${nextSearch}` : '/')
+  }
 
   if (issuesQuery.isPending) return <IssuesLoading />
   if (issuesQuery.isError) {
@@ -83,7 +95,7 @@ export const IssuesView = ({ initialData }: IssuesViewProps) => {
           </Link> : null}
         </div>
       </header>
-      {activeProject && (items.length > 0 || hasActiveFilters) ? <form className="filter-bar phase-two-filters" key={search} method="get">
+      {activeProject && (items.length > 0 || hasActiveFilters) ? <form className="filter-bar phase-two-filters" key={search} method="get" onSubmit={applyFilters}>
         <label className="filter-search">
           <span className="sr-only">Filter issues</span>
           <input name="query" type="search" placeholder="Filter issues…" defaultValue={filters.query} />

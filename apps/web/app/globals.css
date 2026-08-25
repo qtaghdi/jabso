@@ -332,13 +332,14 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-form-header > p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
 .clerk-root-box, .clerk-card-box, .clerk-card, .clerk-main { width: 100% !important; max-width: none !important; }
 .clerk-card-box { box-shadow: none !important; }
-.clerk-card { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+.clerk-card { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .clerk-header { display: none !important; }
 .clerk-social-button { width: 100% !important; min-height: 50px !important; border: 1px solid #17191d !important; border-radius: 10px !important; background: #17191d !important; color: #fff !important; box-shadow: none !important; transition: background-color 140ms ease, transform 140ms ease !important; }
 .clerk-social-button:hover { background: #050607 !important; transform: translateY(-1px); }
 .clerk-social-button:focus-visible { outline: 3px solid rgb(49 118 196 / 24%) !important; outline-offset: 2px !important; }
 .clerk-social-button-text { color: #fff !important; font-size: 14px !important; font-weight: 680 !important; }
 .clerk-social-icon { filter: brightness(0) invert(1); }
+.clerk-last-used-badge { display: none !important; }
 .clerk-divider-line { background: var(--border) !important; }
 .clerk-divider-text { color: #7d8691 !important; font-size: 12px !important; }
 .clerk-input { width: 100% !important; min-height: 50px !important; border: 1px solid #cbd2da !important; border-radius: 8px !important; box-shadow: none !important; }
@@ -454,6 +455,11 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .skeleton-section-title { width: 180px; height: 22px; margin-bottom: 20px; }
 .skeleton-section-body { width: 100%; height: 110px; }
 .skeleton-smoke-panel { width: min(720px, 100%); height: 190px; }
+.dashboard-page-loading { width: 100%; }
+.dashboard-page-loading .page-header-loading { margin-bottom: 42px; }
+.dashboard-page-loading .skeleton-table { margin-top: 30px; }
+.dashboard-page-loading .skeleton-project-form { width: min(100%, 900px); height: 116px; }
+.dashboard-page-loading .skeleton-code { width: min(100%, 760px); height: 180px; margin-top: 42px; }
 .issues-inline-loading { padding-top: 8px; }
 .issues-inline-loading .skeleton-table { margin-top: 42px; }
 .query-refreshing { opacity: 0.62; transition: opacity 140ms ease; }

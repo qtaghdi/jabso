@@ -67,6 +67,7 @@ export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) 
             aria-label="Issues"
             className={`nav-item ${activeNav === 'issues' ? 'nav-item-active' : ''}`}
             href="/"
+            prefetch
             title="Issues"
           >
             <IssueIcon />
@@ -76,6 +77,7 @@ export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) 
             aria-label="Projects"
             className={`nav-item ${activeNav === 'projects' ? 'nav-item-active' : ''}`}
             href="/projects"
+            prefetch
             title="Projects"
           >
             <ProjectIcon />

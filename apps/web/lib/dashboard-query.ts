@@ -39,11 +39,13 @@ export const githubRepositoriesQueryOptions = () => queryOptions({
 export const issuesQueryOptions = (search: string) => queryOptions({
   queryKey: dashboardQueryKeys.issues(search),
   queryFn: () => dashboardFetch<IssuesResponse>(`/api/dashboard/issues${search ? `?${search}` : ''}`),
+  staleTime: 15 * 1000,
 })
 
 export const issueQueryOptions = (issueId: string) => queryOptions({
   queryKey: dashboardQueryKeys.issue(issueId),
   queryFn: () => dashboardFetch<IssueDetail>(`/api/dashboard/issues/${encodeURIComponent(issueId)}`),
+  staleTime: 30 * 1000,
 })
 
 export const createDashboardProject = (name: string) => dashboardFetch<ProjectsResponse>('/api/dashboard/projects', {
