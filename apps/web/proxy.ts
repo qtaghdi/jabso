@@ -11,7 +11,7 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.redirect(new URL('/sign-in?reason=session-expired', request.url))
   }
 
-  await auth.protect()
+  await auth.protect({ unauthenticatedUrl: new URL('/sign-in', request.url).toString() })
 }, { signInUrl: '/sign-in' })
 
 export const config = {
