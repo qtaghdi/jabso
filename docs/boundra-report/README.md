@@ -9,7 +9,6 @@
 | Date | Report | Classification | Status | Upstream candidate |
 | --- | --- | --- | --- | --- |
 | 2026-08-25 | [Production project list contract rejection](./2026-08-25-production-project-list-contract-rejection.md) | Undetermined | Investigating | Undetermined |
-| 2026-08-24 | [PostgreSQL JSONB double encoding](./2026-08-24-postgres-jsonb-double-encoding.md) | Jabso integration | Resolved | No |
 
 ## Recording rule
 
