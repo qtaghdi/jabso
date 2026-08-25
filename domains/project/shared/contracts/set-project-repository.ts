@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { repositoryConnectionSchema } from './repository-connection.js'
 
 export const setProjectRepositoryInputSchema = z.object({
+  workspaceId: z.uuid(),
   projectId: z.uuid(),
   repository: repositoryConnectionSchema.omit({ connectedAt: true }),
 })

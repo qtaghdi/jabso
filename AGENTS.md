@@ -54,6 +54,10 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Session Replay masking must default to safe settings when Replay is eventually reintroduced.
 - Breadcrumb persistence is limited to timestamp, category, level, and scrubbed message. Never persist breadcrumb data objects.
 - Safe context uses an explicit browser/runtime/OS/device-family allowlist. Reject user identity, IP, auth, cookie, session, token, and raw request fields.
+- Every dashboard-owned project belongs to one persisted workspace. Personal workspaces map to a Clerk user; team and organization workspaces map to a Clerk Organization.
+- Treat the active Clerk context as identity input, resolve it server-side to an internal workspace ID, and include that workspace ID in every project-scoped query and mutation. Never authorize with a client cookie, project UUID, or organization label alone.
+- New tenant-aware code requires a negative cross-workspace integration test. Return not found for another workspace's project to avoid leaking resource existence.
+- Never auto-claim unassigned legacy rows during sign-in or onboarding. Ownership backfills require a reviewed one-time migration with an explicit target workspace.
 
 ## Package and runtime policy
 

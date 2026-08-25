@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
 import { listGitHubRepositories } from '@/lib/github'
 import { disconnectProjectRepository, listProjects, setProjectRepository } from '@/lib/projects'
 
@@ -14,7 +14,8 @@ const normalizeRootPath = (value: unknown) => {
 }
 
 export const PUT = async (request: Request) => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
+  if (!workspace.canManage) return NextResponse.json({ error: 'administrator role required' }, { status: 403 })
   const body = await request.json() as { projectId?: unknown; repositoryId?: unknown; rootPath?: unknown }
   const rootPath = normalizeRootPath(body.rootPath)
   if (typeof body.projectId !== 'string' || typeof body.repositoryId !== 'string' || rootPath === null) {
@@ -40,7 +41,8 @@ export const PUT = async (request: Request) => {
 }
 
 export const DELETE = async (request: Request) => {
-  await requireOwner()
+  const workspace = await requireWorkspace()
+  if (!workspace.canManage) return NextResponse.json({ error: 'administrator role required' }, { status: 403 })
   const body = await request.json() as { projectId?: unknown }
   if (typeof body.projectId !== 'string') {
     return NextResponse.json({ error: 'Project not found.' }, { status: 400 })

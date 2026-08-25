@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireOwner } from '@/lib/auth'
+import { requireWorkspace } from '@/lib/auth'
 import { getIssue, updateIssueStatus, type IssueSummary } from '@/lib/jabso-api'
 
 type IssueRouteProps = { params: Promise<{ 'issue-id': string }> }
@@ -7,7 +7,7 @@ type IssueRouteProps = { params: Promise<{ 'issue-id': string }> }
 const statuses = new Set<IssueSummary['status']>(['unresolved', 'resolved', 'ignored'])
 
 export const GET = async (_request: Request, { params }: IssueRouteProps) => {
-  await requireOwner()
+  await requireWorkspace()
   const { 'issue-id': issueId } = await params
   const issue = await getIssue(issueId)
   return issue
@@ -16,7 +16,7 @@ export const GET = async (_request: Request, { params }: IssueRouteProps) => {
 }
 
 export const PATCH = async (request: Request, { params }: IssueRouteProps) => {
-  await requireOwner()
+  await requireWorkspace()
   const { 'issue-id': issueId } = await params
   const body = await request.json() as { status?: unknown }
   if (typeof body.status !== 'string' || !statuses.has(body.status as IssueSummary['status'])) {

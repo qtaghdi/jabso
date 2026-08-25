@@ -43,6 +43,13 @@
       "when": 1787625152768,
       "tag": "0005_friendly_red_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787649375884,
+      "tag": "0006_modern_cammi",
+      "breakpoints": true
     }
   ]
 }

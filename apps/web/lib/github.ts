@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { z } from 'zod'
-import { requireOwner } from '@/lib/auth'
+import { requireGitHubUser } from '@/lib/auth'
 
 const githubRepositorySchema = z.object({
   archived: z.boolean(),
@@ -24,7 +24,7 @@ export class GitHubConnectionError extends Error {
 }
 
 export const listGitHubRepositories = async () => {
-  const { githubLogin } = await requireOwner()
+  const { githubLogin } = await requireGitHubUser()
   const parameters = new URLSearchParams({
     direction: 'desc',
     per_page: '100',

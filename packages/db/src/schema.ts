@@ -20,20 +20,35 @@ export const symbolicationStatus = pgEnum('symbolication_status', [
   'missing',
   'failed',
 ])
+export const workspaceKind = pgEnum('workspace_kind', ['personal', 'team', 'organization'])
 
 const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
   dataType: () => 'bytea',
 })
 
+export const workspaces = pgTable(
+  'workspaces',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    externalId: text('external_id').notNull(),
+    kind: workspaceKind('kind').notNull(),
+    name: text('name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex('workspaces_external_id_uidx').on(table.externalId)],
+)
+
 export const projects = pgTable('projects', {
   id: uuid('id').defaultRandom().primaryKey(),
+  workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   dsnProjectId: text('dsn_project_id').notNull().unique(),
   publicKey: text('public_key').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-})
+}, (table) => [index('projects_workspace_created_idx').on(table.workspaceId, table.createdAt)])
 
 export const projectRepositoryConnections = pgTable('project_repository_connections', {
   projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).primaryKey(),

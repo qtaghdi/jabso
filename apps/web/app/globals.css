@@ -101,6 +101,37 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .owner-summary strong { color: var(--text); font-size: 12px; }
 .owner-summary small { color: var(--muted); }
 .owner-avatar { width: 32px; height: 32px; }
+.account-summary { display: grid; gap: 10px; min-width: 0; }
+.workspace-switcher-trigger { width: 100%; min-height: 38px; justify-content: flex-start; padding: 5px 7px; border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: none; }
+.workspace-switcher-name { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.app-shell-collapsed .account-summary { justify-items: center; }
+.app-shell-collapsed .workspace-switcher-trigger { width: 36px; padding: 4px; }
+.app-shell-collapsed .workspace-switcher-name, .app-shell-collapsed .workspace-switcher-trigger > svg { display: none; }
+
+.onboarding-page { min-height: 100vh; padding: 42px clamp(24px, 6vw, 88px) 64px; background: #fff; }
+.onboarding-brand { display: flex; align-items: center; }
+.onboarding-card { width: min(100%, 760px); margin: clamp(72px, 12vh, 124px) auto 0; }
+.onboarding-step { margin: 0 0 10px; color: var(--muted); font-size: 11px; font-weight: 720; letter-spacing: .1em; text-transform: uppercase; }
+.onboarding-card h1 { margin: 0; font-size: clamp(36px, 5vw, 52px); line-height: 1.05; letter-spacing: -.05em; }
+.onboarding-copy { max-width: 560px; margin: 14px 0 36px; color: var(--muted); font-size: 16px; }
+.workspace-options { display: grid; border-top: 1px solid var(--border); }
+.workspace-option { display: flex; width: 100%; min-height: 92px; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; border: 0; border-bottom: 1px solid var(--border); background: #fff; color: var(--text); text-align: left; cursor: pointer; }
+.workspace-option:hover { background: var(--surface); }
+.workspace-option-selected { background: var(--surface); box-shadow: inset 3px 0 var(--text); }
+.workspace-option > span:first-child { display: grid; gap: 4px; }
+.workspace-option strong { font-size: 16px; }
+.workspace-option small { color: var(--muted); font-size: 13px; }
+.workspace-radio { width: 18px; height: 18px; flex: 0 0 auto; border: 1px solid #929ba5; border-radius: 50%; }
+.workspace-option-selected .workspace-radio { border: 5px solid var(--text); }
+.onboarding-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
+.onboarding-sign-out { padding: 8px 0; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.onboarding-sign-out:hover { color: var(--text); }
+.onboarding-field { display: grid; max-width: 560px; gap: 8px; margin-top: 34px; color: #3f4650; font-size: 12px; font-weight: 650; }
+.onboarding-field input { width: 100%; min-height: 52px; padding: 0 15px; border: 1px solid #cbd2da; border-radius: 10px; color: var(--text); font-size: 15px; font-weight: 400; }
+.onboarding-field input:focus { border-color: var(--focus); outline: 3px solid color-mix(in srgb, var(--focus) 22%, transparent); outline-offset: 0; }
+.onboarding-field-error input { border-color: var(--accent); }
+.onboarding-error { margin: 14px 0 0; color: var(--accent); font-size: 13px; }
+.onboarding-hint { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
 
 .main-content { width: min(100%, 1600px); margin-inline: auto; padding: 48px clamp(32px, 5vw, 76px) 80px; }
 .page-header { margin-bottom: 42px; }

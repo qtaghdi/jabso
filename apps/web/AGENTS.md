@@ -17,6 +17,9 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Use React Server Components for dashboard reads. Add client components only for interaction such as copy, filters, toasts, SDK execution, or local selection state.
 - Read Jabso through `lib/jabso-api.ts` and the authenticated server API. Never connect to PostgreSQL from Next.js.
 - Resolve the active project through the authorized project list before using its cookie value. Never trust a client cookie as project authorization.
+- Resolve Clerk's active user or organization to a persisted Jabso workspace before every dashboard read. Forward only the internal workspace ID to the collector and never rely on a client-selected workspace value.
+- Personal workspaces belong to one Clerk user. Team and Organization workspaces use Clerk Organization membership, and destructive project actions require the organization admin role.
+- Never auto-claim legacy projects for the first user who signs in. Legacy ownership changes require a reviewed one-time migration.
 - Keep `JABSO_DASHBOARD_TOKEN`, database credentials, and project administration values server-only. Generated public DSNs may be rendered for the signed-in owner.
 - Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
 - Trace pages from navigation to the final upstream request. Do not call the project list again merely to resolve the active project when the authorized list is already available.
