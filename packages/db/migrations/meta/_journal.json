@@ -36,6 +36,13 @@
       "when": 1787623029596,
       "tag": "0004_faithful_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787625152768,
+      "tag": "0005_friendly_red_hulk",
+      "breakpoints": true
     }
   ]
 }

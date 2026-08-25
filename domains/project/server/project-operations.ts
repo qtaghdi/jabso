@@ -11,10 +11,20 @@ import {
   type DeleteProjectMutationResult,
 } from '../shared/contracts/delete-project.js'
 import {
+  disconnectProjectRepositoryMutation,
+  type DisconnectProjectRepositoryMutationInput,
+  type DisconnectProjectRepositoryMutationResult,
+} from '../shared/contracts/disconnect-project-repository.js'
+import {
   listProjectsQuery,
   type ListProjectsQueryInput,
   type ListProjectsQueryResult,
 } from '../shared/contracts/list-projects.js'
+import {
+  setProjectRepositoryMutation,
+  type SetProjectRepositoryMutationInput,
+  type SetProjectRepositoryMutationResult,
+} from '../shared/contracts/set-project-repository.js'
 
 export type ProjectStore = {
   create(input: CreateProjectMutationInput & {
@@ -23,7 +33,9 @@ export type ProjectStore = {
     slug: string
   }): Promise<CreateProjectMutationResult>
   delete(input: DeleteProjectMutationInput): Promise<DeleteProjectMutationResult>
+  disconnectRepository(input: DisconnectProjectRepositoryMutationInput): Promise<DisconnectProjectRepositoryMutationResult>
   list(input: ListProjectsQueryInput): Promise<ListProjectsQueryResult>
+  setRepository(input: SetProjectRepositoryMutationInput): Promise<SetProjectRepositoryMutationResult>
 }
 
 const projectSlug = (name: string, suffix: string) => {
@@ -53,3 +65,9 @@ export const createCreateProjectImplementation = (store: ProjectStore) =>
 
 export const createDeleteProjectImplementation = (store: ProjectStore) =>
   implementMutation(deleteProjectMutation, (input) => store.delete(input))
+
+export const createSetProjectRepositoryImplementation = (store: ProjectStore) =>
+  implementMutation(setProjectRepositoryMutation, (input) => store.setRepository(input))
+
+export const createDisconnectProjectRepositoryImplementation = (store: ProjectStore) =>
+  implementMutation(disconnectProjectRepositoryMutation, (input) => store.disconnectRepository(input))
