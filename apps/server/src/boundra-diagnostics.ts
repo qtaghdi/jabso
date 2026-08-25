@@ -6,6 +6,9 @@ import {
 import { BoundraRuntimeError } from 'boundra'
 import { resolve } from 'node:path'
 
+const diagnosticFileName = 'jabso-boundra.ndjson'
+const internalContractMessage = 'internal contract execution failed'
+
 export const toBoundraDiagnosticInput = (error: BoundraRuntimeError): DiagnosticInput => {
   const safe = error.toJSON()
   return {
@@ -25,8 +28,30 @@ export const toBoundraDiagnosticInput = (error: BoundraRuntimeError): Diagnostic
   }
 }
 
+export const toBoundraHttpError = (error: BoundraRuntimeError) => error.phase === 'input'
+  ? {
+      statusCode: 400 as const,
+      payload: { error: error.code, message: error.message },
+    }
+  : {
+      statusCode: 500 as const,
+      payload: { error: error.code, message: internalContractMessage },
+    }
+
+export const resolveBoundraDiagnosticPath = (
+  path = process.env.JABSO_BOUNDRA_DIAGNOSTIC_PATH,
+  vercel = process.env.VERCEL,
+  cwd = process.cwd(),
+) => {
+  const configuredPath = path?.trim()
+  if (configuredPath) return configuredPath
+  return vercel === '1'
+    ? resolve('/tmp', diagnosticFileName)
+    : resolve(cwd, '.jabso-diagnostics', 'boundra.ndjson')
+}
+
 export const createBoundraErrorRecorder = (path = process.env.JABSO_BOUNDRA_DIAGNOSTIC_PATH) => {
-  const filePath = path ?? resolve(process.cwd(), '.jabso-diagnostics/boundra.ndjson')
+  const filePath = resolveBoundraDiagnosticPath(path)
   return createDiagnosticRecorder({
     primary: createNdjsonFileSink(filePath),
     onDropped: (diagnostic, reason) => {

@@ -33,7 +33,11 @@ import { BoundraRuntimeError, executeContract } from 'boundra'
 import Fastify from 'fastify'
 import { timingSafeEqual } from 'node:crypto'
 import { gunzipSync, inflateSync } from 'node:zlib'
-import { createBoundraErrorRecorder, toBoundraDiagnosticInput } from './boundra-diagnostics.js'
+import {
+  createBoundraErrorRecorder,
+  toBoundraDiagnosticInput,
+  toBoundraHttpError,
+} from './boundra-diagnostics.js'
 import { PostgresIngestEventStore } from './ingestion/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-store.js'
 import { openApiDocument } from './openapi-document.js'
@@ -117,8 +121,18 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof BoundraRuntimeError) {
-      await recordBoundraError(toBoundraDiagnosticInput(error))
-      return reply.code(400).send({ error: error.code, message: error.message })
+      const diagnostic = toBoundraDiagnosticInput(error)
+      request.log.error({
+        boundra: {
+          code: diagnostic.code,
+          contract: diagnostic.contract,
+          phase: diagnostic.context?.phase,
+          issues: diagnostic.issues,
+        },
+      }, 'Boundra contract failed')
+      await recordBoundraError(diagnostic)
+      const response = toBoundraHttpError(error)
+      return reply.code(response.statusCode).send(response.payload)
     }
     if (error instanceof SourceMapUploadError) {
       return reply.code(400).send({ error: error.code, message: error.message })
