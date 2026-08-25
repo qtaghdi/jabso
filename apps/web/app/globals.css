@@ -343,10 +343,18 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .clerk-divider-line { background: var(--border) !important; }
 .clerk-divider-text { color: #7d8691 !important; font-size: 12px !important; }
 .clerk-input { width: 100% !important; min-height: 50px !important; border: 1px solid #cbd2da !important; border-radius: 8px !important; box-shadow: none !important; }
-.clerk-input:focus { border-color: #17191d !important; box-shadow: 0 0 0 3px rgb(23 25 29 / 8%) !important; }
+.clerk-input:focus, .clerk-input:focus-visible { border-color: #17191d !important; outline: 0 !important; box-shadow: 0 0 0 3px rgb(23 25 29 / 10%) !important; }
+.clerk-field-error { margin-top: 6px !important; color: #a72a1a !important; font-size: 12px !important; line-height: 1.45 !important; }
 .clerk-primary-button { width: 100% !important; min-height: 50px !important; background: #fff !important; color: #17191d !important; border: 1px solid #17191d !important; border-radius: 10px !important; box-shadow: none !important; font-weight: 680 !important; }
 .clerk-primary-button:hover { background: #f0f2f4 !important; }
 .clerk-footer { background: transparent !important; }
+.auth-sign-in-fallback { display: grid; gap: 20px; width: 100%; animation: pulse 1.4s ease-in-out infinite; }
+.auth-fallback-button, .auth-fallback-input { width: 100%; height: 50px; border-radius: 10px; background: #e8ebef; }
+.auth-fallback-button:first-child { background: #17191d; }
+.auth-fallback-button-secondary { border: 1px solid #cbd2da; background: #f7f8f9; }
+.auth-fallback-divider { height: 1px; margin: 8px 0; background: var(--border); }
+.auth-fallback-label { width: 88px; height: 14px; margin-bottom: -12px; border-radius: 4px; background: #e8ebef; }
+.auth-fallback-input { border-radius: 8px; }
 .session-toast { position: fixed; z-index: 50; top: 24px; right: 24px; display: grid; grid-template-columns: 30px 1fr auto; align-items: start; gap: 12px; width: min(calc(100vw - 48px), 390px); padding: 16px; border: 1px solid #c9d0d8; border-left: 3px solid #17191d; border-radius: 5px; background: #fff; color: var(--text); box-shadow: 0 14px 34px rgb(23 25 29 / 14%); }
 .session-toast-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #17191d; color: #fff; font-size: 14px; font-weight: 760; }
 .session-toast strong { font-size: 14px; }
