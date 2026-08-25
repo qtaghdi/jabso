@@ -1,3 +1,5 @@
 export * from './queries/list-projects.js'
 export * from './mutations/create-project.js'
 export * from './mutations/delete-project.js'
+export * from './mutations/set-project-repository.js'
+export * from './mutations/disconnect-project-repository.js'

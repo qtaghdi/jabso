@@ -1,29 +1,18 @@
 import { NextResponse } from 'next/server'
 import { requireOwner } from '@/lib/auth'
+import { createProjectsResponse, getProjectsResponse } from '@/lib/dashboard-data'
 import {
   clearActiveProject,
   createProject,
   deleteProject,
-  getActiveProject,
+  getActiveProjectFrom,
   listProjects,
-  projectDsn,
-  setActiveProject,
+  setActiveProjectCookie,
 } from '@/lib/projects'
-
-const projectResponse = async () => {
-  const [{ items }, activeProject] = await Promise.all([listProjects(), getActiveProject()])
-  return {
-    items: items.map((project) => ({
-      ...project,
-      active: project.dsnProjectId === activeProject?.dsnProjectId,
-      dsn: projectDsn(project),
-    })),
-  }
-}
 
 export const GET = async () => {
   await requireOwner()
-  return NextResponse.json(await projectResponse())
+  return NextResponse.json(await getProjectsResponse())
 }
 
 export const POST = async (request: Request) => {
@@ -32,16 +21,20 @@ export const POST = async (request: Request) => {
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   if (!name || name.length > 80) return NextResponse.json({ error: 'invalid project name' }, { status: 400 })
   const project = await createProject(name)
-  await setActiveProject(project.dsnProjectId)
-  return NextResponse.json(await projectResponse(), { status: 201 })
+  await setActiveProjectCookie(project.dsnProjectId)
+  return NextResponse.json(await getProjectsResponse(), { status: 201 })
 }
 
 export const PATCH = async (request: Request) => {
   await requireOwner()
   const body = await request.json() as { projectId?: unknown }
   if (typeof body.projectId !== 'string') return NextResponse.json({ error: 'invalid project' }, { status: 400 })
-  await setActiveProject(body.projectId)
-  return NextResponse.json(await projectResponse())
+  const { items } = await listProjects()
+  if (!items.some((project) => project.dsnProjectId === body.projectId)) {
+    return NextResponse.json({ error: 'project not found' }, { status: 404 })
+  }
+  await setActiveProjectCookie(body.projectId)
+  return NextResponse.json(await createProjectsResponse(items))
 }
 
 export const DELETE = async (request: Request) => {
@@ -49,24 +42,18 @@ export const DELETE = async (request: Request) => {
   const body = await request.json() as { projectId?: unknown }
   if (typeof body.projectId !== 'string') return NextResponse.json({ error: 'invalid project' }, { status: 400 })
 
-  const [{ items }, activeProject] = await Promise.all([listProjects(), getActiveProject()])
+  const { items } = await listProjects()
+  const activeProject = await getActiveProjectFrom(items)
   const target = items.find((project) => project.id === body.projectId)
   if (!target) return NextResponse.json({ error: 'project not found' }, { status: 404 })
   await deleteProject(target.id)
 
   if (activeProject?.id === target.id) {
     const nextProject = items.find((project) => project.id !== target.id)
-    if (nextProject) await setActiveProject(nextProject.dsnProjectId)
+    if (nextProject) await setActiveProjectCookie(nextProject.dsnProjectId)
     else await clearActiveProject()
   }
 
   const remainingItems = items.filter((project) => project.id !== target.id)
-  const nextActiveId = activeProject?.id === target.id ? remainingItems[0]?.id : activeProject?.id
-  return NextResponse.json({
-    items: remainingItems.map((project) => ({
-      ...project,
-      active: project.id === nextActiveId,
-      dsn: projectDsn(project),
-    })),
-  })
+  return NextResponse.json(await createProjectsResponse(remainingItems))
 }

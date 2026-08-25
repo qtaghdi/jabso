@@ -11,6 +11,18 @@ export type ProjectSummary = {
   name: string
   publicKey: string
   slug: string
+  repository: RepositoryConnection | null
+}
+
+export type RepositoryConnection = {
+  connectedAt: string
+  defaultBranch: string
+  externalId: string
+  name: string
+  owner: string
+  private: boolean
+  rootPath: string
+  url: string
 }
 
 type ProjectList = {
@@ -63,21 +75,36 @@ export const deleteProject = async (id: string) =>
     method: 'DELETE',
   })
 
-export const getActiveProject = cache(async () => {
-  const { items } = await listProjects()
+export const setProjectRepository = async (projectId: string, repository: Omit<RepositoryConnection, 'connectedAt'>) =>
+  dashboardRequest<{ projectId: string; repository: RepositoryConnection }>(
+    `/api/projects/${encodeURIComponent(projectId)}/repository`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(repository),
+    },
+  )
+
+export const disconnectProjectRepository = async (projectId: string) =>
+  dashboardRequest<{ disconnected: boolean; projectId: string }>(
+    `/api/projects/${encodeURIComponent(projectId)}/repository`,
+    { method: 'DELETE' },
+  )
+
+export const getActiveProjectFrom = async (items: ProjectSummary[]) => {
   const selectedId = (await cookies()).get(activeProjectCookie)?.value
   const configuredId = process.env.JABSO_PROJECT_ID?.trim()
   return items.find((project) => project.dsnProjectId === selectedId)
     ?? items.find((project) => project.dsnProjectId === configuredId)
     ?? items[0]
     ?? null
-})
+}
 
-export const setActiveProject = async (dsnProjectId: string) => {
-  const projects = await listProjects()
-  if (!projects.items.some((project) => project.dsnProjectId === dsnProjectId)) {
-    throw new Error('Cannot activate an unknown Jabso project')
-  }
+export const getActiveProject = cache(async () =>
+  getActiveProjectFrom((await listProjects()).items),
+)
+
+export const setActiveProjectCookie = async (dsnProjectId: string) => {
   const cookieStore = await cookies()
   cookieStore.set(activeProjectCookie, dsnProjectId, {
     httpOnly: true,
@@ -86,6 +113,14 @@ export const setActiveProject = async (dsnProjectId: string) => {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   })
+}
+
+export const setActiveProject = async (dsnProjectId: string) => {
+  const projects = await listProjects()
+  if (!projects.items.some((project) => project.dsnProjectId === dsnProjectId)) {
+    throw new Error('Cannot activate an unknown Jabso project')
+  }
+  await setActiveProjectCookie(dsnProjectId)
 }
 
 export const clearActiveProject = async () => {

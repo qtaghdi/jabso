@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { CopyCodeButton } from '@/components/copy-code-button'
+import { RepositoryConnectionDialog } from '@/components/repository-connection-dialog'
 import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 import {
   createDashboardProject,
   dashboardQueryKeys,
@@ -12,12 +14,18 @@ import {
   projectsQueryOptions,
   selectDashboardProject,
 } from '@/lib/dashboard-query'
+import type { DashboardProject, ProjectsResponse } from '@/lib/dashboard-types'
 
-export const ProjectsView = () => {
+type ProjectsViewProps = {
+  initialData: ProjectsResponse
+}
+
+export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const projectsQuery = useQuery(projectsQueryOptions())
+  const projectsQuery = useQuery({ ...projectsQueryOptions(), initialData })
   const [name, setName] = useState('')
+  const [repositoryProject, setRepositoryProject] = useState<DashboardProject | null>(null)
 
   const syncProjects = (data: NonNullable<typeof projectsQuery.data>) => {
     queryClient.setQueryData(dashboardQueryKeys.projects, data)
@@ -78,8 +86,9 @@ export const ProjectsView = () => {
             <input
               maxLength={80}
               name="name"
+              autoComplete="off"
               onChange={(event) => setName(event.target.value)}
-              placeholder="Checkout web"
+              placeholder="e.g. Checkout web…"
               required
               value={name}
             />
@@ -92,8 +101,20 @@ export const ProjectsView = () => {
       </section>
       <section className="project-list-section" aria-labelledby="project-list-title">
         <div className="section-heading-row">
-          <h2 id="project-list-title">Connected projects</h2>
-          <span>{items.length} {items.length === 1 ? 'project' : 'projects'}</span>
+          <div className="project-list-title-group">
+            <h2 id="project-list-title">Connected projects</h2>
+            <span>{items.length} {items.length === 1 ? 'project' : 'projects'}</span>
+          </div>
+          {items.length > 0 ? <Select
+            className="project-picker"
+            controlSize="sm"
+            disabled={selectMutation.isPending || deleteMutation.isPending}
+            label="Active project"
+            onChange={(event) => selectMutation.mutate(event.target.value)}
+            value={items.find((project) => project.active)?.dsnProjectId ?? ''}
+          >
+            {items.map((project) => <option key={project.id} value={project.dsnProjectId}>{project.name}</option>)}
+          </Select> : null}
         </div>
         {projectsQuery.isPending ? (
           <div className="project-list-loading" role="status">
@@ -111,7 +132,6 @@ export const ProjectsView = () => {
         ) : (
           <div className="project-list">
             {items.map((project) => {
-              const selecting = selectMutation.isPending && selectMutation.variables === project.dsnProjectId
               const deleting = deleteMutation.isPending && deleteMutation.variables === project.id
               return (
                 <article className="project-row" key={project.id}>
@@ -119,6 +139,9 @@ export const ProjectsView = () => {
                     <div>
                       <h3>{project.name}</h3>
                       <code>{project.slug}</code>
+                      {project.repository ? <a className="project-repository-link" href={project.repository.url} rel="noreferrer" target="_blank">
+                        {project.repository.owner}/{project.repository.name}{project.repository.rootPath ? `/${project.repository.rootPath}` : ''}
+                      </a> : <span className="project-repository-empty">No repository connected</span>}
                     </div>
                     {project.active ? <span className="active-project-label">Active</span> : null}
                   </div>
@@ -128,12 +151,13 @@ export const ProjectsView = () => {
                   </div>
                   <div className="project-row-actions">
                     <Button
-                      disabled={project.active || selectMutation.isPending || deleteMutation.isPending}
-                      onClick={() => selectMutation.mutate(project.dsnProjectId)}
+                      className="project-repository-button"
+                      disabled={deleteMutation.isPending || selectMutation.isPending}
+                      onClick={() => setRepositoryProject(project)}
                       type="button"
                       variant="secondary"
                     >
-                      {selecting ? 'Switching…' : project.active ? 'Current project' : 'Use in Issues'}
+                      {project.repository ? 'Manage GitHub' : 'Connect GitHub'}
                     </Button>
                     <Button
                       className="project-delete-button"
@@ -151,6 +175,7 @@ export const ProjectsView = () => {
           </div>
         )}
       </section>
+      {repositoryProject ? <RepositoryConnectionDialog close={() => setRepositoryProject(null)} key={repositoryProject.id} project={repositoryProject} /> : null}
     </>
   )
 }

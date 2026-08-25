@@ -137,6 +137,37 @@ export const openApiDocument: OpenAPIV3.Document = {
         },
       },
     },
+    '/api/projects/{projectId}/repository': {
+      put: {
+        tags: ['Projects'],
+        summary: 'Connect a repository',
+        description: 'Stores server-verified repository metadata and an optional repository-relative root. Credentials and source content are never accepted.',
+        operationId: 'setProjectRepository',
+        security: dashboardSecurity,
+        parameters: [projectUuidParameter],
+        requestBody: {
+          required: true,
+          content: jsonContent({ $ref: '#/components/schemas/RepositoryConnectionInput' }),
+        },
+        responses: {
+          '200': response('The repository connection was stored.', { $ref: '#/components/schemas/ProjectRepositoryConnection' }),
+          '400': response('The repository metadata or root is invalid.', { $ref: '#/components/schemas/Error' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+      delete: {
+        tags: ['Projects'],
+        summary: 'Disconnect a repository',
+        operationId: 'disconnectProjectRepository',
+        security: dashboardSecurity,
+        parameters: [projectUuidParameter],
+        responses: {
+          '200': response('The repository connection was removed.', { $ref: '#/components/schemas/RepositoryDisconnection' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+          '404': response('The repository connection does not exist.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
     '/api/{projectId}/envelope': {
       post: {
         tags: ['Ingestion'],
@@ -367,7 +398,7 @@ export const openApiDocument: OpenAPIV3.Document = {
       },
       Project: {
         type: 'object',
-        required: ['id', 'name', 'slug', 'dsnProjectId', 'publicKey', 'createdAt'],
+        required: ['id', 'name', 'slug', 'dsnProjectId', 'publicKey', 'createdAt', 'repository'],
         properties: {
           id: { type: 'string', format: 'uuid' },
           name: { type: 'string' },
@@ -375,6 +406,7 @@ export const openApiDocument: OpenAPIV3.Document = {
           dsnProjectId: { type: 'string' },
           publicKey: { type: 'string' },
           createdAt: { type: 'string', format: 'date-time' },
+          repository: { allOf: [{ $ref: '#/components/schemas/RepositoryConnection' }], nullable: true },
         },
       },
       ProjectList: {
@@ -391,6 +423,46 @@ export const openApiDocument: OpenAPIV3.Document = {
         properties: {
           deleted: { type: 'boolean' },
           id: { type: 'string', format: 'uuid' },
+        },
+      },
+      RepositoryConnectionInput: {
+        type: 'object',
+        required: ['externalId', 'owner', 'name', 'url', 'defaultBranch', 'private', 'rootPath'],
+        additionalProperties: false,
+        properties: {
+          externalId: { type: 'string', maxLength: 64 },
+          owner: { type: 'string', maxLength: 100 },
+          name: { type: 'string', maxLength: 100 },
+          url: { type: 'string', format: 'uri', maxLength: 500 },
+          defaultBranch: { type: 'string', maxLength: 250 },
+          private: { type: 'boolean' },
+          rootPath: { type: 'string', maxLength: 500 },
+        },
+      },
+      RepositoryConnection: {
+        allOf: [
+          { $ref: '#/components/schemas/RepositoryConnectionInput' },
+          {
+            type: 'object',
+            required: ['connectedAt'],
+            properties: { connectedAt: { type: 'string', format: 'date-time' } },
+          },
+        ],
+      },
+      ProjectRepositoryConnection: {
+        type: 'object',
+        required: ['projectId', 'repository'],
+        properties: {
+          projectId: { type: 'string', format: 'uuid' },
+          repository: { $ref: '#/components/schemas/RepositoryConnection' },
+        },
+      },
+      RepositoryDisconnection: {
+        type: 'object',
+        required: ['disconnected', 'projectId'],
+        properties: {
+          disconnected: { type: 'boolean' },
+          projectId: { type: 'string', format: 'uuid' },
         },
       },
       IssueStatus: {

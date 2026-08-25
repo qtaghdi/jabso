@@ -1,3 +1,6 @@
 export * from './contracts/list-projects.js'
 export * from './contracts/create-project.js'
 export * from './contracts/delete-project.js'
+export * from './contracts/repository-connection.js'
+export * from './contracts/set-project-repository.js'
+export * from './contracts/disconnect-project-repository.js'
