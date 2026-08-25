@@ -20,7 +20,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Keep `JABSO_DASHBOARD_TOKEN`, database credentials, and project administration values server-only. Generated public DSNs may be rendered for the signed-in owner.
 - Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
 - Trace pages from navigation to the final upstream request. Do not call the project list again merely to resolve the active project when the authorized list is already available.
-- Seed TanStack Query with server-fetched data for first render and set an intentional stale time for repeat navigation. Do not add client fetch-after-hydration waterfalls or show an error-page-shaped skeleton while the destination route is loading.
+- Seed TanStack Query with server-fetched data for first render and set an intentional stale time for repeat navigation. Do not make every client transition wait for the same uncached upstream read before the query cache can render; stream remote reads behind a shape-matched Suspense boundary or reuse a persistent cache, then verify that repeat navigation avoids upstream calls. Do not add client fetch-after-hydration waterfalls or show an error-page-shaped skeleton while the destination route is loading.
 
 ## Product UI
 
