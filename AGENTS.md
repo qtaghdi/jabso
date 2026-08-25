@@ -135,12 +135,24 @@ pnpm build
 
 Read `apps/web/AGENTS.md` before changing the Next.js app. Follow the version-matched documentation bundled under `apps/web/node_modules/next/dist/docs/` and preserve asynchronous request APIs required by Next.js 16.
 
+## Delivery discipline
+
+- Establish the deployed baseline before implementing: fetch `origin`, inspect `origin/main`, open PRs, and commit ancestry. A feature that exists only on another branch or a PR based on a non-main branch is not part of the product.
+- Separate four states in every report: implemented locally, pushed to a branch, deployed to Preview, and verified in Production. Never use “deployed” or “working” as a substitute for the exact state that was actually checked.
+- Reproduce failures and trace the complete request path before editing. For slow pages, count remote calls and identify client hydration waterfalls, duplicate reads, cold starts, and region latency instead of guessing from the visible spinner.
+- Verify product behavior, not only compilation. A green build proves the bundle is valid; it does not prove authentication, SDK delivery, database migrations, GitHub discovery, or the signed-in dashboard flow.
+- Apply additive database migrations before exercising code that depends on the new schema. Record the migration and deployment impact in the PR.
+- When a requested feature already exists elsewhere, restore or cherry-pick the original scoped commits after verifying their base and dependencies. Do not silently recreate a partial version.
+- Before handoff, compare `origin/main...HEAD`, run the required checks, inspect the final PR body and status checks, and confirm the worktree is clean.
+- Never place Markdown containing backticks, dollar signs, or command substitutions directly inside a shell argument. Write PR bodies and release notes to a temporary file with `apply_patch`, then pass the file through `--body-file` or the equivalent.
+
 ## Git hygiene
 
 - Keep commits logically scoped and stage explicit paths.
 - Use imperative Conventional Commit subjects: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`, or `ci:`.
 - Use kebab-case branch names with a type prefix, for example `feat/issue-inbox` or `fix/envelope-length`.
 - Open pull requests as ready for review. Do not create Draft PRs unless a task explicitly requests one.
+- After creating a PR, inspect it with `gh pr view` to confirm the base branch, included commits, non-Draft state, and uncorrupted body before reporting it.
 - PR descriptions include a summary, scope exclusions, verification commands, and any migration, privacy, or deployment impact.
 - Do not commit generated `.next`, `dist`, coverage, Turbo cache, local diagnostics, or fixture dumps.
 - Preserve the original Replay spike under `spikes/replay` until sanitized golden fixtures cover its useful protocol behavior.
