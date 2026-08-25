@@ -109,7 +109,9 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
             </div>
             {error ? <p className="onboarding-error" role="alert">{error}</p> : null}
             <footer className="onboarding-actions">
-              <SignOutButton><button className="onboarding-sign-out" type="button">Sign out</button></SignOutButton>
+              <SignOutButton redirectUrl="/sign-in">
+                <button className="onboarding-sign-out" type="button">Sign out</button>
+              </SignOutButton>
               <Button disabled={isSubmitting || !isLoaded} onClick={continueFromChoice}>
                 {isSubmitting ? 'Creating…' : 'Continue'}
               </Button>

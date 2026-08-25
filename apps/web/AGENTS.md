@@ -44,4 +44,5 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Each data route needs a shape-matched `loading.tsx` plus useful empty, not-found, and error states.
 - Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
 - Keep redirects server-side where possible and avoid full-page client auth gates.
+- Give every Clerk sign-out control an explicit `/sign-in` redirect. Do not rely on Clerk's default `/` destination, which adds a protected-route bounce and can leave the sign-in shell temporarily empty.
 - Maintain `app/icon.svg` and a working `/favicon.ico` response.
