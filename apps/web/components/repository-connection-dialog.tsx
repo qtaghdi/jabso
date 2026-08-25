@@ -77,7 +77,7 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
         {repositoriesQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub repositories</span></div> : repositoriesQuery.isError ? (
           <div className="inline-error" role="alert"><p>{repositoriesQuery.error.message}</p><Button onClick={() => repositoriesQuery.refetch()} variant="secondary">Try again</Button></div>
         ) : <form className="repository-connection-form" onSubmit={submit}>
-          <Select label="GitHub repository" value={repositoryId} onChange={(event) => setRepositoryId(event.target.value)}>
+          <Select label="GitHub repository" name="repository" value={repositoryId} onChange={(event) => setRepositoryId(event.target.value)}>
             <option value="">Choose a repository</option>
             {repositoriesQuery.data.items.map((repository) => (
               <option disabled={repository.archived} key={repository.externalId} value={repository.externalId}>
@@ -87,7 +87,7 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
           </Select>
           <label className="repository-root-field">
             <span>Repository root <small>Optional</small></span>
-            <input maxLength={500} onChange={(event) => setRootPath(event.target.value)} placeholder="apps/web" value={rootPath} />
+            <input autoComplete="off" maxLength={500} name="root-path" onChange={(event) => setRootPath(event.target.value)} placeholder="apps/web…" value={rootPath} />
             <small>Use a relative path without a leading slash.</small>
           </label>
           {mutationError ? <p className="form-error" role="alert">{mutationError.message}</p> : null}

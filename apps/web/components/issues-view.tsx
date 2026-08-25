@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select'
 import { issuesQueryOptions, issueQueryOptions } from '@/lib/dashboard-query'
 import { formatCount, formatDateTime } from '@/lib/format'
 import type { IssueFilters, IssueSummary } from '@/lib/jabso-api'
+import type { IssuesResponse } from '@/lib/dashboard-types'
 
 const ViewIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7.5 4.5 5 5-5 5" /></svg>
@@ -50,7 +51,11 @@ const IssuesLoading = () => (
   </div>
 )
 
-export const IssuesView = () => {
+type IssuesViewProps = {
+  initialData: IssuesResponse
+}
+
+export const IssuesView = ({ initialData }: IssuesViewProps) => {
   const searchParameters = useSearchParams()
   const queryClient = useQueryClient()
   const search = searchParameters.toString()
@@ -58,6 +63,7 @@ export const IssuesView = () => {
   const hasActiveFilters = Object.values(filters).some(Boolean)
   const issuesQuery = useQuery({
     ...issuesQueryOptions(search),
+    initialData,
     placeholderData: keepPreviousData,
   })
 

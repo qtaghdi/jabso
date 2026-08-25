@@ -27,6 +27,7 @@ export const dashboardQueryKeys = {
 export const projectsQueryOptions = () => queryOptions({
   queryKey: dashboardQueryKeys.projects,
   queryFn: () => dashboardFetch<ProjectsResponse>('/api/dashboard/projects'),
+  staleTime: 5 * 60 * 1000,
 })
 
 export const githubRepositoriesQueryOptions = () => queryOptions({

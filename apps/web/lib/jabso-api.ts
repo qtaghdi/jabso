@@ -1,6 +1,6 @@
 import { cache } from 'react'
 import { requireOwner } from '@/lib/auth'
-import { getActiveProject, getServerApiConfig } from '@/lib/projects'
+import { getActiveProject, getServerApiConfig, type ProjectSummary } from '@/lib/projects'
 
 export type IssueSummary = {
   id: string
@@ -86,9 +86,13 @@ export type IssueFacets = {
   releases: string[]
 }
 
-const request = async <Result>(path: string, init?: RequestInit): Promise<Result | null> => {
+const request = async <Result>(
+  path: string,
+  init?: RequestInit,
+  projectOverride?: ProjectSummary | null,
+): Promise<Result | null> => {
   await requireOwner()
-  const project = await getActiveProject()
+  const project = projectOverride === undefined ? await getActiveProject() : projectOverride
   if (!project) return null
   const { baseUrl, dashboardToken } = getServerApiConfig()
   const headers = new Headers(init?.headers)
@@ -115,7 +119,7 @@ export type IssueFilters = {
 
 const periodMilliseconds = { '24h': 86_400_000, '7d': 604_800_000, '30d': 2_592_000_000 }
 
-export const listIssues = async (filters: IssueFilters = {}) => {
+export const listIssues = async (filters: IssueFilters = {}, project?: ProjectSummary | null) => {
   const parameters = new URLSearchParams({ limit: '25' })
   if (filters.query) parameters.set('query', filters.query)
   if (filters.status) parameters.set('status', filters.status)
@@ -125,15 +129,15 @@ export const listIssues = async (filters: IssueFilters = {}) => {
   if (filters.period) parameters.set('last_seen_after', new Date(Date.now() - periodMilliseconds[filters.period]).toISOString())
   if (filters.cursor) parameters.set('cursor', filters.cursor)
   if (filters.direction) parameters.set('direction', filters.direction)
-  return (await request<IssueList>(`/issues?${parameters}`)) ?? {
+  return (await request<IssueList>(`/issues?${parameters}`, undefined, project)) ?? {
     items: [],
     nextCursor: null,
     previousCursor: null,
   }
 }
 
-export const getIssueFacets = cache(async () =>
-  (await request<IssueFacets>('/issues/facets')) ?? { levels: [], environments: [], releases: [] },
+export const getIssueFacets = cache(async (project?: ProjectSummary | null) =>
+  (await request<IssueFacets>('/issues/facets', undefined, project)) ?? { levels: [], environments: [], releases: [] },
 )
 
 export const getIssue = cache(async (issueId: string) =>
