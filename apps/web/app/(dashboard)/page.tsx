@@ -5,6 +5,7 @@ import { Button, buttonClassName } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { formatCount, formatDateTime } from '@/lib/format'
 import { getIssueFacets, listIssues, type IssueFilters, type IssueSummary } from '@/lib/jabso-api'
+import { getActiveProject, projectDsn } from '@/lib/projects'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,43 +34,45 @@ const pageHref = (filters: IssueFilters, cursor: string, direction: 'next' | 'pr
 const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
   const filters = await searchParams
   const hasActiveFilters = Object.values(filters).some(Boolean)
-  const [{ items, nextCursor, previousCursor }, facets] = await Promise.all([
-    listIssues(filters),
-    getIssueFacets(),
-  ])
-  const dsn = process.env.NEXT_PUBLIC_JABSO_DSN
-    ?? 'http://0123456789abcdef0123456789abcdef@localhost:4000/1'
+  const activeProject = await getActiveProject()
+  const [{ items, nextCursor, previousCursor }, facets] = activeProject
+    ? await Promise.all([listIssues(filters), getIssueFacets()])
+    : [{ items: [], nextCursor: null, previousCursor: null }, { levels: [], environments: [], releases: [] }]
 
   return (
     <AppShell>
       <header className="page-header compact-page-header">
-        <h1>Issues</h1>
-        <p>Find the errors that need attention.</p>
+        <div className="page-heading-row">
+          <div><h1>Issues</h1><p>Find the errors that need attention.</p></div>
+          {activeProject ? <Link className="active-project-link" href="/projects">
+            <span>Project</span><strong>{activeProject.name}</strong>
+          </Link> : null}
+        </div>
       </header>
-      {items.length > 0 || hasActiveFilters ? <form className="filter-bar phase-two-filters" method="get">
+      {activeProject && (items.length > 0 || hasActiveFilters) ? <form className="filter-bar phase-two-filters" method="get">
         <label className="filter-search">
           <span className="sr-only">Filter issues</span>
           <input name="query" type="search" placeholder="Filter issues…" defaultValue={filters.query} />
         </label>
-        <Select label="Status" name="status" defaultValue={filters.status ?? ''}>
+        <Select hideLabel label="Status" name="status" defaultValue={filters.status ?? ''}>
           <option value="">All statuses</option>
           <option value="unresolved">Unresolved</option>
           <option value="resolved">Resolved</option>
           <option value="ignored">Ignored</option>
         </Select>
-        <Select label="Level" name="level" defaultValue={filters.level ?? ''}>
+        <Select hideLabel label="Level" name="level" defaultValue={filters.level ?? ''}>
           <option value="">All levels</option>
           {facets.levels.map((level) => <option key={level} value={level}>{level}</option>)}
         </Select>
-        <Select label="Environment" name="environment" defaultValue={filters.environment ?? ''}>
+        <Select hideLabel label="Environment" name="environment" defaultValue={filters.environment ?? ''}>
           <option value="">All environments</option>
           {facets.environments.map((environment) => <option key={environment} value={environment}>{environment}</option>)}
         </Select>
-        <Select label="Release" name="release" defaultValue={filters.release ?? ''}>
+        <Select hideLabel label="Release" name="release" defaultValue={filters.release ?? ''}>
           <option value="">All releases</option>
           {facets.releases.map((release) => <option key={release} value={release}>{release}</option>)}
         </Select>
-        <Select label="Last seen" name="period" defaultValue={filters.period ?? ''}>
+        <Select hideLabel label="Last seen" name="period" defaultValue={filters.period ?? ''}>
           <option value="">Any time</option>
           <option value="24h">Last 24 hours</option>
           <option value="7d">Last 7 days</option>
@@ -78,12 +81,16 @@ const IssuesPage = async ({ searchParams }: IssuesPageProps) => {
         <Button type="submit">Apply</Button>
         <Link className={buttonClassName('secondary', 'clear-filter')} href="/">Clear</Link>
       </form> : null}
-      {items.length === 0 ? (
+      {!activeProject ? <section className="empty-state project-empty-state">
+        <h2>Create your first project</h2>
+        <p>A project gives Jabso an isolated DSN, issue inbox, and release history.</p>
+        <Link className={buttonClassName('primary')} href="/projects">Create project</Link>
+      </section> : items.length === 0 ? (
         hasActiveFilters ? <section className="empty-state">
           <h2>No matching issues</h2>
           <p>Clear the filters or send an error from the SDK smoke test.</p>
           <Link className="text-link" href="/smoke-test">Open SDK smoke test</Link>
-        </section> : <GettingStarted dsn={dsn} />
+        </section> : <GettingStarted dsn={projectDsn(activeProject)} projectName={activeProject.name} />
       ) : (
         <div className="issue-table-wrap">
           <table className="issue-table phase-two-table">

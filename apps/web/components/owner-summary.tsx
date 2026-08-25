@@ -11,7 +11,7 @@ export const OwnerSummary = () => {
   return (
     <div className="owner-summary">
       <UserButton appearance={{ elements: { avatarBox: 'owner-avatar' } }} />
-      <span><strong>{ownerName}</strong><small>@{githubLogin}</small></span>
+      <span className="owner-details"><strong>{ownerName}</strong><small>@{githubLogin}</small></span>
     </div>
   )
 }

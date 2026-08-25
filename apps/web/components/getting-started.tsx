@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select'
 
 type GettingStartedProps = {
   dsn: string
+  projectName: string
 }
 
 const setupStepCopy = [
@@ -36,14 +37,16 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
   const captureCode = (packageName: string, framework: string) => [
     `import * as Sentry from '${packageName}'`,
     '',
-    "Sentry.setTag('feature', 'onboarding')",
-    `Sentry.setContext('runtime', { framework: '${framework}' })`,
-    'Sentry.addBreadcrumb({',
-    "  category: 'onboarding',",
-    "  message: 'Jabso SDK connected',",
-    "  level: 'info',",
-    '})',
-    "Sentry.captureException(new Error('Jabso test error'))",
+    'export const sendJabsoTestError = () => {',
+    "  Sentry.setTag('feature', 'onboarding')",
+    `  Sentry.setContext('runtime', { framework: '${framework}' })`,
+    '  Sentry.addBreadcrumb({',
+    "    category: 'onboarding',",
+    "    message: 'Jabso SDK connected',",
+    "    level: 'info',",
+    '  })',
+    "  Sentry.captureException(new Error('Jabso test error'))",
+    '}',
   ].join('\n')
 
   const setup = ({
@@ -54,6 +57,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
     initPrefix = '',
     packageName,
     release,
+    testFile,
   }: {
     afterInit?: string
     environment: string
@@ -62,6 +66,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
     initPrefix?: string
     packageName: string
     release: string
+    testFile: string
   }): FrameworkSetup => ({
     label: framework,
     steps: [
@@ -92,7 +97,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
       {
         actionLabel: 'Run smoke test',
         code: captureCode(packageName, framework),
-        file: 'anywhere-in-your-app.ts',
+        file: testFile,
         note: 'The test event includes a tag, safe context, and a breadcrumb so the full issue detail can be checked.',
       },
     ],
@@ -105,6 +110,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
       framework: 'Next.js',
       packageName: '@sentry/nextjs',
       release: "process.env.NEXT_PUBLIC_APP_VERSION ?? 'web@dev'",
+      testFile: 'src/lib/jabso-test.ts',
     }),
     react: setup({
       environment: 'import.meta.env.MODE',
@@ -112,6 +118,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
       framework: 'React (Vite)',
       packageName: '@sentry/react',
       release: "import.meta.env.VITE_APP_VERSION ?? 'web@dev'",
+      testFile: 'src/lib/jabso-test.ts',
     }),
     vue: setup({
       afterInit: "app.mount('#app')",
@@ -121,6 +128,7 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
       initPrefix: "import { createApp } from 'vue'\nimport App from './App.vue'\n\nconst app = createApp(App)\n\n",
       packageName: '@sentry/vue',
       release: "import.meta.env.VITE_APP_VERSION ?? 'web@dev'",
+      testFile: 'src/lib/jabso-test.ts',
     }),
     javascript: setup({
       environment: "'production'",
@@ -128,11 +136,12 @@ const createFrameworkSetups = (dsn: string): Record<FrameworkId, FrameworkSetup>
       framework: 'Vanilla JavaScript',
       packageName: '@sentry/browser',
       release: "'web@1.0.0'",
+      testFile: 'src/jabso-test.js',
     }),
   }
 }
 
-export const GettingStarted = ({ dsn }: GettingStartedProps) => {
+export const GettingStarted = ({ dsn, projectName }: GettingStartedProps) => {
   const [activeStep, setActiveStep] = useState(0)
   const [framework, setFramework] = useState<FrameworkId>('nextjs')
   const frameworkSetups = createFrameworkSetups(dsn)
@@ -143,7 +152,13 @@ export const GettingStarted = ({ dsn }: GettingStartedProps) => {
 
   return (
     <section className="getting-started" aria-labelledby="getting-started-title">
-      <h2 id="getting-started-title">No issues yet. Connect a project to start collecting errors.</h2>
+      <div className="getting-started-heading">
+        <div>
+          <h2 id="getting-started-title">Connect {projectName} to start collecting errors.</h2>
+          <p>The generated DSN below is scoped to this project.</p>
+        </div>
+        <Link href="/projects">Change project</Link>
+      </div>
       <div className="setup-workspace">
         <ol className="setup-index" aria-label="SDK setup steps">
           {setupStepCopy.map((item, index) => (
@@ -168,6 +183,7 @@ export const GettingStarted = ({ dsn }: GettingStartedProps) => {
                   <span>Framework</span>
                   <Select
                     className="framework-select"
+                    hideLabel
                     label="Framework"
                     value={framework}
                     onChange={(event) => setFramework(event.target.value as FrameworkId)}

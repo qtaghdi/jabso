@@ -7,3 +7,30 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Jabso web instructions
+
+The root and `apps/AGENTS.md` instructions also apply here.
+
+## Rendering and data access
+
+- Use React Server Components for dashboard reads. Add client components only for interaction such as copy, filters, toasts, SDK execution, or local selection state.
+- Read Jabso through `lib/jabso-api.ts` and the authenticated server API. Never connect to PostgreSQL from Next.js.
+- Resolve the active project through the authorized project list before using its cookie value. Never trust a client cookie as project authorization.
+- Keep `JABSO_DASHBOARD_TOKEN`, database credentials, and project administration values server-only. Generated public DSNs may be rendered for the signed-in owner.
+- Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
+
+## Product UI
+
+- Issues is the primary workflow. SDK installation appears only as an empty-project onboarding state, not as the whole product.
+- Projects owns project creation, active-project selection, public DSN display, and the route back into Issues.
+- Do not link Swagger/OpenAPI from the dashboard.
+- Reuse components under `components/ui`; fields must support labels, errors, keyboard focus, and accessible descriptions.
+- Use real framework file paths and runnable snippets in SDK setup. Avoid placeholder names such as `anywhere-in-your-app.ts`.
+
+## Route states and errors
+
+- Each data route needs a shape-matched `loading.tsx` plus useful empty, not-found, and error states.
+- Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
+- Keep redirects server-side where possible and avoid full-page client auth gates.
+- Maintain `app/icon.svg` and a working `/favicon.ico` response.

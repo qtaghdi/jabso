@@ -2,15 +2,18 @@ import { defineQuery, type InferSchema } from "boundra";
 import { z } from "zod";
 
 export const listProjectsInputSchema = z.object({
-  cursor: z.string().optional(),
+  cursor: z.uuid().optional(),
   limit: z.number().int().min(1).max(100).default(25),
 });
 export const listProjectsResultSchema = z.object({
   items: z.array(z.object({
     id: z.uuid(),
-    name: z.string(),
-    slug: z.string(),
-  })),
+    name: z.string().min(1).max(80),
+    slug: z.string().min(1).max(120),
+    dsnProjectId: z.string().min(1).max(64),
+    publicKey: z.string().min(1).max(128),
+    createdAt: z.iso.datetime(),
+  })).max(100),
   nextCursor: z.string().nullable(),
 });
 

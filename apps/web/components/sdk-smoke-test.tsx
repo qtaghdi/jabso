@@ -4,10 +4,7 @@ import { captureException, init } from '@sentry/browser'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 
-const dsn = process.env.NEXT_PUBLIC_JABSO_DSN
-  ?? 'http://0123456789abcdef0123456789abcdef@localhost:4000/1'
-
-export const SdkSmokeTest = () => {
+export const SdkSmokeTest = ({ dsn }: { dsn: string }) => {
   const [messages, setMessages] = useState<string[]>([])
 
   useEffect(() => {

@@ -10,6 +10,7 @@
   --focus: #155fd1;
   --warning: #e99800;
   --sidebar-width: 220px;
+  --sidebar-collapsed-width: 80px;
 }
 
 * { box-sizing: border-box; }
@@ -42,7 +43,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   border: 0;
 }
 
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); transition: grid-template-columns 180ms ease; }
+.app-shell-collapsed { grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr); }
 
 .sidebar {
   position: sticky;
@@ -53,9 +55,27 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   padding: 30px 14px 22px;
   border-right: 1px solid var(--border);
   background: #fbfcfd;
+  transition: padding 180ms ease;
 }
 
-.wordmark { margin: 0 12px 42px; font-size: 27px; font-weight: 760; letter-spacing: -0.04em; text-decoration: none; }
+.sidebar-brand { display: flex; min-height: 32px; align-items: center; justify-content: space-between; gap: 8px; margin: 0 4px 42px; }
+.wordmark { display: inline-flex; min-width: 0; align-items: center; color: var(--text); text-decoration: none; }
+.jabso-wordmark { display: inline-flex; min-width: 0; align-items: center; gap: 10px; }
+.jabso-mark { width: 28px; height: 28px; flex: 0 0 auto; }
+.jabso-mark rect { fill: #17191d; }
+.jabso-mark path { fill: #fff; }
+.wordmark-text { overflow: hidden; font-size: 25px; font-weight: 760; letter-spacing: -0.045em; text-overflow: clip; white-space: nowrap; }
+.sidebar-toggle { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #68727d; cursor: pointer; }
+.sidebar-toggle:hover { border-color: var(--border); background: var(--background); color: var(--text); }
+.sidebar-toggle:disabled { opacity: 0.55; cursor: default; }
+.sidebar-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.app-shell-collapsed .sidebar { padding-inline: 10px; }
+.app-shell-collapsed .sidebar-brand { gap: 4px; margin-inline: 0; }
+.app-shell-collapsed .jabso-mark { width: 26px; height: 26px; }
+.app-shell-collapsed .wordmark-text, .app-shell-collapsed .nav-label, .app-shell-collapsed .owner-details { display: none; }
+.app-shell-collapsed .nav-item { justify-content: center; padding-inline: 0; }
+.app-shell-collapsed .sidebar-footer { padding-inline: 0; }
+.app-shell-collapsed .owner-summary { justify-content: center; }
 .sidebar nav { display: grid; gap: 6px; }
 
 .nav-item {
@@ -75,7 +95,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .nav-item-active { color: var(--text); background: var(--surface-strong); box-shadow: inset 3px 0 var(--text); }
 .sidebar-footer { margin-top: auto; padding: 18px 12px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .owner-summary { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.owner-summary > span { display: grid; min-width: 0; }
+.owner-details { display: grid; min-width: 0; }
 .owner-summary strong, .owner-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .owner-summary strong { color: var(--text); font-size: 12px; }
 .owner-summary small { color: var(--muted); }
@@ -85,6 +105,11 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .page-header { margin-bottom: 42px; }
 .page-header h1, .issue-detail-header h1, .route-state h1 { margin: 0; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; letter-spacing: -0.045em; }
 .page-header p { max-width: 600px; margin: 10px 0 0; color: var(--muted); font-size: 16px; }
+.page-heading-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
+.active-project-link { display: grid; min-width: 180px; gap: 2px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; text-decoration: none; }
+.active-project-link:hover { border-color: #9aa3ad; background: var(--surface); }
+.active-project-link span { color: var(--muted); font-size: 9px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.active-project-link strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 
 .filter-bar { display: flex; gap: 12px; margin-bottom: 34px; }
 .filter-bar label:first-child { flex: 1; max-width: 500px; }
@@ -124,9 +149,16 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .ui-button-ghost:hover { background: var(--surface-strong); color: var(--text); }
 .ui-button:disabled { opacity: 0.48; cursor: default; }
 
-.ui-select { position: relative; display: block; }
-.ui-select select { appearance: none; padding-right: 34px; }
-.ui-select svg { position: absolute; top: 50%; right: 12px; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: currentColor; stroke-width: 1.5; pointer-events: none; }
+.ui-select { display: grid; gap: 7px; min-width: 0; }
+.ui-field-label { color: #3f4650; font-size: 12px; font-weight: 650; }
+.ui-select-control { position: relative; display: block; min-width: 0; }
+.ui-select select { width: 100%; appearance: none; padding-right: 34px; }
+.ui-select-control svg { position: absolute; top: 50%; right: 12px; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: currentColor; stroke-width: 1.5; pointer-events: none; }
+.ui-select-sm select { min-height: 36px; }
+.ui-select-md select { min-height: 44px; }
+.ui-field-message { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.ui-select-error select { border-color: var(--accent); }
+.ui-select-error .ui-field-message { color: var(--accent); }
 
 .issue-table-wrap { border-top: 1px solid var(--border); }
 .issue-table, .stack-table { width: 100%; border-collapse: collapse; }
@@ -177,7 +209,10 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 
 .eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 720; letter-spacing: 0.11em; text-transform: uppercase; }
 .getting-started { max-width: 1080px; padding-top: 30px; border-top: 1px solid var(--border); }
-.getting-started > h2 { max-width: 620px; margin: 0; font-size: 18px; font-weight: 590; letter-spacing: -0.018em; }
+.getting-started-heading { display: flex; max-width: 760px; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.getting-started-heading h2 { max-width: 620px; margin: 0; font-size: 18px; font-weight: 590; letter-spacing: -0.018em; }
+.getting-started-heading p { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+.getting-started-heading > a { flex: 0 0 auto; color: #075fb7; font-size: 12px; font-weight: 650; text-underline-offset: 3px; }
 .setup-workspace { display: grid; grid-template-columns: 240px minmax(0, 1fr); margin-top: 42px; }
 .setup-index { position: relative; display: grid; align-content: start; margin: 0; padding: 0 30px 0 0; border-right: 1px solid var(--border); list-style: none; }
 .setup-index::before { position: absolute; top: 13px; bottom: 13px; left: 4px; width: 1px; background: #c9cfd6; content: ""; }
@@ -197,7 +232,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .framework-control { display: flex; align-items: center; gap: 9px; }
 .framework-control > span, .code-file > span { color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }
 .framework-select select { min-width: 150px; min-height: 36px; padding: 0 34px 0 11px; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; color: var(--text); font-size: 12px; font-weight: 650; }
-.framework-select svg { right: 10px; }
+.framework-select .ui-select-control svg { right: 10px; }
 .code-file { display: flex; min-width: 0; align-items: center; gap: 9px; padding-left: 16px; border-left: 1px solid var(--border); }
 .code-file code { overflow: hidden; color: var(--text); font-size: 12px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
 .copy-icon-button { flex: 0 0 auto; width: 36px; min-height: 36px; padding: 0; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; }
@@ -213,9 +248,41 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .getting-started-actions > span { color: var(--muted); font-size: 12px; }
 .setup-note { max-width: 720px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 
+.project-create-section { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr); gap: 48px; padding: 30px 0 36px; border-block: 1px solid var(--border); }
+.project-create-section h2, .project-list-section h2 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
+.project-create-section p { max-width: 440px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.project-create-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px; }
+.project-create-form label { display: grid; gap: 7px; }
+.project-create-form label > span { color: #3f4650; font-size: 12px; font-weight: 650; }
+.project-create-form input { width: 100%; min-height: 44px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 5px; background: #fff; color: var(--text); }
+.project-create-form input[aria-invalid="true"] { border-color: var(--accent); }
+.project-create-form > small { grid-column: 1 / -1; color: var(--accent); font-size: 11px; }
+.project-list-section { padding-top: 34px; }
+.project-list-section .section-heading-row { margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.project-list-section .section-heading-row > span { color: var(--muted); font-size: 12px; }
+.project-list { display: grid; }
+.project-row { display: grid; grid-template-columns: minmax(180px, 0.75fr) minmax(320px, 1.6fr) auto; align-items: center; gap: 28px; padding: 22px 0; border-bottom: 1px solid var(--border); }
+.project-row-heading { display: flex; min-width: 0; align-items: flex-start; gap: 10px; }
+.project-row-heading > div { min-width: 0; }
+.project-row h3 { margin: 0; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.project-row-heading code { display: block; margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.active-project-label { padding: 3px 7px; border: 1px solid #9cc8ac; border-radius: 999px; background: #eff8f2; color: #21623b; font-size: 10px; font-weight: 700; }
+.project-dsn { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 10px 10px 13px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.project-dsn > span { display: grid; min-width: 0; gap: 3px; }
+.project-dsn > span > span { color: var(--muted); font-size: 9px; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.project-dsn code { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.project-dsn .copy-icon-button { width: 32px; min-height: 32px; }
+.project-empty-state .ui-button { margin-top: 12px; }
+.skeleton-project-create { width: 100%; height: 130px; margin-top: 28px; }
+.skeleton-project-list { display: grid; gap: 1px; margin-top: 34px; }
+.skeleton-project-list .skeleton-block { height: 86px; border-radius: 0; }
+
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(560px, 1.04fr) minmax(500px, 0.96fr); }
 .auth-intro { display: grid; min-width: 0; min-height: 100vh; grid-template-rows: auto minmax(280px, 1fr) auto; gap: 28px; padding: 34px clamp(34px, 4vw, 72px) 42px; border-right: 1px solid #272b30; background: #111316; color: #fff; }
-.auth-wordmark { margin: 0; color: #fff; font-size: 28px; }
+.auth-wordmark { width: fit-content; margin: 0; color: #fff; }
+.auth-wordmark .jabso-mark rect { fill: #fff; }
+.auth-wordmark .jabso-mark path { fill: #111316; }
+.auth-wordmark .wordmark-text { color: #fff; }
 .auth-signal-field { position: relative; min-height: 0; }
 .auth-signal-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .auth-signal-caption { margin: 0; color: #8d959f; font-size: 12px; }
@@ -358,10 +425,12 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 
 @media (max-width: 900px) {
   :root { --sidebar-width: 72px; }
+  .app-shell, .app-shell-collapsed { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
   .sidebar { align-items: center; padding-inline: 8px; }
-  .wordmark { margin-inline: 0; font-size: 0; }
-  .wordmark::first-letter { font-size: 25px; }
-  .nav-item { justify-content: center; width: 48px; padding: 0; font-size: 0; }
+  .sidebar-brand { justify-content: center; margin-inline: 0; }
+  .sidebar-toggle { display: none; }
+  .sidebar .wordmark-text, .nav-label { display: none; }
+  .nav-item { justify-content: center; width: 48px; padding: 0; }
   .sidebar-footer { display: none; }
   .main-content { padding-inline: 28px; }
   .issue-table { min-width: 850px; }
@@ -375,7 +444,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .safe-context-section { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); }
   .auth-page { grid-template-columns: clamp(180px, 34vw, 280px) minmax(0, 1fr); }
   .auth-intro { min-height: 100vh; grid-template-rows: auto minmax(220px, 1fr) auto; padding: 26px 20px 30px; border-right: 1px solid #272b30; border-bottom: 0; }
-  .auth-wordmark { font-size: 24px; }
+  .auth-wordmark .wordmark-text { font-size: 24px; }
   .auth-signal-caption { font-size: 10px; line-height: 1.4; }
   .auth-card-wrap { min-width: 0; padding: 36px 24px; }
   .auth-form-header { margin-bottom: 28px; }
@@ -387,12 +456,15 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .session-toast { top: 14px; right: 14px; width: calc(100vw - 28px); }
   .app-shell { display: block; }
   .sidebar { position: static; width: 100%; height: auto; flex-direction: row; align-items: center; justify-content: space-between; padding: 14px 18px; border-right: 0; border-bottom: 1px solid var(--border); }
-  .wordmark { margin: 0; font-size: 22px; }
-  .wordmark::first-letter { font-size: inherit; }
+  .sidebar-brand { width: auto; margin: 0; }
+  .sidebar .wordmark-text { display: inline; font-size: 22px; }
+  .sidebar .jabso-mark { width: 26px; height: 26px; }
   .sidebar nav { display: flex; }
   .nav-item { width: 42px; min-height: 42px; }
   .main-content { padding: 32px 18px 56px; }
   .page-header { margin-bottom: 30px; }
+  .page-heading-row { display: grid; }
+  .active-project-link { width: 100%; }
   .filter-bar { display: grid; grid-template-columns: 1fr auto; }
   .filter-bar label:first-child { grid-column: 1 / -1; max-width: none; }
   .filter-bar select { min-width: 0; }
@@ -427,12 +499,17 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .code-file { padding-left: 0; border-left: 0; }
   .getting-started-actions { align-items: stretch; flex-direction: column; gap: 12px; }
   .getting-started-actions > span { text-align: center; }
+  .getting-started-heading { display: grid; }
+  .project-create-section { grid-template-columns: 1fr; gap: 24px; }
+  .project-row { grid-template-columns: 1fr; gap: 14px; }
+  .project-row > form .ui-button { width: 100%; }
 }
 
 @media (max-width: 520px) {
   .auth-page { grid-template-columns: 104px minmax(0, 1fr); }
   .auth-intro { gap: 12px; padding: 20px 10px 22px; }
-  .auth-wordmark { font-size: 20px; }
+  .auth-wordmark .jabso-mark { width: 24px; height: 24px; }
+  .auth-wordmark .wordmark-text { font-size: 20px; }
   .auth-signal-caption { display: none; }
   .auth-card-wrap { padding: 28px 14px; }
   .auth-form-header { margin-bottom: 24px; }

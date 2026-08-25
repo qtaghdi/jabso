@@ -1,5 +1,6 @@
 import { SignIn } from '@clerk/nextjs'
 import { AuthSignalField } from '@/components/auth-signal-field'
+import { JabsoWordmark } from '@/components/jabso-wordmark'
 import { SessionExpiredToast } from '@/components/session-expired-toast'
 
 type SignInPageProps = {
@@ -13,7 +14,7 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
     <main className="auth-page">
       {reason === 'session-expired' ? <SessionExpiredToast /> : null}
       <section className="auth-intro">
-        <a className="wordmark auth-wordmark" href="/">Jabso</a>
+        <a className="wordmark auth-wordmark" href="/" aria-label="Jabso home"><JabsoWordmark /></a>
         <div className="auth-signal-field">
           <AuthSignalField />
         </div>

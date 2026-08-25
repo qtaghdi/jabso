@@ -23,6 +23,10 @@ import {
   createRetryReleaseSymbolicationImplementation,
   createUploadSourceMapImplementation,
 } from '../../../domains/release/server/public.js'
+import {
+  createCreateProjectImplementation,
+  createListProjectsImplementation,
+} from '../../../domains/project/server/public.js'
 import { maxSourceMapBytes } from '../../../domains/release/shared/public.js'
 import { BoundraRuntimeError, executeContract } from 'boundra'
 import Fastify from 'fastify'
@@ -32,6 +36,7 @@ import { createBoundraErrorRecorder, toBoundraDiagnosticInput } from './boundra-
 import { PostgresIngestEventStore } from './ingestion/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-store.js'
 import { openApiDocument } from './openapi-document.js'
+import { createPostgresProjectStore } from './projects/postgres-project-store.js'
 import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
 
 const compressedBodyLimit = 1024 * 1024
@@ -78,6 +83,9 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const getReleaseRegressions = createGetReleaseRegressionsImplementation(releaseStore)
   const uploadSourceMap = createUploadSourceMapImplementation(releaseStore)
   const retryReleaseSymbolication = createRetryReleaseSymbolicationImplementation(releaseStore)
+  const projectStore = createPostgresProjectStore(database)
+  const listProjects = createListProjectsImplementation(projectStore)
+  const createProject = createCreateProjectImplementation(projectStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
   const dashboardToken = options.dashboardToken ?? process.env.JABSO_DASHBOARD_TOKEN
 
@@ -136,6 +144,28 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.get('/ready', async (_request, reply) => {
     await database.query('select 1')
     return reply.send({ status: 'ready' })
+  })
+
+  app.get<{
+    Querystring: { cursor?: string; limit?: string }
+  }>('/api/projects', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    return reply.send(await executeContract(listProjects, {
+      cursor: request.query.cursor,
+      limit: request.query.limit ? Number(request.query.limit) : undefined,
+    }))
+  })
+
+  app.post<{
+    Body: { name?: string }
+  }>('/api/projects', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const project = await executeContract(createProject, { name: request.body?.name ?? '' })
+    return reply.code(201).send(project)
   })
 
   app.get<{
