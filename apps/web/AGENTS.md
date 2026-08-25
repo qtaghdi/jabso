@@ -19,6 +19,8 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Resolve the active project through the authorized project list before using its cookie value. Never trust a client cookie as project authorization.
 - Keep `JABSO_DASHBOARD_TOKEN`, database credentials, and project administration values server-only. Generated public DSNs may be rendered for the signed-in owner.
 - Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
+- Trace pages from navigation to the final upstream request. Do not call the project list again merely to resolve the active project when the authorized list is already available.
+- Seed TanStack Query with server-fetched data for first render and set an intentional stale time for repeat navigation. Do not add client fetch-after-hydration waterfalls or show an error-page-shaped skeleton while the destination route is loading.
 
 ## Product UI
 
@@ -26,7 +28,11 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Projects owns project creation, active-project selection, public DSN display, and the route back into Issues.
 - Do not link Swagger/OpenAPI from the dashboard.
 - Reuse components under `components/ui`; fields must support labels, errors, keyboard focus, and accessible descriptions.
+- Apply shared Button, Select, input, copy, and destructive-action styles consistently across the entire affected workflow. Do not fix one row or one state while leaving equivalent controls visually different.
 - Use real framework file paths and runnable snippets in SDK setup. Avoid placeholder names such as `anywhere-in-your-app.ts`.
+- Distinguish the current Sentry-compatible integration from a first-party Jabso SDK in code, documentation, and handoff notes. The smoke test must wait for the SDK transport to flush; calling `captureException` alone is not proof of delivery.
+- GitHub repository discovery currently supports public repositories only. Do not imply that private repositories are available until a least-privilege GitHub App flow is implemented and verified.
+- For layout changes, verify desktop and narrow breakpoints, long DSNs, active badges, empty states, and connected/disconnected repository states. If browser verification is unavailable, state that limitation instead of presenting build success as visual verification.
 
 ## Route states and errors
 
