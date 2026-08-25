@@ -91,3 +91,7 @@ Current implementation status:
 - [ ] deployment-specific durable fallback and retention
 
 Direct database persistence should be added before an external deployment needs durable Boundra diagnostics. It must remain outside the failing public ingestion contract.
+
+## Human-readable issue history
+
+Runtime diagnostics and CI artifacts are machine-oriented evidence. Every Boundra-related problem that is investigated during development must also be summarized in [`boundra-report/`](./boundra-report/README.md). Reports must identify whether Boundra itself appears defective or whether its validation correctly exposed a Jabso integration problem, and they must not copy raw diagnostic payloads containing application data.
