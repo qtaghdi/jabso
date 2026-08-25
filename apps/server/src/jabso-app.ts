@@ -26,7 +26,9 @@ import {
 import {
   createCreateProjectImplementation,
   createDeleteProjectImplementation,
+  createDisconnectProjectRepositoryImplementation,
   createListProjectsImplementation,
+  createSetProjectRepositoryImplementation,
 } from '../../../domains/project/server/public.js'
 import { maxSourceMapBytes } from '../../../domains/release/shared/public.js'
 import { BoundraRuntimeError, executeContract } from 'boundra'
@@ -88,6 +90,8 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const listProjects = createListProjectsImplementation(projectStore)
   const createProject = createCreateProjectImplementation(projectStore)
   const deleteProject = createDeleteProjectImplementation(projectStore)
+  const setProjectRepository = createSetProjectRepositoryImplementation(projectStore)
+  const disconnectProjectRepository = createDisconnectProjectRepositoryImplementation(projectStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
   const dashboardToken = options.dashboardToken ?? process.env.JABSO_DASHBOARD_TOKEN
 
@@ -180,6 +184,48 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     return result.deleted
       ? reply.send(result)
       : reply.code(404).send({ error: 'project not found' })
+  })
+
+  app.put<{
+    Params: { projectId: string }
+    Body: {
+      defaultBranch?: string
+      externalId?: string
+      name?: string
+      owner?: string
+      private?: boolean
+      rootPath?: string
+      url?: string
+    }
+  }>('/api/projects/:projectId/repository', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const result = await executeContract(setProjectRepository, {
+      projectId: request.params.projectId,
+      repository: {
+        defaultBranch: request.body?.defaultBranch ?? '',
+        externalId: request.body?.externalId ?? '',
+        name: request.body?.name ?? '',
+        owner: request.body?.owner ?? '',
+        private: request.body?.private ?? false,
+        rootPath: request.body?.rootPath ?? '',
+        url: request.body?.url ?? '',
+      },
+    })
+    return reply.send(result)
+  })
+
+  app.delete<{
+    Params: { projectId: string }
+  }>('/api/projects/:projectId/repository', async (request, reply) => {
+    if (!hasValidBearerToken(request.headers.authorization, dashboardToken)) {
+      return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    }
+    const result = await executeContract(disconnectProjectRepository, { projectId: request.params.projectId })
+    return result.disconnected
+      ? reply.send(result)
+      : reply.code(404).send({ error: 'repository connection not found' })
   })
 
   app.get<{

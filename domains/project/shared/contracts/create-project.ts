@@ -1,5 +1,6 @@
 import { defineMutation, type InferSchema } from 'boundra'
 import { z } from 'zod'
+import { repositoryConnectionSchema } from './repository-connection.js'
 
 export const createProjectInputSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -12,6 +13,7 @@ export const createProjectResultSchema = z.object({
   dsnProjectId: z.string().min(1).max(64),
   publicKey: z.string().min(16).max(128),
   createdAt: z.iso.datetime(),
+  repository: repositoryConnectionSchema.nullable(),
 })
 
 export type CreateProjectMutationInput = InferSchema<typeof createProjectInputSchema>

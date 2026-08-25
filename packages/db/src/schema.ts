@@ -1,4 +1,5 @@
 import {
+  boolean,
   customType,
   index,
   integer,
@@ -32,6 +33,20 @@ export const projects = pgTable('projects', {
   publicKey: text('public_key').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
+})
+
+export const projectRepositoryConnections = pgTable('project_repository_connections', {
+  projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).primaryKey(),
+  provider: text('provider').notNull().default('github'),
+  externalId: text('external_id').notNull(),
+  owner: text('owner').notNull(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  defaultBranch: text('default_branch').notNull(),
+  private: boolean('private').notNull(),
+  rootPath: text('root_path').notNull().default(''),
+  connectedAt: timestamp('connected_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const releases = pgTable(
