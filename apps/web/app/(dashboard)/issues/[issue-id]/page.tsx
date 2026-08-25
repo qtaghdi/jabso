@@ -1,22 +1,17 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { AppShell } from '@/components/app-shell'
+import { useParams } from 'next/navigation'
 import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
+import {
+  dashboardQueryKeys,
+  issueQueryOptions,
+  updateDashboardIssueStatus,
+} from '@/lib/dashboard-query'
 import { formatCount, formatDateTime, formatLocation } from '@/lib/format'
-import { getIssue, type StackFrame } from '@/lib/jabso-api'
-import { changeIssueStatus } from './actions'
-
-export const dynamic = 'force-dynamic'
-
-type IssuePageProps = { params: Promise<{ 'issue-id': string }> }
-
-export const generateMetadata = async ({ params }: IssuePageProps): Promise<Metadata> => {
-  const { 'issue-id': issueId } = await params
-  const issue = await getIssue(issueId)
-  return { title: issue?.title ?? 'Issue not found' }
-}
+import type { StackFrame } from '@/lib/jabso-api'
 
 const BackIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m12.5 4.5-5 5 5 5M8 9.5h8" /></svg>
@@ -29,13 +24,27 @@ const StatusButton = ({ issueId, status, label, active }: {
   status: keyof typeof statusLabel
   label: string
   active?: boolean
-}) => (
-  <form action={changeIssueStatus}>
-    <input type="hidden" name="issue-id" value={issueId} />
-    <input type="hidden" name="status" value={status} />
-    <Button className={active ? 'status-action-active' : undefined} variant="secondary" type="submit" disabled={active}>{label}</Button>
-  </form>
-)
+}) => {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: () => updateDashboardIssueStatus(issueId, status),
+    onSuccess: (issue) => {
+      queryClient.setQueryData(dashboardQueryKeys.issue(issueId), issue)
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'issues'] })
+    },
+  })
+  return (
+    <Button
+      className={active ? 'status-action-active' : undefined}
+      variant="secondary"
+      type="button"
+      disabled={active || mutation.isPending}
+      onClick={() => mutation.mutate()}
+    >
+      {mutation.isPending ? 'Updating…' : label}
+    </Button>
+  )
+}
 
 const StackTraceTable = ({ frames }: { frames: StackFrame[] }) => (
   <div className="stack-table-wrap"><table className="stack-table">
@@ -51,10 +60,17 @@ const StackTraceTable = ({ frames }: { frames: StackFrame[] }) => (
   </table></div>
 )
 
-const IssuePage = async ({ params }: IssuePageProps) => {
-  const { 'issue-id': issueId } = await params
-  const issue = await getIssue(issueId)
-  if (!issue) notFound()
+const IssuePage = () => {
+  const parameters = useParams<{ 'issue-id': string }>()
+  const issueId = parameters['issue-id']
+  const issueQuery = useQuery(issueQueryOptions(issueId))
+  if (issueQuery.isPending) {
+    return <div className="issue-detail-loading" role="status"><span className="skeleton-block skeleton-back" /><span className="skeleton-block skeleton-detail-title" /><span className="sr-only">Loading issue</span></div>
+  }
+  if (issueQuery.isError) {
+    return <div className="route-state" role="alert"><h1>Could not load this issue</h1><p>{issueQuery.error.message}</p><Link className="text-link" href="/">Return to Issues</Link></div>
+  }
+  const issue = issueQuery.data
   const event = issue.latestEvent
   const frames = [...(event?.stacktrace ?? [])].reverse()
   const originalFrames = [...(event?.originalStacktrace ?? [])].reverse()
@@ -67,7 +83,7 @@ const IssuePage = async ({ params }: IssuePageProps) => {
   }).filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].length > 0)
 
   return (
-    <AppShell>
+    <>
       <Link className="back-link" href="/"><BackIcon />Back to Issues</Link>
       <header className="issue-detail-header phase-two-detail-header">
         <div className="issue-title-row">
@@ -154,7 +170,7 @@ const IssuePage = async ({ params }: IssuePageProps) => {
           {safeContext.length ? <dl>{safeContext.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl> : <p className="muted-copy">No safe context was captured.</p>}
         </section>
       </div>
-    </AppShell>
+    </>
   )
 }
 

@@ -58,6 +58,11 @@ export const createProject = async (name: string) =>
     body: JSON.stringify({ name }),
   })
 
+export const deleteProject = async (id: string) =>
+  dashboardRequest<{ deleted: boolean; id: string }>(`/api/projects/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+
 export const getActiveProject = cache(async () => {
   const { items } = await listProjects()
   const selectedId = (await cookies()).get(activeProjectCookie)?.value
@@ -81,6 +86,11 @@ export const setActiveProject = async (dsnProjectId: string) => {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   })
+}
+
+export const clearActiveProject = async () => {
+  const cookieStore = await cookies()
+  cookieStore.delete(activeProjectCookie)
 }
 
 export const projectDsn = (project: ProjectSummary) => {

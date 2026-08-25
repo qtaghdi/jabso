@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { QueryProvider } from '@/components/query-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 type RootLayoutProps = { children: ReactNode }
 
 const RootLayout = ({ children }: RootLayoutProps) => (
-  <html lang="en"><body><ClerkProvider>{children}</ClerkProvider></body></html>
+  <html lang="en"><body><ClerkProvider><QueryProvider>{children}</QueryProvider></ClerkProvider></body></html>
 )
 
 export default RootLayout

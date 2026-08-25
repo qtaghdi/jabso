@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { useState, useTransition } from 'react'
 import { JabsoWordmark } from '@/components/jabso-wordmark'
@@ -9,7 +10,6 @@ import { SessionExpiryWatcher } from '@/components/session-expiry-watcher'
 import { setSidebarCollapsed } from '@/components/sidebar-actions'
 
 type SidebarShellProps = {
-  activeNav: 'issues' | 'projects'
   children: ReactNode
   initialCollapsed: boolean
 }
@@ -35,7 +35,9 @@ const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
   </svg>
 )
 
-export const SidebarShell = ({ activeNav, children, initialCollapsed }: SidebarShellProps) => {
+export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) => {
+  const pathname = usePathname()
+  const activeNav = pathname.startsWith('/projects') ? 'projects' : 'issues'
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [isPending, startTransition] = useTransition()
 
@@ -59,17 +61,6 @@ export const SidebarShell = ({ activeNav, children, initialCollapsed }: SidebarS
           <Link className="wordmark" href="/" aria-label="Jabso issue inbox">
             <JabsoWordmark />
           </Link>
-          <button
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="sidebar-toggle"
-            disabled={isPending}
-            onClick={toggleSidebar}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            type="button"
-          >
-            <SidebarToggleIcon collapsed={collapsed} />
-          </button>
         </div>
         <nav aria-label="Primary navigation">
           <Link
@@ -93,6 +84,18 @@ export const SidebarShell = ({ activeNav, children, initialCollapsed }: SidebarS
         </nav>
         <div className="sidebar-footer">
           <OwnerSummary />
+          <button
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="sidebar-toggle"
+            disabled={isPending}
+            onClick={toggleSidebar}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            type="button"
+          >
+            <SidebarToggleIcon collapsed={collapsed} />
+            <span className="sidebar-toggle-label">Collapse sidebar</span>
+          </button>
         </div>
       </aside>
       <main className="main-content">{children}</main>
