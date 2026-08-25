@@ -105,6 +105,78 @@ describe('Jabso server', () => {
     ]))
     expect(projects.nextCursor).toBeNull()
 
+    const unauthorizedConnection = await app.inject({
+      method: 'PUT',
+      url: `/api/projects/${created.id}/repository`,
+      payload: {
+        externalId: '123456',
+        owner: 'qtaghdi',
+        name: 'checkout',
+        url: 'https://github.com/qtaghdi/checkout',
+        defaultBranch: 'main',
+        private: false,
+        rootPath: 'apps/web',
+      },
+    })
+    expect(unauthorizedConnection.statusCode).toBe(403)
+
+    const unsafeConnection = await app.inject({
+      method: 'PUT',
+      url: `/api/projects/${created.id}/repository`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: {
+        externalId: '123456',
+        owner: 'qtaghdi',
+        name: 'checkout',
+        url: 'https://github.com/qtaghdi/checkout',
+        defaultBranch: 'main',
+        private: false,
+        rootPath: '../private',
+      },
+    })
+    expect(unsafeConnection.statusCode).toBe(400)
+
+    const connectedResponse = await app.inject({
+      method: 'PUT',
+      url: `/api/projects/${created.id}/repository`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: {
+        externalId: '123456',
+        owner: 'qtaghdi',
+        name: 'checkout',
+        url: 'https://github.com/qtaghdi/checkout',
+        defaultBranch: 'main',
+        private: false,
+        rootPath: 'apps/web',
+      },
+    })
+    expect(connectedResponse.statusCode).toBe(200)
+    expect(connectedResponse.json()).toMatchObject({
+      projectId: created.id,
+      repository: { owner: 'qtaghdi', name: 'checkout', rootPath: 'apps/web' },
+    })
+
+    const connectedProjects = await app.inject({
+      method: 'GET',
+      url: '/api/projects',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(connectedProjects.json<{ items: Array<{ id: string; repository: unknown }> }>().items)
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          id: created.id,
+          repository: expect.objectContaining({ owner: 'qtaghdi', name: 'checkout' }),
+        }),
+      ]))
+
+    const disconnectedResponse = await app.inject({
+      method: 'DELETE',
+      url: `/api/projects/${created.id}/repository`,
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(disconnectedResponse.statusCode).toBe(200)
+    expect(disconnectedResponse.json()).toEqual({ disconnected: true, projectId: created.id })
+
     const ingestionResponse = await app.inject({
       method: 'POST',
       url: `/api/${created.dsnProjectId}/envelope?sentry_key=${created.publicKey}`,

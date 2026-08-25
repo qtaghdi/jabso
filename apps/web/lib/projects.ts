@@ -11,6 +11,18 @@ export type ProjectSummary = {
   name: string
   publicKey: string
   slug: string
+  repository: RepositoryConnection | null
+}
+
+export type RepositoryConnection = {
+  connectedAt: string
+  defaultBranch: string
+  externalId: string
+  name: string
+  owner: string
+  private: boolean
+  rootPath: string
+  url: string
 }
 
 type ProjectList = {
@@ -62,6 +74,22 @@ export const deleteProject = async (id: string) =>
   dashboardRequest<{ deleted: boolean; id: string }>(`/api/projects/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
+
+export const setProjectRepository = async (projectId: string, repository: Omit<RepositoryConnection, 'connectedAt'>) =>
+  dashboardRequest<{ projectId: string; repository: RepositoryConnection }>(
+    `/api/projects/${encodeURIComponent(projectId)}/repository`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(repository),
+    },
+  )
+
+export const disconnectProjectRepository = async (projectId: string) =>
+  dashboardRequest<{ disconnected: boolean; projectId: string }>(
+    `/api/projects/${encodeURIComponent(projectId)}/repository`,
+    { method: 'DELETE' },
+  )
 
 export const getActiveProject = cache(async () => {
   const { items } = await listProjects()

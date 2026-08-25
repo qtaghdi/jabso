@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { CopyCodeButton } from '@/components/copy-code-button'
+import { RepositoryConnectionDialog } from '@/components/repository-connection-dialog'
 import { Button } from '@/components/ui/button'
 import {
   createDashboardProject,
@@ -12,12 +13,14 @@ import {
   projectsQueryOptions,
   selectDashboardProject,
 } from '@/lib/dashboard-query'
+import type { DashboardProject } from '@/lib/dashboard-types'
 
 export const ProjectsView = () => {
   const router = useRouter()
   const queryClient = useQueryClient()
   const projectsQuery = useQuery(projectsQueryOptions())
   const [name, setName] = useState('')
+  const [repositoryProject, setRepositoryProject] = useState<DashboardProject | null>(null)
 
   const syncProjects = (data: NonNullable<typeof projectsQuery.data>) => {
     queryClient.setQueryData(dashboardQueryKeys.projects, data)
@@ -119,6 +122,9 @@ export const ProjectsView = () => {
                     <div>
                       <h3>{project.name}</h3>
                       <code>{project.slug}</code>
+                      {project.repository ? <a className="project-repository-link" href={project.repository.url} rel="noreferrer" target="_blank">
+                        {project.repository.owner}/{project.repository.name}{project.repository.rootPath ? `/${project.repository.rootPath}` : ''}
+                      </a> : <span className="project-repository-empty">No repository connected</span>}
                     </div>
                     {project.active ? <span className="active-project-label">Active</span> : null}
                   </div>
@@ -127,6 +133,15 @@ export const ProjectsView = () => {
                     <CopyCodeButton iconOnly label={`Copy ${project.name} DSN`} value={project.dsn} />
                   </div>
                   <div className="project-row-actions">
+                    <Button
+                      className="project-repository-button"
+                      disabled={deleteMutation.isPending || selectMutation.isPending}
+                      onClick={() => setRepositoryProject(project)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      GitHub
+                    </Button>
                     <Button
                       disabled={project.active || selectMutation.isPending || deleteMutation.isPending}
                       onClick={() => selectMutation.mutate(project.dsnProjectId)}
@@ -151,6 +166,7 @@ export const ProjectsView = () => {
           </div>
         )}
       </section>
+      {repositoryProject ? <RepositoryConnectionDialog close={() => setRepositoryProject(null)} key={repositoryProject.id} project={repositoryProject} /> : null}
     </>
   )
 }

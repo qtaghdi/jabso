@@ -1,5 +1,6 @@
 import { defineQuery, type InferSchema } from "boundra";
 import { z } from "zod";
+import { repositoryConnectionSchema } from './repository-connection.js'
 
 export const listProjectsInputSchema = z.object({
   cursor: z.uuid().optional(),
@@ -13,6 +14,7 @@ export const listProjectsResultSchema = z.object({
     dsnProjectId: z.string().min(1).max(64),
     publicKey: z.string().min(1).max(128),
     createdAt: z.iso.datetime(),
+    repository: repositoryConnectionSchema.nullable(),
   })).max(100),
   nextCursor: z.string().nullable(),
 });

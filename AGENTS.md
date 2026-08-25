@@ -96,6 +96,13 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Treat source maps and `sourcesContent` as private source code. Do not expose their raw contents through UI, logs, public APIs, diagnostics, or MCP responses.
 - Until measured load requires a worker, use bounded retry/backfill over persisted pending state. Do not add Redis or a queue only for Phase 3.
 
+## Repository connection conventions
+
+- Repository connections store provider metadata and an optional normalized repository-relative root only. Never persist OAuth access tokens, refresh tokens, Git credentials, source archives, or arbitrary provider responses.
+- Treat private repository names and paths as sensitive metadata. Do not expose them through public ingestion, diagnostics, logs, or unauthenticated APIs.
+- Revalidate a repository selection against the provider response on the server before persisting it; never trust repository metadata submitted by the browser.
+- Public GitHub repository discovery may use unauthenticated APIs. Private repository access requires a separately approved GitHub App design with installation access limited to selected repositories.
+
 ## Web conventions
 
 - Prefer React Server Components for reads. Keep client components limited to actual browser state or SDK interaction.
