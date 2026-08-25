@@ -173,6 +173,13 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     if (ownsDatabase) await database.close?.()
   })
 
+  app.get('/', async () => ({
+    service: 'jabso-server',
+    status: 'ok',
+    message: 'Jabso collector is running.',
+    health: '/health',
+    readiness: '/ready',
+  }))
   app.get('/health', async () => ({ status: 'ok' }))
   app.get('/ready', async (_request, reply) => {
     await database.query('select 1')
