@@ -332,7 +332,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-form-header > p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
 .clerk-root-box, .clerk-card-box, .clerk-card, .clerk-main { width: 100% !important; max-width: none !important; }
 .clerk-card-box { box-shadow: none !important; }
-.clerk-card { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+.clerk-card { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
 .clerk-header { display: none !important; }
 .clerk-social-button { width: 100% !important; min-height: 50px !important; border: 1px solid #17191d !important; border-radius: 10px !important; background: #17191d !important; color: #fff !important; box-shadow: none !important; transition: background-color 140ms ease, transform 140ms ease !important; }
 .clerk-social-button:hover { background: #050607 !important; transform: translateY(-1px); }
