@@ -15,11 +15,19 @@ import {
   projectsQueryOptions,
   selectDashboardProject,
 } from 'src/lib/dashboard/dashboard-query'
-import type { DashboardProject, ProjectsResponse } from 'src/lib/dashboard/dashboard-types'
+import type { DashboardProject, IssuesResponse, ProjectsResponse } from 'src/lib/dashboard/dashboard-types'
 
 type ProjectsViewProps = {
   initialData: ProjectsResponse
 }
+
+const emptyIssuesResponse = (activeProject: DashboardProject | null): IssuesResponse => ({
+  activeProject,
+  facets: { environments: [], levels: [], releases: [] },
+  items: [],
+  nextCursor: null,
+  previousCursor: null,
+})
 
 export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
   const router = useRouter()
@@ -30,9 +38,16 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
   const [repositoryProject, setRepositoryProject] = useState<DashboardProject | null>(null)
 
   const syncProjects = (data: NonNullable<typeof projectsQuery.data>) => {
+    const activeProject = data.items.find((project) => project.active) ?? null
     queryClient.setQueryData(dashboardQueryKeys.projects, data)
     queryClient.removeQueries({ queryKey: ['dashboard', 'issues'] })
     queryClient.removeQueries({ queryKey: ['dashboard', 'issue'] })
+    queryClient.setQueryData(dashboardQueryKeys.issues(''), emptyIssuesResponse(activeProject))
+    void queryClient.invalidateQueries({
+      exact: true,
+      queryKey: dashboardQueryKeys.issues(''),
+      refetchType: 'none',
+    })
   }
 
   const selectMutation = useMutation({
