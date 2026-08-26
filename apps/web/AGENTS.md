@@ -59,4 +59,6 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
 - Keep redirects server-side where possible and avoid full-page client auth gates.
 - Give every Clerk sign-out control an explicit `/sign-in` redirect. Do not rely on Clerk's default `/` destination, which adds a protected-route bounce and can leave the sign-in shell temporarily empty.
+- Keep Clerk Organizations enabled with membership optional. Jabso owns the Personal, Team, or Organization choice after sign-up; required Clerk organization membership creates a duplicate pre-onboarding organization task.
+- Keep sign-in and sign-up on explicit routes. Successful sign-up must transition through a visible loading state before `/onboarding`; never leave the mounted Clerk shell blank while session state settles.
 - Maintain `app/icon.svg` and a working `/favicon.ico` response.

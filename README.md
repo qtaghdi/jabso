@@ -118,11 +118,13 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `JABSO_DEV_CLERK_USER_ID` | Optional Clerk user ID that owns the local seeded project |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk server secret |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Jabso's Clerk sign-in route (`/sign-in`) |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Jabso's Clerk sign-up route (`/sign-up`) |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
 `JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
-In Clerk, enable GitHub as a social connection and enable Organizations with **Membership optional**. After sign-in, Jabso asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Clerk user. Team and Organization workspaces both use Clerk Organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active Clerk context and all dashboard API calls are scoped to the corresponding Jabso workspace.
+In Clerk, enable GitHub as a social connection and enable Organizations with **Membership optional**. Do not require organization membership: Clerk's required-membership session task inserts its own organization chooser before Jabso onboarding and duplicates workspace creation. After sign-up, Jabso shows an explicit transition state and then asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Clerk user. Team and Organization workspaces both use Clerk Organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active Clerk context and all dashboard API calls are scoped to the corresponding Jabso workspace.
 
 Run `pnpm db:migrate` before deploying this version. Existing projects intentionally remain unassigned and invisible after the migration instead of being claimed by the first user who signs in. Assign legacy rows to a verified workspace with a reviewed, one-time database migration.
 
