@@ -391,7 +391,7 @@ spikes/
       <li><code>apps/server/src/issues/postgres-issue-query-store.ts</code></li>
       <li><code>packages/db/src/schema.ts</code>, migrations <code>0000</code>–<code>0003</code></li>
       <li><code>domains/ingestion</code>, <code>domains/issue</code>, <code>domains/project</code>, <code>domains/release</code></li>
-      <li><code>apps/web/app/page.tsx</code>, <code>apps/web/app/issues/[issue-id]/page.tsx</code></li>
+      <li><code>apps/web/src/app/(dashboard)/page.tsx</code>, <code>apps/web/src/app/(dashboard)/issues/[issue-id]/page.tsx</code></li>
     </ul>
   </details>
   <details open><summary>Phase 3 구현 파일</summary>
@@ -400,7 +400,7 @@ spikes/
       <li><code>packages/db/src/schema.ts</code>: releases, artifacts, issue-release aggregate와 event symbolication 상태</li>
       <li><code>packages/symbolication</code>: path normalization, map lookup, frame mapping</li>
       <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/releases/postgres-release-store.ts</code>: 관리자 upload/retry와 저장 adapter</li>
-      <li><code>apps/web/app/issues/[issue-id]</code>: mapped/original frame과 release 이력 UI</li>
+      <li><code>apps/web/src/app/(dashboard)/issues/[issue-id]</code>: mapped/original frame과 release 이력 UI</li>
       <li><code>apps/server/test/app.test.ts</code>: late upload, isolation, privacy, regression integration story</li>
     </ul>
   </details>
