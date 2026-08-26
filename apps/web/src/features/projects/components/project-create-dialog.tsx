@@ -88,7 +88,7 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
             </label>
             <label className={source === 'github' ? 'project-source-option project-source-option-active' : 'project-source-option'}>
               <input checked={source === 'github'} name="project-source" onChange={() => setSource('github')} type="radio" value="github" />
-              <span><strong>GitHub project</strong><small>Create a DSN and connect a public repository.</small></span>
+              <span><strong>GitHub project</strong><small>Connect a public personal or organization repository.</small></span>
             </label>
           </div>
         </fieldset>

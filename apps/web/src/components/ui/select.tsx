@@ -1,18 +1,22 @@
 'use client'
 
 import {
+  type CSSProperties,
   Children,
   isValidElement,
+  useCallback,
   type KeyboardEvent,
   type OptionHTMLAttributes,
   type ReactElement,
   type ReactNode,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 
 type SelectChangeEvent = {
   currentTarget: { name: string | undefined; value: string }
@@ -42,6 +46,8 @@ type SelectOption = {
   value: string
 }
 
+type SelectMenuStyle = Pick<CSSProperties, 'bottom' | 'left' | 'maxHeight' | 'top' | 'width'>
+
 const isOptionElement = (child: ReactNode): child is ReactElement<OptionHTMLAttributes<HTMLOptionElement>> =>
   isValidElement(child) && child.type === 'option'
 
@@ -68,8 +74,10 @@ export const Select = ({
   const descriptionId = hint || error ? `${fieldId}-description` : undefined
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<Array<HTMLDivElement | null>>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [menuStyle, setMenuStyle] = useState<SelectMenuStyle | null>(null)
   const [internalValue, setInternalValue] = useState(defaultValue)
   const selectedValue = value ?? internalValue
   const options = useMemo<SelectOption[]>(() => Children.toArray(children)
@@ -83,10 +91,44 @@ export const Select = ({
     })), [children])
   const selectedOption = options.find((option) => option.value === selectedValue) ?? options[0]
 
+  const positionMenu = useCallback(() => {
+    const trigger = triggerRef.current
+    if (!trigger) return
+    const rect = trigger.getBoundingClientRect()
+    const width = Math.min(Math.max(rect.width, 190), window.innerWidth - 16)
+    const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8)
+    const availableBelow = window.innerHeight - rect.bottom - 12
+    const availableAbove = rect.top - 12
+    const openAbove = availableBelow < 160 && availableAbove > availableBelow
+    const maxHeight = Math.max(120, Math.min(280, openAbove ? availableAbove : availableBelow))
+    setMenuStyle(openAbove
+      ? { bottom: window.innerHeight - rect.top + 6, left, maxHeight, width }
+      : { left, maxHeight, top: rect.bottom + 6, width })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    positionMenu()
+    const menu = menuRef.current
+    if (menu && typeof menu.showPopover === 'function' && !menu.matches(':popover-open')) {
+      menu.showPopover()
+    }
+    window.addEventListener('resize', positionMenu)
+    window.addEventListener('scroll', positionMenu, true)
+    return () => {
+      if (menu && typeof menu.hidePopover === 'function' && menu.matches(':popover-open')) {
+        menu.hidePopover()
+      }
+      window.removeEventListener('resize', positionMenu)
+      window.removeEventListener('scroll', positionMenu, true)
+    }
+  }, [isOpen, positionMenu])
+
   useEffect(() => {
     if (!isOpen) return
     const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false)
+      const target = event.target as Node
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setIsOpen(false)
     }
     document.addEventListener('pointerdown', closeOnOutsidePointer)
     return () => document.removeEventListener('pointerdown', closeOnOutsidePointer)
@@ -181,8 +223,16 @@ export const Select = ({
           <span id={`${fieldId}-value`}>{selectedOption?.label ?? 'Select an option'}</span>
           <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
         </button>
-        {isOpen ? (
-          <div aria-labelledby={`${fieldId}-label`} className="ui-select-options" id={listboxId} role="listbox">
+        {isOpen ? createPortal(
+          <div
+            aria-labelledby={`${fieldId}-label`}
+            className="ui-select-options"
+            id={listboxId}
+            popover="manual"
+            ref={menuRef}
+            role="listbox"
+            style={{ ...menuStyle, visibility: menuStyle ? 'visible' : 'hidden' }}
+          >
             {options.map((option, index) => (
               <div
                 aria-disabled={option.disabled || undefined}
@@ -200,7 +250,8 @@ export const Select = ({
                 {option.value === selectedValue ? <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3.5 8.5 2.8 2.8 6.2-6.2" /></svg> : null}
               </div>
             ))}
-          </div>
+          </div>,
+          document.body,
         ) : null}
         {name ? <input name={name} type="hidden" value={selectedValue} /> : null}
       </span>
