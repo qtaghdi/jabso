@@ -38,6 +38,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
 - Trace pages from navigation to the final upstream request. Do not call the project list again merely to resolve the active project when the authorized list is already available.
 - Seed TanStack Query with server-fetched data for first render and set an intentional stale time for repeat navigation. Do not make every client transition wait for the same uncached upstream read before the query cache can render; stream remote reads behind a shape-matched Suspense boundary or reuse a persistent cache, then verify that repeat navigation avoids upstream calls. Do not add client fetch-after-hydration waterfalls or show an error-page-shaped skeleton while the destination route is loading.
+- After a mutation changes the active project, seed the destination Issues query with that project before navigating, then mark it stale for background refresh. Do not remove the Issues query and navigate into a cached RSC payload that still represents the previous active project.
 
 ## Product UI
 
@@ -59,4 +60,6 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
 - Keep redirects server-side where possible and avoid full-page client auth gates.
 - Give every Clerk sign-out control an explicit `/sign-in` redirect. Do not rely on Clerk's default `/` destination, which adds a protected-route bounce and can leave the sign-in shell temporarily empty.
+- Keep Clerk Organizations enabled with membership optional. Jabso owns the Personal, Team, or Organization choice after sign-up; required Clerk organization membership creates a duplicate pre-onboarding organization task.
+- Keep sign-in and sign-up on explicit routes. Successful sign-up must transition through a visible loading state before `/onboarding`; never leave the mounted Clerk shell blank while session state settles.
 - Maintain `app/icon.svg` and a working `/favicon.ico` response.

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 type RootLayoutProps = { children: ReactNode }
 
 const RootLayout = ({ children }: RootLayoutProps) => (
-  <html lang="en"><body><ClerkProvider><QueryProvider>{children}</QueryProvider></ClerkProvider></body></html>
+  <html lang="en"><body><ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up"><QueryProvider>{children}</QueryProvider></ClerkProvider></body></html>
 )
 
 export default RootLayout

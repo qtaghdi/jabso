@@ -1,30 +1,30 @@
 'use client'
 
-import { SignIn, useAuth } from '@clerk/nextjs'
+import { SignUp, useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { AuthFormFallback } from 'src/features/auth/components/auth-form-fallback'
 import { AuthTransition } from 'src/features/auth/components/auth-transition'
 import { useDisableClerkNativeValidation } from 'src/features/auth/components/use-disable-clerk-native-validation'
 
-export const JabsoSignIn = () => {
+export const JabsoSignUp = () => {
   const { isLoaded, isSignedIn } = useAuth()
   const router = useRouter()
   const rootRef = useDisableClerkNativeValidation()
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) router.replace('/')
+    if (isLoaded && isSignedIn) router.replace('/onboarding')
   }, [isLoaded, isSignedIn, router])
 
-  if (isLoaded && isSignedIn) return <AuthTransition label="Signing you in…" />
+  if (isLoaded && isSignedIn) return <AuthTransition label="Account created" />
 
   return (
     <div ref={rootRef} className="jabso-sign-in">
-      <SignIn
-        forceRedirectUrl="/"
-        signUpForceRedirectUrl="/onboarding"
-        signUpUrl="/sign-up"
-        fallback={<AuthFormFallback label="Loading sign in" />}
+      <SignUp
+        forceRedirectUrl="/onboarding"
+        signInForceRedirectUrl="/"
+        signInUrl="/sign-in"
+        fallback={<AuthFormFallback label="Loading sign up" />}
         appearance={{
           elements: {
             rootBox: 'clerk-root-box',

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { JabsoWordmark } from 'src/components/brand/jabso-wordmark'
 import { Button } from 'src/components/ui/button'
+import { OnboardingLoading } from 'src/features/onboarding/components/onboarding-loading'
 import type { WorkspaceKind } from 'src/lib/jabso/workspaces'
 
 type OnboardingFlowProps = { hasActiveOrganization: boolean }
@@ -83,6 +84,20 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
     }
   }
 
+  if (!isLoaded || isSubmitting) {
+    return (
+      <main className="onboarding-page">
+        <header className="onboarding-brand"><JabsoWordmark /></header>
+        <div className="onboarding-card">
+          <OnboardingLoading description={isSubmitting
+            ? 'Creating the workspace and connecting it to your account.'
+            : undefined}
+          />
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="onboarding-page">
       <header className="onboarding-brand"><JabsoWordmark /></header>
@@ -112,9 +127,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
               <SignOutButton redirectUrl="/sign-in">
                 <button className="onboarding-sign-out" type="button">Sign out</button>
               </SignOutButton>
-              <Button disabled={isSubmitting || !isLoaded} onClick={continueFromChoice}>
-                {isSubmitting ? 'Creating…' : 'Continue'}
-              </Button>
+              <Button onClick={continueFromChoice}>Continue</Button>
             </footer>
           </>
         ) : (
@@ -137,9 +150,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
             <p className="onboarding-hint">You can invite members after setup.</p>
             <footer className="onboarding-actions">
               <Button onClick={() => { setError(null); setStep(1) }} variant="ghost">Back</Button>
-              <Button disabled={isSubmitting || !isLoaded} onClick={createSharedWorkspace}>
-                {isSubmitting ? 'Creating…' : `Create ${kind}`}
-              </Button>
+              <Button onClick={createSharedWorkspace}>{`Create ${kind}`}</Button>
             </footer>
           </>
         )}

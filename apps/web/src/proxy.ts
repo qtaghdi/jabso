@@ -2,7 +2,8 @@ import { clerkMiddleware } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 export default clerkMiddleware(async (auth, request) => {
-  if (request.nextUrl.pathname.startsWith('/sign-in')) return
+  if (request.nextUrl.pathname.startsWith('/sign-in')
+    || request.nextUrl.pathname.startsWith('/sign-up')) return
 
   const { userId } = await auth()
   const hasStaleSession = !userId && request.cookies.has('__session')

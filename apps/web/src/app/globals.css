@@ -146,14 +146,14 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .filter-bar { display: flex; gap: 12px; margin-bottom: 34px; }
 .filter-bar label:first-child { flex: 1; max-width: 500px; }
 .filter-bar input { width: 100%; min-height: 44px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 8px; background: var(--background); color: var(--text); font-size: 14px; }
-.filter-bar select { min-width: 210px; }
+.filter-bar .ui-select-control { min-width: 210px; }
 .filter-bar button { min-height: 44px; padding: 0 18px; border: 1px solid #20242a; border-radius: 5px; background: #20242a; color: white; font-size: 13px; font-weight: 680; cursor: pointer; }
 .filter-bar button:hover { background: #000; }
 
 .compact-page-header { margin-bottom: 26px; }
 .phase-two-filters { display: grid; grid-template-columns: minmax(220px, 1.6fr) repeat(5, minmax(130px, 0.75fr)) auto auto; gap: 10px; margin-bottom: 28px; }
 .phase-two-filters label:first-child { max-width: none; }
-.phase-two-filters select { min-width: 0; }
+.phase-two-filters .ui-select-control { min-width: 0; }
 .phase-two-filters .clear-filter { display: grid; min-height: 44px; padding: 0 15px; place-items: center; border: 1px solid #cbd2da; border-radius: 5px; font-size: 13px; font-weight: 650; text-decoration: none; }
 .phase-two-filters .clear-filter:hover { background: var(--surface); }
 
@@ -188,20 +188,30 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 
 .ui-input { display: grid; gap: 7px; min-width: 0; }
 .ui-input input { width: 100%; min-height: 44px; padding: 0 13px; border: 1px solid #cbd2da; border-radius: 8px; background: #fff; color: var(--text); font: inherit; font-size: 13px; }
-.ui-input input:focus, .ui-input input:focus-visible, .ui-select select:focus, .ui-select select:focus-visible { border-color: #17191d; outline: 3px solid rgb(23 25 29 / 10%); outline-offset: 0; }
+.ui-input input:focus, .ui-input input:focus-visible, .ui-select-trigger:focus-visible { border-color: #17191d; outline: 3px solid rgb(23 25 29 / 10%); outline-offset: 0; }
 .ui-input-error input { border-color: var(--accent); }
 .ui-input-error .ui-field-message { color: var(--accent); }
 
 .ui-select { display: grid; gap: 7px; min-width: 0; }
 .ui-field-label { color: #3f4650; font-size: 12px; font-weight: 650; }
 .ui-select-control { position: relative; display: block; min-width: 0; }
-.ui-select select { width: 100%; appearance: none; padding: 0 34px 0 13px; border: 1px solid #cbd2da; border-radius: 8px; background: #fff; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
-.ui-select select:disabled { background: var(--surface); color: var(--muted); cursor: default; }
-.ui-select-control svg { position: absolute; top: 50%; right: 12px; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: currentColor; stroke-width: 1.5; pointer-events: none; }
-.ui-select-sm select { min-height: 36px; }
-.ui-select-md select { min-height: 44px; }
+.ui-select-trigger { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px 0 13px; border: 1px solid #cbd2da; border-radius: 8px; background: #fff; color: var(--text); font-size: 13px; text-align: left; cursor: pointer; }
+.ui-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-trigger:disabled { background: var(--surface); color: var(--muted); cursor: default; }
+.ui-select-trigger > svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform 140ms ease; }
+.ui-select-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.ui-select-sm .ui-select-trigger { min-height: 36px; }
+.ui-select-md .ui-select-trigger { min-height: 44px; }
+.ui-select-options { position: absolute; z-index: 80; top: calc(100% + 6px); left: 0; width: max(100%, 190px); max-height: min(280px, 42vh); padding: 5px; overflow-y: auto; border: 1px solid #d3d8de; border-radius: 10px; background: #fff; box-shadow: 0 16px 40px rgb(23 25 29 / 14%); }
+.ui-select-option { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 10px; border-radius: 6px; color: #3f4650; font-size: 13px; cursor: pointer; }
+.ui-select-option > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-option > svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: #17191d; stroke-width: 1.8; }
+.ui-select-option:hover, .ui-select-option:focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
+.ui-select-option[aria-selected='true'] { color: var(--text); font-weight: 650; }
+.ui-select-option[aria-disabled='true'] { color: #a1a8b0; cursor: not-allowed; }
+.ui-select-option[aria-disabled='true']:hover { background: transparent; }
 .ui-field-message { color: var(--muted); font-size: 11px; line-height: 1.45; }
-.ui-select-error select { border-color: var(--accent); }
+.ui-select-error .ui-select-trigger { border-color: var(--accent); }
 .ui-select-error .ui-field-message { color: var(--accent); }
 
 .issue-table-wrap { border-top: 1px solid var(--border); }
@@ -275,8 +285,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .code-panel-meta { display: flex; min-width: 0; align-items: center; gap: 16px; }
 .framework-control { display: flex; align-items: center; gap: 9px; }
 .framework-control > span, .code-file > span { color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: 0.06em; text-transform: uppercase; }
-.framework-select select { min-width: 150px; min-height: 36px; padding: 0 34px 0 11px; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; color: var(--text); font-size: 12px; font-weight: 650; }
-.framework-select .ui-select-control svg { right: 10px; }
+.framework-select .ui-select-control { min-width: 150px; }
+.framework-select .ui-select-trigger { min-height: 36px; font-size: 12px; font-weight: 650; }
 .code-file { display: flex; min-width: 0; align-items: center; gap: 9px; padding-left: 16px; border-left: 1px solid var(--border); }
 .code-file code { overflow: hidden; color: var(--text); font-size: 12px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
 .copy-icon-button { flex: 0 0 auto; width: 36px; min-height: 36px; padding: 0; border: 1px solid #cbd2da; border-radius: 6px; background: #fff; }
@@ -378,7 +388,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-card-wrap { display: grid; place-items: center; padding: 52px clamp(34px, 5vw, 84px); background: #fff; }
 .auth-form-shell { width: min(100%, 440px); }
 .auth-form-header { margin-bottom: 34px; }
-.auth-form-header h2 { margin: 0; font-size: 34px; line-height: 1.06; letter-spacing: -0.045em; }
+.auth-form-header h1 { margin: 0; font-size: 34px; line-height: 1.06; letter-spacing: -0.045em; }
 .auth-form-header > p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
 .clerk-root-box, .clerk-card-box, .clerk-card, .clerk-main { width: 100% !important; max-width: none !important; }
 .clerk-card-box { box-shadow: none !important; }
@@ -405,6 +415,13 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-fallback-divider { height: 1px; margin: 8px 0; background: var(--border); }
 .auth-fallback-label { width: 88px; height: 14px; margin-bottom: -12px; border-radius: 4px; background: #e8ebef; }
 .auth-fallback-input { border-radius: 8px; }
+.auth-transition { display: grid; min-height: 250px; place-items: center; align-content: center; gap: 10px; color: var(--muted); text-align: center; }
+.auth-transition strong { color: var(--text); font-size: 18px; }
+.auth-transition > span:last-child { font-size: 13px; }
+.auth-transition-spinner, .onboarding-loading-spinner { width: 28px; height: 28px; margin-bottom: 6px; border: 2px solid #dce1e7; border-right-color: #17191d; border-radius: 50%; animation: ui-button-spin 700ms linear infinite; }
+
+.onboarding-loading { display: grid; min-height: 320px; align-content: center; justify-items: start; }
+.onboarding-loading .onboarding-copy { margin-bottom: 0; }
 .session-toast { position: fixed; z-index: 50; top: 24px; right: 24px; display: grid; grid-template-columns: 30px 1fr auto; align-items: start; gap: 12px; width: min(calc(100vw - 48px), 390px); padding: 16px; border: 1px solid #c9d0d8; border-left: 3px solid #17191d; border-radius: 5px; background: #fff; color: var(--text); box-shadow: 0 14px 34px rgb(23 25 29 / 14%); }
 .session-toast-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #17191d; color: #fff; font-size: 14px; font-weight: 760; }
 .session-toast strong { font-size: 14px; }
@@ -553,7 +570,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .auth-signal-caption { font-size: 10px; line-height: 1.4; }
   .auth-card-wrap { min-width: 0; padding: 36px 24px; }
   .auth-form-header { margin-bottom: 28px; }
-  .auth-form-header h2 { font-size: 30px; }
+  .auth-form-header h1 { font-size: 30px; }
   .auth-form-header > p:last-child { font-size: 13px; line-height: 1.45; }
 }
 
@@ -572,7 +589,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .active-project-link { width: 100%; }
   .filter-bar { display: grid; grid-template-columns: 1fr auto; }
   .filter-bar label:first-child { grid-column: 1 / -1; max-width: none; }
-  .filter-bar select { min-width: 0; }
+  .filter-bar .ui-select-control { min-width: 0; }
   .page-header h1, .issue-detail-header h1 { font-size: 32px; }
   .issue-table { min-width: 760px; }
   .issue-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -618,13 +635,13 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .ui-dialog, .ui-dialog-sm { width: calc(100% - 24px); max-height: calc(100vh - 24px); }
   .ui-dialog-surface { padding: 20px; }
   .project-source-options { grid-template-columns: 1fr; }
-  .auth-page { grid-template-columns: 104px minmax(0, 1fr); }
-  .auth-intro { gap: 12px; padding: 20px 10px 22px; }
+  .auth-page { display: block; }
+  .auth-intro { min-height: 0; grid-template-rows: auto; padding: 18px 20px; border-right: 0; border-bottom: 1px solid #272b30; }
   .auth-wordmark .jabso-mark { width: 24px; height: 24px; }
   .auth-wordmark .wordmark-text { font-size: 20px; }
-  .auth-signal-caption { display: none; }
-  .auth-card-wrap { padding: 28px 14px; }
+  .auth-signal-field, .auth-signal-caption { display: none; }
+  .auth-card-wrap { min-height: calc(100vh - 61px); padding: 36px 20px; place-items: start center; }
   .auth-form-header { margin-bottom: 24px; }
-  .auth-form-header h2 { font-size: 26px; }
+  .auth-form-header h1 { font-size: 26px; }
   .auth-form-header > p:last-child { font-size: 12px; }
 }
