@@ -91,7 +91,7 @@
       <h1><span>Jabso</span><br />Implementation Plan</h1>
       <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
     </div>
-    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-24<br />Status: Phase 3.5 complete · Phase 4 next<br />Scope: MVP → MCP</div>
+    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-26<br />Status: Phase 3.5 complete · Phase 4 designed<br />Scope: MVP → MCP</div>
   </section>
 
   <h2>현재 위치</h2>
@@ -101,8 +101,8 @@
     <div class="status-step done"><strong>Phase 1.5</strong><span class="small">조회 기반<br />완료</span></div>
     <div class="status-step done"><strong>Phase 2</strong><span class="small">Issue workflow<br />완료</span></div>
     <div class="status-step done"><strong>Phase 3</strong><span class="small">Source map<br />완료</span></div>
-    <div class="status-step done"><strong>Phase 3.5</strong><span class="small">Owner auth<br />완료</span></div>
-    <div class="status-step next"><strong>Phase 4</strong><span class="small">Read-only MCP<br />다음</span></div>
+    <div class="status-step done"><strong>Phase 3.5</strong><span class="small">Workspace auth<br />완료</span></div>
+    <div class="status-step next"><strong>Phase 4</strong><span class="small">Read-only MCP<br />설계 완료</span></div>
     <div class="status-step planned"><strong>Later</strong><span class="small">운영·Replay<br />보류</span></div>
   </div>
   <div class="decision" style="margin-top:16px"><strong>기준 문서:</strong> phase 범위와 완료 이력은 이 HTML 한 곳에서 관리한다. README는 현재 제품 상태를 요약하고, 별도의 Markdown 구현 플랜은 만들지 않는다.</div>
@@ -130,6 +130,7 @@
       <tr><td>Architecture</td><td>Boundra + Zod</td><td>도메인 공개 API와 client/server 경계를 강제하고 UI/MCP 계약을 공유</td></tr>
       <tr><td>Persistence</td><td>PostgreSQL + Drizzle</td><td>초기 검색·JSONB·transaction·migration을 하나의 저장소로 처리</td></tr>
       <tr><td>Client intake</td><td>Sentry SDK compatibility</td><td>초기에는 검증된 capture, breadcrumb, framework integration을 재사용</td></tr>
+      <tr><td>Dashboard auth</td><td>Clerk backend + Jabso custom UI</td><td>세션·조직은 유지하고 prebuilt 로그인 폼 의존과 UI 제약은 제거</td></tr>
       <tr><td>MCP</td><td>공식 TypeScript SDK, Streamable HTTP</td><td>REST와 같은 domain handler를 호출하는 얇은 읽기 전용 adapter</td></tr>
       <tr><td>Replay</td><td>Later</td><td>개인정보·대용량 저장·segment 처리보다 오류 inbox의 가치 검증이 먼저</td></tr>
     </tbody>
@@ -311,7 +312,32 @@ spikes/
   </div>
   <p class="small">완료 근거: 공개 DSN key의 dashboard 접근 거부와 workspace 간 프로젝트·issue 격리를 통합 테스트로 검증하고, lint·typecheck·test·Boundra boundary check·production build를 확인했다.</p>
 
-  <h2><span class="badge next-badge">다음</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
+  <h2><span class="badge p1">P1</span>인증 UI 후속 결정</h2>
+  <div class="decision"><strong>결정:</strong> Clerk를 즉시 제거하지 않고 identity·session·Organizations backend로 유지한다. 대신 prebuilt <code>SignIn</code>/<code>SignUp</code> 컴포넌트는 제거하고 Clerk v7 custom-flow API 위에 Jabso 로그인·회원가입·검증·오류·로딩 UI를 직접 구현한다.</div>
+  <div class="grid-2" style="margin-top:16px">
+    <div class="card">
+      <h3>Jabso가 소유</h3>
+      <ul>
+        <li>GitHub 버튼과 email/password form</li>
+        <li>클라이언트 검증과 inline error</li>
+        <li>OAuth callback·missing requirement·verification 화면</li>
+        <li>loading, expired session, redirect, toast</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Clerk가 계속 소유</h3>
+      <ul>
+        <li>OAuth state/PKCE와 계정 연결</li>
+        <li>session 생성·회전·폐기</li>
+        <li>email verification과 password reset</li>
+        <li>Organizations, membership, invitation</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small">이 후속 작업은 MCP를 막지 않는다. 완전 자체 GitHub OAuth는 custom flow로도 해결되지 않는 제품 제약이나 Clerk 비용·한계가 측정될 때 별도 identity migration으로 재검토한다.</p>
+
+  <h2><span class="badge next-badge">설계 완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
+  <div class="decision"><strong>배포 결정:</strong> 별도 MCP 앱을 만들지 않고 기존 Fastify 서버의 <code>/mcp</code>에 stateless Streamable HTTP adapter를 추가한다. transport·인증·Origin 검증은 adapter가 맡고 모든 도구는 기존 Boundra query implementation을 재사용한다.</div>
   <div class="grid-2">
     <div class="card">
       <h3>첫 도구</h3>
@@ -327,15 +353,27 @@ spikes/
     <div class="card">
       <h3>안전장치</h3>
       <ul>
-        <li>project scope가 있는 token</li>
+        <li>workspace 소유 + 명시적 project allowlist credential</li>
+        <li>32-byte 이상 random secret, one-time display, hash 저장</li>
         <li>PII 제거된 응답 schema</li>
         <li>결과 개수와 payload 크기 제한</li>
-        <li>도구 호출 audit log</li>
+        <li>argument/result를 제외한 도구 호출 audit log</li>
         <li>쓰기 도구는 명시적으로 out of scope</li>
       </ul>
     </div>
   </div>
-  <p class="small">MCP adapter는 DB를 직접 조회하지 않고 Phase 2에서 만든 Boundra query handler를 호출한다.</p>
+  <table style="margin-top:16px">
+    <thead><tr><th>Slice</th><th>구현</th><th>Exit criteria</th></tr></thead>
+    <tbody>
+      <tr><td>4.1 Credentials</td><td>MCP connection, project allowlist, audit schema와 additive migration</td><td>secret 원문 비저장, revoke 즉시 반영, cross-workspace 음성 테스트</td></tr>
+      <tr><td>4.2 Management</td><td>workspace 인증 기반 생성·목록·폐기 API와 one-time token UI</td><td>조직 전환과 권한 없는 project 선택 거부</td></tr>
+      <tr><td>4.3 Transport</td><td><code>/mcp</code> stateless Streamable HTTP, bearer auth, Origin validation, rate limit</td><td>공식 client initialize와 tools/list 성공</td></tr>
+      <tr><td>4.4 Tools</td><td>6개 read-only tool을 기존 project/issue/event/release query에 연결</td><td>bounded schema, project allowlist, safe context 검증</td></tr>
+      <tr><td>4.5 Story</td><td>설정 예제, audit, protocol·integration test</td><td>agent가 project를 선택해 issue → event → release 문맥을 조회</td></tr>
+    </tbody>
+  </table>
+  <div class="note" style="margin-top:16px"><strong>Credential boundary:</strong> MCP는 DSN, <code>JABSO_DASHBOARD_TOKEN</code>, Clerk session, source-map admin token을 재사용하지 않는다. 새 project는 기존 MCP connection에 자동 추가하지 않는다.</div>
+  <p class="small">MCP adapter는 DB를 직접 조회하지 않고 Phase 2와 3에서 만든 Boundra query handler를 호출한다. 상세 결정은 <code>docs/decisions/0003-read-only-mcp-transport-and-authorization.md</code>에 기록한다.</p>
 
   <h2><span class="badge done-badge">기반 완료</span><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
   <div class="decision">
@@ -404,6 +442,15 @@ spikes/
       <li><code>apps/server/test/app.test.ts</code>: late upload, isolation, privacy, regression integration story</li>
     </ul>
   </details>
+  <details open><summary>Phase 4 변경 지점</summary>
+    <ul>
+      <li><code>packages/db/src/schema.ts</code>와 신규 migration: MCP connection, project allowlist, audit</li>
+      <li><code>apps/server/src/mcp/*</code>: transport, authentication, tool registration</li>
+      <li><code>domains/project/mcp</code>, <code>domains/issue/mcp</code>, <code>domains/event/mcp</code>, <code>domains/release/mcp</code>: 기존 query를 호출하는 bounded tool adapter</li>
+      <li><code>apps/web/src/features/mcp/*</code>: connection 생성·project 선택·one-time credential·폐기</li>
+      <li><code>apps/server/test/mcp.test.ts</code>: protocol, revocation, allowlist, audit, privacy integration story</li>
+    </ul>
+  </details>
   <details><summary>폐기 또는 격리</summary>
     <ul>
       <li>인증 없는 <code>/api/dumps</code>는 production 코드로 승격하지 않는다.</li>
@@ -427,13 +474,13 @@ spikes/
       </ul>
     </div>
     <div class="card">
-      <h3>Phase 3 story 검증</h3>
+      <h3>Phase 4 story 검증</h3>
       <ol>
-        <li>release와 source map artifact를 등록</li>
-        <li>해당 release의 minified error를 smoke app에서 전송</li>
-        <li>issue detail에서 mapped frame과 original frame을 모두 확인</li>
-        <li>map보다 먼저 도착한 event가 upload 후 backfill되는지 확인</li>
-        <li>다른 project와 UI 응답에 map 원문·<code>sourcesContent</code>가 노출되지 않는지 확인</li>
+        <li>workspace에서 일부 project만 선택한 MCP connection 생성</li>
+        <li>공식 client로 <code>initialize</code>와 <code>tools/list</code> 수행</li>
+        <li>issue → event → release regression 문맥 조회</li>
+        <li>allowlist 밖 project와 다른 workspace의 UUID가 not found인지 확인</li>
+        <li>credential 폐기 후 즉시 거부되고 audit에 secret·argument·result가 없는지 확인</li>
       </ol>
     </div>
   </div>
@@ -460,6 +507,8 @@ spikes/
       <tr><td>1.5. Read path</td><td>완료</td><td>—</td><td>공유 query와 inbox shell</td></tr>
       <tr><td>2. Issue workflow</td><td>완료</td><td>—</td><td>UI에서 오류 조사·상태 관리</td></tr>
       <tr><td>3. Source maps</td><td>완료</td><td>—</td><td>production stack symbolication</td></tr>
+      <tr><td>3.5. Workspace auth</td><td>완료</td><td>—</td><td>사용자·조직 workspace 격리</td></tr>
+      <tr><td>Auth UI follow-up</td><td>Small–Medium</td><td>중간</td><td>prebuilt Clerk form 없이 전체 인증 story</td></tr>
       <tr><td>4. Read-only MCP</td><td>Medium</td><td>중간</td><td>agent가 project-scoped 조회</td></tr>
       <tr><td>Later. Replay</td><td>XL</td><td>높음</td><td>privacy-safe replay 연결</td></tr>
     </tbody>
