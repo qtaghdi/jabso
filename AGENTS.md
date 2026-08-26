@@ -109,6 +109,9 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 
 ## Web conventions
 
+- Keep the Next.js application under `apps/web/src`. Use `src/...` absolute imports within the web workspace; do not use the `@/` alias.
+- Keep routing and framework adapters in `src/app`, product workflows in `src/features`, feature-agnostic UI in `src/components`, and reusable technical adapters or cross-feature contracts in `src/lib`.
+- Keep dependencies directional: routes compose features, features consume shared components and libraries, and shared components never depend on features. Prefer direct module imports over runtime barrel files.
 - Prefer React Server Components for reads. Keep client components limited to actual browser state or SDK interaction.
 - Next.js 16 `params`, `searchParams`, `cookies()`, and `headers()` are asynchronous and must be awaited.
 - Fetch Jabso data through the read-only server API/domain path; do not query PostgreSQL from `apps/web`.

@@ -180,7 +180,7 @@ Jabso is also a real-world Boundra integration. Boundary violations, runtime con
 
 ```text
 apps/
-|-- web/                    # Next.js dashboard and SDK smoke test
+|-- web/                    # Next.js dashboard; application code lives in src/
 `-- server/                 # Fastify collector and HTTP adapters
 
 domains/
@@ -200,6 +200,19 @@ packages/
 spikes/
 `-- replay/                 # Preserved, non-production Replay experiment
 ```
+
+The web workspace uses a shallow, feature-oriented structure:
+
+```text
+apps/web/src/
+|-- app/                    # Next.js routes, layouts, and HTTP adapters
+|-- features/               # Auth, issues, projects, onboarding, SDK, and shell workflows
+|-- components/             # Feature-agnostic UI, brand, and providers
+|-- lib/                    # Jabso API, dashboard cache contracts, and integrations
+`-- proxy.ts                # Next.js request proxy
+```
+
+Internal web imports use `src/...` rather than `@/`. Route modules compose features, features may depend on shared components and libraries, and shared modules never depend on route modules. Concrete module imports are preferred over runtime barrel files. The complete naming and dependency rules live in [`apps/web/AGENTS.md`](./apps/web/AGENTS.md).
 
 ## Development commands
 

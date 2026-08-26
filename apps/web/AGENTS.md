@@ -12,10 +12,24 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 The root and `apps/AGENTS.md` instructions also apply here.
 
+## Source architecture
+
+- Keep all application source under `src/`. Next.js route files and `proxy.ts` belong in `src/app` and `src/proxy.ts`; workspace configuration remains at the package root.
+- Use `src/...` absolute imports for code inside this app. Do not introduce `@/`, package-root absolute imports, or long parent-relative imports such as `../../../`.
+- `src/app` is the composition and routing layer. Route files may validate request input, call a feature or library entry point, and translate results into HTTP or UI responses; reusable product behavior does not belong there.
+- `src/features/<feature>` owns one product workflow such as auth, issues, projects, onboarding, SDK smoke tests, or the dashboard shell. Organize a feature by runtime responsibility only when needed, using focused folders such as `components`, `server`, and `model`.
+- `src/components` contains feature-agnostic building blocks only: `ui` primitives, `brand` assets, and application-wide `providers`. Shared components must not import from `src/features`.
+- `src/lib` contains reusable technical adapters and cross-feature contracts. Keep Jabso HTTP access under `src/lib/jabso`, dashboard query/cache contracts under `src/lib/dashboard`, and third-party adapters under `src/lib/integrations`.
+- Dependencies point inward: `app -> features -> components/lib`. A feature may use shared components and libraries, but must not import route files. Avoid direct imports between sibling features; move truly shared behavior to `components` or `lib`, or compose the features from `app`. The shell feature is the only composition feature and may assemble dashboard-wide feature UI when necessary.
+- Import the concrete module that owns a symbol. Do not add runtime barrel files solely to shorten import paths; type-only barrels are allowed only when they define a deliberate public contract.
+- Start with a single focused file. Add `components`, `server`, `model`, or `test` subfolders only when a feature has more than one responsibility; do not mirror a full layered architecture for trivial code.
+- Keep browser-only code behind a client boundary and server-only authentication or secret-bearing calls in `server` modules. Never import a server module into a client component.
+- Keep Clerk-to-workspace authorization in `src/lib/auth/workspace-auth.ts`; feature UI must not duplicate workspace resolution or trust client-selected tenant values.
+
 ## Rendering and data access
 
 - Use React Server Components for dashboard reads. Add client components only for interaction such as copy, filters, toasts, SDK execution, or local selection state.
-- Read Jabso through `lib/jabso-api.ts` and the authenticated server API. Never connect to PostgreSQL from Next.js.
+- Read Jabso through the focused adapters under `src/lib/jabso` and the authenticated server API. Never connect to PostgreSQL from Next.js.
 - Resolve the active project through the authorized project list before using its cookie value. Never trust a client cookie as project authorization.
 - Resolve Clerk's active user or organization to a persisted Jabso workspace before every dashboard read. Forward only the internal workspace ID to the collector and never rely on a client-selected workspace value.
 - Personal workspaces belong to one Clerk user. Team and Organization workspaces use Clerk Organization membership, and destructive project actions require the organization admin role.
@@ -30,7 +44,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Issues is the primary workflow. SDK installation appears only as an empty-project onboarding state, not as the whole product.
 - Projects owns project creation, active-project selection, public DSN display, and the route back into Issues.
 - Do not link Swagger/OpenAPI from the dashboard.
-- Reuse components under `components/ui`; fields must support labels, errors, keyboard focus, and accessible descriptions.
+- Reuse primitives under `src/components/ui`; fields must support labels, errors, keyboard focus, and accessible descriptions.
 - Apply shared Button, Select, input, copy, and destructive-action styles consistently across the entire affected workflow. Do not fix one row or one state while leaving equivalent controls visually different.
 - Use the shared `Dialog` and `AlertDialog` primitives for modal flows and destructive confirmation. Never use browser `alert()`, `confirm()`, or `prompt()` in product UI.
 - Keep asynchronous action labels and geometry stable. Do not change `Delete` to `Removing`, `Create` to `Creating`, or otherwise swap the action verb while pending; use the shared spinner, `aria-busy`, and disabled state without changing column width or causing layout shift.
