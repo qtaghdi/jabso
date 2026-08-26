@@ -102,11 +102,42 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .owner-summary small { color: var(--muted); }
 .owner-avatar { width: 32px; height: 32px; }
 .account-summary { display: grid; gap: 10px; min-width: 0; }
-.workspace-switcher-trigger { width: 100%; min-height: 38px; justify-content: flex-start; padding: 5px 7px; border: 1px solid var(--border); border-radius: 8px; background: #fff; box-shadow: none; }
-.workspace-switcher-name { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.workspace-switcher { min-width: 0; }
+.workspace-switcher-trigger { display: grid; width: 100%; min-height: 48px; grid-template-columns: 30px minmax(0, 1fr) 16px; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text); text-align: left; cursor: pointer; transition: border-color 140ms ease, background 140ms ease; }
+.workspace-switcher-trigger:hover { border-color: #a7afb8; background: var(--surface); }
+.workspace-switcher-trigger:focus-visible { border-color: #17191d; outline: 3px solid rgb(23 25 29 / 10%); outline-offset: 0; }
+.workspace-switcher-trigger:disabled { opacity: .56; cursor: default; }
+.workspace-switcher-trigger > svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform 140ms ease; }
+.workspace-switcher-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.workspace-avatar { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #17191d; color: #fff; font-size: 10px; font-weight: 760; letter-spacing: -.02em; }
+.workspace-avatar-personal { background: #edf0f3; color: #303640; }
+.workspace-trigger-copy { display: grid; min-width: 0; gap: 1px; }
+.workspace-trigger-copy strong, .workspace-trigger-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-trigger-copy strong { font-size: 12px; font-weight: 680; }
+.workspace-trigger-copy small { color: var(--muted); font-size: 10px; }
+.workspace-menu { position: fixed; z-index: 1100; display: flex; flex-direction: column; margin: 0; padding: 0; overflow: hidden; border: 1px solid #d3d8de; border-radius: 12px; background: #fff; color: var(--text); box-shadow: 0 20px 55px rgb(17 19 22 / 18%); }
+.workspace-menu-header { display: flex; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid var(--border); }
+.workspace-menu-header strong { font-size: 12px; }
+.workspace-menu-header span { color: var(--muted); font-size: 10px; }
+.workspace-menu-list { min-height: 0; max-height: 280px; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
+.workspace-menu-list > button { display: grid; width: 100%; min-height: 48px; grid-template-columns: 30px minmax(0, 1fr) 16px; align-items: center; gap: 10px; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; text-align: left; cursor: pointer; }
+.workspace-menu-list > button:hover, .workspace-menu-list > button:focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
+.workspace-menu-list > button:disabled { opacity: .52; cursor: default; }
+.workspace-menu-list > button > span:nth-child(2) { display: grid; min-width: 0; gap: 1px; }
+.workspace-menu-list > button strong, .workspace-menu-list > button small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-menu-list > button strong { font-size: 12px; font-weight: 650; }
+.workspace-menu-list > button small { color: var(--muted); font-size: 10px; }
+.workspace-menu-list > button > svg { width: 16px; height: 16px; fill: none; stroke: #17191d; stroke-width: 1.8; }
+.workspace-menu-load-more { grid-column: 1 / -1; padding-left: 4px; color: var(--muted); font-size: 11px; font-weight: 620; }
+.workspace-menu-error { margin: 0; padding: 8px 14px; border-top: 1px solid var(--border); color: var(--accent); font-size: 11px; }
+.workspace-menu-footer { padding: 6px; border-top: 1px solid var(--border); }
+.workspace-menu-footer button { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 9px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; cursor: pointer; font-size: 11px; font-weight: 650; }
+.workspace-menu-footer button:hover, .workspace-menu-footer button:focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
+.workspace-menu-footer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .app-shell-collapsed .account-summary { justify-items: center; }
-.app-shell-collapsed .workspace-switcher-trigger { width: 36px; padding: 4px; }
-.app-shell-collapsed .workspace-switcher-name, .app-shell-collapsed .workspace-switcher-trigger > svg { display: none; }
+.app-shell-collapsed .workspace-switcher-trigger { width: 38px; min-height: 38px; grid-template-columns: 28px; padding: 4px; }
+.app-shell-collapsed .workspace-switcher-trigger .workspace-avatar { width: 28px; height: 28px; }
+.app-shell-collapsed .workspace-trigger-copy, .app-shell-collapsed .workspace-switcher-trigger > svg { display: none; }
 
 .onboarding-page { min-height: 100vh; padding: 42px clamp(24px, 6vw, 88px) 64px; background: #fff; }
 .onboarding-brand { display: flex; align-items: center; }
@@ -353,6 +384,17 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .ui-dialog-close:focus-visible { outline: 3px solid rgb(23 25 29 / 12%); outline-offset: 1px; }
 .ui-dialog-description { margin: 20px 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 .ui-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+.workspace-create-form { display: grid; gap: 20px; }
+.workspace-kind-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.workspace-kind-fieldset legend { margin-bottom: 7px; color: #3f4650; font-size: 12px; font-weight: 650; }
+.workspace-kind-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.workspace-kind-option { display: grid; min-width: 0; grid-template-columns: auto minmax(0, 1fr); gap: 9px; padding: 12px; border: 1px solid #cbd2da; border-radius: 9px; background: #fff; cursor: pointer; }
+.workspace-kind-option:hover { border-color: #949ca6; }
+.workspace-kind-option-active { border-color: #17191d; background: var(--surface); box-shadow: 0 0 0 1px #17191d; }
+.workspace-kind-option input { width: 15px; height: 15px; margin: 2px 0 0; accent-color: #17191d; }
+.workspace-kind-option span { display: grid; min-width: 0; gap: 4px; }
+.workspace-kind-option strong { font-size: 13px; }
+.workspace-kind-option small { color: var(--muted); font-size: 11px; line-height: 1.4; }
 .project-dialog-form { display: grid; gap: 18px; }
 .project-source-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .project-source-fieldset legend { margin-bottom: 7px; color: #3f4650; font-size: 12px; font-weight: 650; }
@@ -553,7 +595,12 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .sidebar-toggle { display: none; }
   .sidebar .wordmark-text, .nav-label { display: none; }
   .nav-item { justify-content: center; width: 48px; padding: 0; }
-  .sidebar-footer { display: none; }
+  .sidebar-footer { display: grid; width: 100%; padding: 12px 0 0; }
+  .account-summary { justify-items: center; }
+  .workspace-switcher-trigger { width: 38px; min-height: 38px; grid-template-columns: 28px; padding: 4px; }
+  .workspace-switcher-trigger .workspace-avatar { width: 28px; height: 28px; }
+  .workspace-trigger-copy, .workspace-switcher-trigger > svg, .owner-details { display: none; }
+  .owner-summary { justify-content: center; }
   .main-content { padding-inline: 28px; }
   .issue-table { min-width: 850px; }
   .issue-table-wrap { overflow-x: auto; }
@@ -583,6 +630,9 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .sidebar .jabso-mark { width: 26px; height: 26px; }
   .sidebar nav { display: flex; }
   .nav-item { width: 42px; min-height: 42px; }
+  .sidebar-footer { width: auto; margin: 0; padding: 0; border: 0; }
+  .account-summary { display: block; }
+  .owner-summary { display: none; }
   .main-content { padding: 32px 18px 56px; }
   .page-header { margin-bottom: 30px; }
   .page-heading-row { display: grid; }
@@ -634,6 +684,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 @media (max-width: 520px) {
   .ui-dialog, .ui-dialog-sm { width: calc(100% - 24px); max-height: calc(100vh - 24px); }
   .ui-dialog-surface { padding: 20px; }
+  .workspace-kind-options { grid-template-columns: 1fr; }
   .project-source-options { grid-template-columns: 1fr; }
   .auth-page { display: block; }
   .auth-intro { min-height: 0; grid-template-rows: auto; padding: 18px 20px; border-right: 0; border-bottom: 1px solid #272b30; }

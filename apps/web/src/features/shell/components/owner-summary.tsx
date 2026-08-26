@@ -1,6 +1,7 @@
 'use client'
 
-import { OrganizationSwitcher, UserButton, useUser } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
+import { WorkspaceSwitcher } from 'src/features/workspaces/components/workspace-switcher'
 
 export const OwnerSummary = () => {
   const { user } = useUser()
@@ -10,18 +11,7 @@ export const OwnerSummary = () => {
 
   return (
     <div className="account-summary">
-      <OrganizationSwitcher
-        afterCreateOrganizationUrl="/onboarding"
-        afterSelectOrganizationUrl="/"
-        afterSelectPersonalUrl="/"
-        appearance={{
-          elements: {
-            organizationSwitcherTrigger: 'workspace-switcher-trigger',
-            organizationPreviewMainIdentifier: 'workspace-switcher-name',
-          },
-        }}
-        hidePersonal={false}
-      />
+      <WorkspaceSwitcher personalName={ownerName} />
       <div className="owner-summary">
         <UserButton appearance={{ elements: { avatarBox: 'owner-avatar' } }} />
         <span className="owner-details"><strong>{ownerName}</strong><small>@{githubLogin}</small></span>
