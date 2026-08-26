@@ -45,6 +45,7 @@ import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-sto
 import { openApiDocument } from './openapi-document.js'
 import { createPostgresProjectStore } from './projects/postgres-project-store.js'
 import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
+import { renderServerStatusPage } from './server-status-page.js'
 import { createPostgresWorkspaceStore, type WorkspaceKind } from './workspaces/postgres-workspace-store.js'
 
 const compressedBodyLimit = 1024 * 1024
@@ -173,13 +174,26 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     if (ownsDatabase) await database.close?.()
   })
 
-  app.get('/', async () => ({
+  const serviceDescription = {
     service: 'jabso-server',
     status: 'ok',
     message: 'Jabso collector is running.',
     health: '/health',
     readiness: '/ready',
-  }))
+  } as const
+
+  app.get('/', async (request, reply) => {
+    if (request.headers.accept?.includes('application/json')) return reply.send(serviceDescription)
+
+    const databaseReady = await database.query('select 1').then(() => true).catch(() => false)
+    return reply
+      .code(databaseReady ? 200 : 503)
+      .header('content-security-policy', "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
+      .header('referrer-policy', 'no-referrer')
+      .header('x-content-type-options', 'nosniff')
+      .type('text/html; charset=utf-8')
+      .send(renderServerStatusPage({ dashboardOrigin: allowedOrigin, databaseReady }))
+  })
   app.get('/health', async () => ({ status: 'ok' }))
   app.get('/ready', async (_request, reply) => {
     await database.query('select 1')
