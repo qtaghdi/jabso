@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { clerkClient } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { requireGitHubUser } from 'src/lib/auth/workspace-auth'
 
@@ -24,23 +25,39 @@ export class GitHubConnectionError extends Error {
 }
 
 export const listGitHubRepositories = async () => {
-  const { githubLogin } = await requireGitHubUser()
-  const parameters = new URLSearchParams({
+  const { githubLogin, userId } = await requireGitHubUser()
+  const client = await clerkClient()
+  const oauthTokens = await client.users.getUserOauthAccessToken(userId, 'github')
+  const accessToken = oauthTokens.data[0]?.token
+  const parameters = new URLSearchParams(accessToken ? {
+    affiliation: 'owner,collaborator,organization_member',
+    direction: 'desc',
+    per_page: '100',
+    sort: 'updated',
+    visibility: 'public',
+  } : {
     direction: 'desc',
     per_page: '100',
     sort: 'updated',
     type: 'owner',
   })
-  const response = await fetch(`https://api.github.com/users/${encodeURIComponent(githubLogin)}/repos?${parameters}`, {
+  const endpoint = accessToken
+    ? 'https://api.github.com/user/repos'
+    : `https://api.github.com/users/${encodeURIComponent(githubLogin)}/repos`
+  const response = await fetch(`${endpoint}?${parameters}`, {
     headers: {
       accept: 'application/vnd.github+json',
+      ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
       'user-agent': 'jabso-dashboard',
       'x-github-api-version': '2022-11-28',
     },
-    next: { revalidate: 300 },
+    cache: 'no-store',
   })
-  if (response.status === 403) {
+  if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
     throw new GitHubConnectionError(429, 'GitHub rate limit reached. Try again in a few minutes.')
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new GitHubConnectionError(403, 'Reconnect GitHub to grant access to your public organization repositories.')
   }
   if (!response.ok) throw new GitHubConnectionError(502, 'GitHub repositories are temporarily unavailable.')
 

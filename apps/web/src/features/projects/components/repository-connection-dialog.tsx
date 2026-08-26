@@ -63,7 +63,7 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
   return (
     <Dialog
       close={closeDialog}
-      description={`Choose one public repository from @${project.repository?.owner ?? 'your GitHub account'}. Add a root only when the app lives inside a monorepo.`}
+      description="Choose a public repository owned by you, shared with you, or available through your GitHub organizations."
       eyebrow="Repository connection"
       icon={<GitHubIcon />}
       title={`Connect ${project.name}`}
