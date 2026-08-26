@@ -72,9 +72,19 @@ describe('Jabso server', () => {
   it('describes the service and reports health and database readiness', async () => {
     const { app, database } = await fixture()
     const root = await app.inject({ method: 'GET', url: '/' })
+    const description = await app.inject({
+      method: 'GET',
+      url: '/',
+      headers: { accept: 'application/json' },
+    })
 
     expect(root.statusCode).toBe(200)
-    expect(root.json()).toEqual({
+    expect(root.headers['content-type']).toContain('text/html')
+    expect(root.body).toContain('Collector is running.')
+    expect(root.body).toContain('Database</span><strong class="">Ready')
+    expect(root.body).toContain('href="/health"')
+    expect(root.body).toContain('href="/ready"')
+    expect(description.json()).toEqual({
       service: 'jabso-server',
       status: 'ok',
       message: 'Jabso collector is running.',
@@ -83,6 +93,26 @@ describe('Jabso server', () => {
     })
     expect((await app.inject({ method: 'GET', url: '/health' })).json()).toEqual({ status: 'ok' })
     expect((await app.inject({ method: 'GET', url: '/ready' })).json()).toEqual({ status: 'ready' })
+    await app.close()
+    await database.close()
+  })
+
+  it('reports a degraded status page when the database is unavailable', async () => {
+    const { database, executor } = await createTestDatabase()
+    const unavailableDatabase = {
+      ...executor,
+      query: async <Row>(statement: string, parameters?: readonly unknown[]) => {
+        if (statement === 'select 1') throw new Error('database unavailable')
+        return executor.query<Row>(statement, parameters)
+      },
+    }
+    const app = await buildServer({ database: unavailableDatabase })
+    const root = await app.inject({ method: 'GET', url: '/' })
+
+    expect(root.statusCode).toBe(503)
+    expect(root.headers['content-type']).toContain('text/html')
+    expect(root.body).toContain('Degraded')
+    expect(root.body).toContain('Database</span><strong class="unavailable">Unavailable')
     await app.close()
     await database.close()
   })
