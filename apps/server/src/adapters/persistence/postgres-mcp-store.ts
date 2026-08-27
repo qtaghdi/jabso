@@ -1,5 +1,5 @@
 import type { SqlExecutor } from '@jabso/db'
-import type { McpConnectionStore } from '@domains/mcp/server/public.js'
+import type { McpConnectionStore } from '@jabso/domain-mcp/server'
 import type {
   CreateMcpConnectionMutationInput,
   CreateMcpConnectionMutationResult,
@@ -7,13 +7,13 @@ import type {
   ListMcpConnectionsQueryResult,
   RevokeMcpConnectionMutationInput,
   RevokeMcpConnectionMutationResult,
-} from '@domains/mcp/shared/public.js'
+} from '@jabso/domain-mcp/shared'
 import type {
   AllowedMcpProject,
   AuthenticatedMcpConnection,
   McpAuditInput,
   McpTransportStore,
-} from 'src/ports/mcp-transport-store.js'
+} from '../../ports/mcp-transport-store.js'
 
 type Timestamp = Date | string
 

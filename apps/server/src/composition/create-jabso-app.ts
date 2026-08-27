@@ -10,33 +10,33 @@ import {
   SentryEnvelopeParseError,
 } from '@jabso/sentry-compat'
 import { normalizeArtifactPath, validateSourceMap } from '@jabso/symbolication'
-import { createGetEventImplementation } from '@domains/event/server/public.js'
-import { createIngestEventImplementation } from '@domains/ingestion/server/public.js'
+import { createGetEventImplementation } from '@jabso/domain-event/server'
+import { createIngestEventImplementation } from '@jabso/domain-ingestion/server'
 import {
   createCreateMcpConnectionImplementation,
   createListMcpConnectionsImplementation,
   createRevokeMcpConnectionImplementation,
-} from '@domains/mcp/server/public.js'
+} from '@jabso/domain-mcp/server'
 import {
   createGetIssueImplementation,
   createGetIssueFacetsImplementation,
   createSearchIssuesImplementation,
   createUpdateIssueStatusImplementation,
-} from '@domains/issue/server/public.js'
+} from '@jabso/domain-issue/server'
 import {
   createGetReleaseRegressionsImplementation,
   createListReleasesImplementation,
   createRetryReleaseSymbolicationImplementation,
   createUploadSourceMapImplementation,
-} from '@domains/release/server/public.js'
+} from '@jabso/domain-release/server'
 import {
   createCreateProjectImplementation,
   createDeleteProjectImplementation,
   createDisconnectProjectRepositoryImplementation,
   createListProjectsImplementation,
   createSetProjectRepositoryImplementation,
-} from '@domains/project/server/public.js'
-import { maxSourceMapBytes } from '@domains/release/shared/public.js'
+} from '@jabso/domain-project/server'
+import { maxSourceMapBytes } from '@jabso/domain-release/shared'
 import { BoundraRuntimeError, executeContract } from 'boundra'
 import Fastify from 'fastify'
 import { timingSafeEqual } from 'node:crypto'
@@ -45,18 +45,18 @@ import {
   createBoundraErrorRecorder,
   toBoundraDiagnosticInput,
   toBoundraHttpError,
-} from 'src/adapters/http/boundra-diagnostics.js'
-import { createPostgresEventQueryStore } from 'src/adapters/persistence/postgres-event-query-store.js'
-import { PostgresIngestEventStore } from 'src/adapters/persistence/postgres-ingest-event-store.js'
-import { createPostgresIssueQueryStore } from 'src/adapters/persistence/postgres-issue-query-store.js'
-import { registerMcpManagementRoutes } from 'src/adapters/mcp/mcp-management-routes.js'
-import { registerMcpRoutes } from 'src/adapters/mcp/mcp-routes.js'
-import { PostgresMcpStore } from 'src/adapters/persistence/postgres-mcp-store.js'
-import { openApiDocument } from 'src/adapters/http/openapi-document.js'
-import { createPostgresProjectStore } from 'src/adapters/persistence/postgres-project-store.js'
-import { PostgresReleaseStore, SourceMapUploadError } from 'src/adapters/persistence/postgres-release-store.js'
-import { renderServerStatusPage } from 'src/adapters/http/server-status-page.js'
-import { createPostgresWorkspaceStore, type WorkspaceKind } from 'src/adapters/persistence/postgres-workspace-store.js'
+} from '../adapters/http/boundra-diagnostics.js'
+import { createPostgresEventQueryStore } from '../adapters/persistence/postgres-event-query-store.js'
+import { PostgresIngestEventStore } from '../adapters/persistence/postgres-ingest-event-store.js'
+import { createPostgresIssueQueryStore } from '../adapters/persistence/postgres-issue-query-store.js'
+import { registerMcpManagementRoutes } from '../adapters/mcp/mcp-management-routes.js'
+import { registerMcpRoutes } from '../adapters/mcp/mcp-routes.js'
+import { PostgresMcpStore } from '../adapters/persistence/postgres-mcp-store.js'
+import { openApiDocument } from '../adapters/http/openapi-document.js'
+import { createPostgresProjectStore } from '../adapters/persistence/postgres-project-store.js'
+import { PostgresReleaseStore, SourceMapUploadError } from '../adapters/persistence/postgres-release-store.js'
+import { renderServerStatusPage } from '../adapters/http/server-status-page.js'
+import { createPostgresWorkspaceStore, type WorkspaceKind } from '../adapters/persistence/postgres-workspace-store.js'
 
 const compressedBodyLimit = 1024 * 1024
 const decodedBodyLimit = 5 * 1024 * 1024

@@ -1,0 +1,29 @@
+{
+  "name": "@jabso/domain-event",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": {
+      "types": "./dist/server/public.d.ts",
+      "import": "./dist/server/public.js"
+    },
+    "./shared": {
+      "types": "./dist/shared/public.d.ts",
+      "import": "./dist/shared/public.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "boundra": "0.3.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
+  }
+}

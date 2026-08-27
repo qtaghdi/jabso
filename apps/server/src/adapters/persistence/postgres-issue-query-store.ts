@@ -1,5 +1,5 @@
 import type { SqlExecutor } from '@jabso/db'
-import type { IssueQueryStore } from '@domains/issue/server/public.js'
+import type { IssueQueryStore } from '@jabso/domain-issue/server'
 import type {
   GetIssueFacetsQueryResult,
   GetIssueQueryInput,
@@ -8,7 +8,7 @@ import type {
   SearchIssuesQueryResult,
   UpdateIssueStatusMutationInput,
   UpdateIssueStatusMutationResult,
-} from '@domains/issue/shared/public.js'
+} from '@jabso/domain-issue/shared'
 
 type Timestamp = string | Date
 type IssueStatus = 'unresolved' | 'resolved' | 'ignored'

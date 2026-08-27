@@ -1,15 +1,10 @@
 {
   "extends": "../../packages/config/tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "../..",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "rootDir": "../..",
-    "paths": {
-      "@domains/*": ["domains/*"],
-      "src/*": ["apps/server/src/*"]
-    }
+    "rootDir": "."
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

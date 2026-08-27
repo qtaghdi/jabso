@@ -35,6 +35,20 @@ const jabsoPlugin = {
         },
       }),
     },
+    'vercel-safe-server-imports': {
+      meta: { type: 'problem', schema: [] },
+      create: (context) => ({
+        ImportDeclaration: (node) => {
+          const source = node.source.value
+          if (typeof source === 'string' && (source.startsWith('src/') || source.startsWith('@domains/'))) {
+            context.report({
+              node: node.source,
+              message: 'Vercel Node Functions do not support TypeScript paths. Use a relative server import or @jabso/domain-* package.',
+            })
+          }
+        },
+      }),
+    },
   },
 }
 
@@ -86,6 +100,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['apps/server/src/**/*.ts'],
+    rules: {
+      'jabso/vercel-safe-server-imports': 'error',
+    },
+  },
+  {
     files: ['apps/web/src/shared/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
@@ -123,7 +143,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{
-          group: ['src/adapters/mcp/**', 'src/adapters/persistence/**', 'src/composition/**'],
+          group: ['../mcp/**', '../persistence/**', '../../composition/**', 'src/adapters/mcp/**', 'src/adapters/persistence/**', 'src/composition/**'],
           message: 'HTTP adapters depend on ports and domains, not concrete sibling adapters or composition.',
         }],
       }],
@@ -134,7 +154,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{
-          group: ['src/adapters/http/**', 'src/adapters/persistence/**', 'src/composition/**'],
+          group: ['../http/**', '../persistence/**', '../../composition/**', 'src/adapters/http/**', 'src/adapters/persistence/**', 'src/composition/**'],
           message: 'MCP adapters depend on ports and domains, not concrete sibling adapters or composition.',
         }],
       }],
@@ -145,7 +165,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{
-          group: ['src/adapters/http/**', 'src/adapters/mcp/**', 'src/composition/**'],
+          group: ['../http/**', '../mcp/**', '../../composition/**', 'src/adapters/http/**', 'src/adapters/mcp/**', 'src/composition/**'],
           message: 'Persistence adapters depend on ports and domains, not concrete sibling adapters or composition.',
         }],
       }],
@@ -156,7 +176,7 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{
-          group: ['src/adapters/**', 'src/composition/**'],
+          group: ['../adapters/**', '../composition/**', 'src/adapters/**', 'src/composition/**'],
           message: 'Ports cannot depend on adapters or composition.',
         }],
       }],

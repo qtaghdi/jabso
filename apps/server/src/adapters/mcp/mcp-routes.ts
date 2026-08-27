@@ -6,22 +6,22 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { executeContract } from 'boundra'
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
-import type { createGetEventImplementation } from '@domains/event/server/public.js'
-import { getEventResultSchema } from '@domains/event/shared/public.js'
+import type { createGetEventImplementation } from '@jabso/domain-event/server'
+import { getEventResultSchema } from '@jabso/domain-event/shared'
 import type {
   createGetIssueImplementation,
   createSearchIssuesImplementation,
-} from '@domains/issue/server/public.js'
+} from '@jabso/domain-issue/server'
 import {
   getIssueResultSchema,
   searchIssuesResultSchema,
-} from '@domains/issue/shared/public.js'
-import type { createGetReleaseRegressionsImplementation } from '@domains/release/server/public.js'
-import { getReleaseRegressionsResultSchema } from '@domains/release/shared/public.js'
+} from '@jabso/domain-issue/shared'
+import type { createGetReleaseRegressionsImplementation } from '@jabso/domain-release/server'
+import { getReleaseRegressionsResultSchema } from '@jabso/domain-release/shared'
 import type {
   AuthenticatedMcpConnection,
   McpTransportStore,
-} from 'src/ports/mcp-transport-store.js'
+} from '../../ports/mcp-transport-store.js'
 
 type McpDependencies = {
   getEvent: ReturnType<typeof createGetEventImplementation>

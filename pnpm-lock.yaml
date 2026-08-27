@@ -59,6 +59,24 @@ importers:
       '@jabso/diagnostics':
         specifier: workspace:*
         version: link:../../packages/diagnostics
+      '@jabso/domain-event':
+        specifier: workspace:*
+        version: link:../../domains/event
+      '@jabso/domain-ingestion':
+        specifier: workspace:*
+        version: link:../../domains/ingestion
+      '@jabso/domain-issue':
+        specifier: workspace:*
+        version: link:../../domains/issue
+      '@jabso/domain-mcp':
+        specifier: workspace:*
+        version: link:../../domains/mcp
+      '@jabso/domain-project':
+        specifier: workspace:*
+        version: link:../../domains/project
+      '@jabso/domain-release':
+        specifier: workspace:*
+        version: link:../../domains/release
       '@jabso/sentry-compat':
         specifier: workspace:*
         version: link:../../packages/sentry-compat
@@ -139,6 +157,102 @@ importers:
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/event:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/ingestion:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/issue:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/mcp:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/project:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  domains/release:
+    dependencies:
+      boundra:
+        specifier: 0.3.0
+        version: 0.3.0
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
       typescript:
         specifier: 5.9.3
         version: 5.9.3
