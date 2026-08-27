@@ -8,7 +8,7 @@ Jabso already exposes bounded project, issue, event, and release queries through
 
 Phase 4 adds a Streamable HTTP endpoint at `/mcp` to `apps/server`. Fastify owns routing, Origin validation, bearer authentication, rate limits, and protocol errors; the official MCP Web-standard transport owns Streamable HTTP framing. Each tool delegates to the same Boundra query implementation used by the HTTP dashboard API. Credential lookup, allowlist resolution, and audit persistence stay in the MCP infrastructure store rather than tool handlers.
 
-The first deployment is stateless and returns JSON responses. It does not require resumable sessions, server notifications, prompts, resources, or a second deployable application. MCP protocol code remains isolated under `apps/server/src/mcp` so it can be extracted later if independent scaling is measured.
+The first deployment is stateless and returns JSON responses. It does not require resumable sessions, server notifications, prompts, resources, or a second deployable application. MCP protocol code remains isolated under `apps/server/src/adapters/mcp` so it can be extracted later if independent scaling is measured.
 
 An MCP connection belongs to one internal workspace and an explicit allowlist of one or more projects. A new project is never added to an existing connection automatically. Its bearer credential is generated from at least 32 random bytes, shown once, and stored only as a SHA-256 hash plus a non-secret display prefix. The public DSN, global dashboard token, Clerk token, and source-map administrator token cannot authenticate MCP.
 

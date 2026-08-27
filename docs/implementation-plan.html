@@ -424,9 +424,9 @@ spikes/
   <h2>핵심 파일과 다음 변경 지점</h2>
   <details><summary>현재 구현의 중심</summary>
     <ul>
-      <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/routes/sentry-envelope.ts</code></li>
+      <li><code>apps/server/src/composition/create-jabso-app.ts</code>, <code>packages/sentry-compat/src/parse-envelope.ts</code></li>
       <li><code>packages/sentry-compat/src/parse-envelope.ts</code></li>
-      <li><code>apps/server/src/issues/postgres-issue-query-store.ts</code></li>
+      <li><code>apps/server/src/adapters/persistence/postgres-issue-query-store.ts</code></li>
       <li><code>packages/db/src/schema.ts</code>, migrations <code>0000</code>–<code>0003</code></li>
       <li><code>domains/ingestion</code>, <code>domains/issue</code>, <code>domains/project</code>, <code>domains/release</code></li>
       <li><code>apps/web/src/app/(dashboard)/page.tsx</code>, <code>apps/web/src/app/(dashboard)/issues/[issue-id]/page.tsx</code></li>
@@ -437,7 +437,7 @@ spikes/
       <li><code>domains/release</code>: create/list release, artifact metadata, regression query 구현</li>
       <li><code>packages/db/src/schema.ts</code>: releases, artifacts, issue-release aggregate와 event symbolication 상태</li>
       <li><code>packages/symbolication</code>: path normalization, map lookup, frame mapping</li>
-      <li><code>apps/server/src/app.ts</code>, <code>apps/server/src/releases/postgres-release-store.ts</code>: 관리자 upload/retry와 저장 adapter</li>
+      <li><code>apps/server/src/composition/create-jabso-app.ts</code>, <code>apps/server/src/adapters/persistence/postgres-release-store.ts</code>: 관리자 upload/retry와 저장 adapter</li>
       <li><code>apps/web/src/app/(dashboard)/issues/[issue-id]</code>: mapped/original frame과 release 이력 UI</li>
       <li><code>apps/server/test/app.test.ts</code>: late upload, isolation, privacy, regression integration story</li>
     </ul>
@@ -445,9 +445,9 @@ spikes/
   <details open><summary>Phase 4 변경 지점</summary>
     <ul>
       <li><code>packages/db/src/schema.ts</code>와 신규 migration: MCP connection, project allowlist, audit</li>
-      <li><code>apps/server/src/mcp/*</code>: transport, authentication, tool registration</li>
+      <li><code>apps/server/src/adapters/mcp/*</code>: transport, authentication, tool registration</li>
       <li><code>domains/mcp</code>: connection 생성·목록·폐기 계약, 기존 project/issue/event/release query는 그대로 재사용</li>
-      <li><code>apps/web/src/features/mcp/*</code>: connection 생성·project 선택·one-time credential·폐기</li>
+      <li><code>apps/web/src/screens/mcp/*</code>: connection 생성·project 선택·one-time credential·폐기</li>
       <li><code>apps/server/test/mcp.test.ts</code>: protocol, revocation, allowlist, audit, privacy integration story</li>
     </ul>
   </details>
