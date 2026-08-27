@@ -6,7 +6,7 @@ import {
   validateSourceMap,
   type StackFrame,
 } from '@jabso/symbolication'
-import type { ReleaseStore } from '@domains/release/server/public.js'
+import type { ReleaseStore } from '@jabso/domain-release/server'
 import type {
   GetReleaseRegressionsQueryInput,
   GetReleaseRegressionsQueryResult,
@@ -16,7 +16,7 @@ import type {
   RetryReleaseSymbolicationMutationResult,
   UploadSourceMapMutationInput,
   UploadSourceMapMutationResult,
-} from '@domains/release/shared/public.js'
+} from '@jabso/domain-release/shared'
 import { createHash } from 'node:crypto'
 
 type Timestamp = string | Date

@@ -243,7 +243,7 @@ apps/web/src/
 `-- proxy.ts                # Next.js request proxy
 ```
 
-Internal app imports use `src/...`, while server composition imports Boundra public APIs through `@domains/...`. Web dependencies point inward as `app -> screens -> widgets -> shared`. The server is organized as a composition root over HTTP, MCP, and PostgreSQL adapters. Concrete module imports are preferred over runtime barrel files. The complete rules live in [`apps/web/AGENTS.md`](./apps/web/AGENTS.md) and [`apps/server/AGENTS.md`](./apps/server/AGENTS.md).
+The web app uses `src/...` imports, while the server imports Boundra public APIs through runtime-resolvable `@jabso/domain-*` workspace packages and uses short relative paths internally. Web dependencies point inward as `app -> screens -> widgets -> shared`. The server is organized as a composition root over HTTP, MCP, and PostgreSQL adapters. Concrete module imports are preferred over runtime barrel files. The complete rules live in [`apps/web/AGENTS.md`](./apps/web/AGENTS.md) and [`apps/server/AGENTS.md`](./apps/server/AGENTS.md).
 
 ## Development commands
 

@@ -1,5 +1,5 @@
 import type { SqlExecutor } from '@jabso/db'
-import type { ProjectStore } from '@domains/project/server/public.js'
+import type { ProjectStore } from '@jabso/domain-project/server'
 
 type ProjectRow = {
   created_at: Date | string

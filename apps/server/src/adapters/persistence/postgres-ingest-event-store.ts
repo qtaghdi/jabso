@@ -1,9 +1,9 @@
 import type { SqlExecutor } from '@jabso/db'
-import { fingerprintEvent, type IngestEventStore } from '@domains/ingestion/server/public.js'
+import { fingerprintEvent, type IngestEventStore } from '@jabso/domain-ingestion/server'
 import type {
   IngestEventMutationInput,
   IngestEventMutationResult,
-} from '@domains/ingestion/shared/public.js'
+} from '@jabso/domain-ingestion/shared'
 
 type ProjectRow = { id: string; workspace_id: string | null }
 type IssueRow = {

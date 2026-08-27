@@ -10,6 +10,7 @@
 | --- | --- | --- | --- | --- |
 | 2026-08-25 | [Production project list handler failure](./2026-08-25-production-project-list-contract-rejection.md) | Jabso integration | Resolved | No |
 | 2026-08-27 | [Unused client layer and public API drift](./2026-08-27-unused-client-layer-and-public-api-drift.md) | Jabso integration | Resolved | No |
+| 2026-08-27 | [Vercel runtime path alias failure](./2026-08-27-vercel-runtime-path-alias-failure.md) | Jabso integration | Resolved | No |
 
 ## Recording rule
 

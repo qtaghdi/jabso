@@ -5,7 +5,7 @@ import type {
   createCreateMcpConnectionImplementation,
   createListMcpConnectionsImplementation,
   createRevokeMcpConnectionImplementation,
-} from '@domains/mcp/server/public.js'
+} from '@jabso/domain-mcp/server'
 
 type ManagementDependencies = {
   createConnection: ReturnType<typeof createCreateMcpConnectionImplementation>

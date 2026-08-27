@@ -1,5 +1,5 @@
 import type { SqlExecutor } from '@jabso/db'
-import type { EventQueryStore } from '@domains/event/server/public.js'
+import type { EventQueryStore } from '@jabso/domain-event/server'
 
 type EventRow = {
   id: string
