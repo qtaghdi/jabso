@@ -8,6 +8,12 @@ import type {
   RevokeMcpConnectionMutationInput,
   RevokeMcpConnectionMutationResult,
 } from '@domains/mcp/shared/public.js'
+import type {
+  AllowedMcpProject,
+  AuthenticatedMcpConnection,
+  McpAuditInput,
+  McpTransportStore,
+} from 'src/ports/mcp-transport-store.js'
 
 type Timestamp = Date | string
 
@@ -25,33 +31,6 @@ type ProjectRow = {
   id: string
   name: string
   slug: string
-}
-
-export type AuthenticatedMcpConnection = {
-  id: string
-  workspaceId: string
-  projectIds: string[]
-}
-
-export type McpAuditInput = {
-  connectionId: string
-  workspaceId: string
-  projectId: string | null
-  tool: string
-  outcome: 'success' | 'error' | 'denied'
-  durationMs: number
-}
-
-export type AllowedMcpProject = {
-  id: string
-  name: string
-  slug: string
-  repository: {
-    owner: string
-    name: string
-    url: string
-    rootPath: string
-  } | null
 }
 
 const iso = (value: Timestamp) => new Date(value).toISOString()
@@ -76,7 +55,7 @@ const groupConnections = (connections: ConnectionRow[], projects: ProjectRow[]) 
   }))
 }
 
-export class PostgresMcpStore implements McpConnectionStore {
+export class PostgresMcpStore implements McpConnectionStore, McpTransportStore {
   constructor(private readonly database: SqlExecutor) {}
 
   async create(input: CreateMcpConnectionMutationInput): Promise<CreateMcpConnectionMutationResult> {
