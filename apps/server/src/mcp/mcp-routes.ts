@@ -342,7 +342,7 @@ export const registerMcpRoutes = (
     await server.connect(transport)
     const response = await transport.handleRequest(webRequestFromFastify(request), {
       parsedBody: request.body,
-    })
+    }) as unknown as Awaited<ReturnType<typeof fetch>>
     const body = Buffer.from(await response.arrayBuffer())
     response.headers.forEach((value, name) => reply.header(name, value))
     await server.close()
