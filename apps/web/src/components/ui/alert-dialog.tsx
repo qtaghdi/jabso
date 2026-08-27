@@ -7,6 +7,7 @@ type AlertDialogProps = {
   cancel: () => void
   confirm: () => void
   description: string
+  confirmLabel?: string
   error?: string
   pending?: boolean
   title: string
@@ -19,12 +20,20 @@ const WarningIcon = () => (
   </svg>
 )
 
-export const AlertDialog = ({ cancel, confirm, description, error, pending = false, title }: AlertDialogProps) => (
+export const AlertDialog = ({
+  cancel,
+  confirm,
+  confirmLabel = 'Delete project',
+  description,
+  error,
+  pending = false,
+  title,
+}: AlertDialogProps) => (
   <Dialog close={cancel} description={description} icon={<WarningIcon />} size="sm" title={title}>
     {error ? <p className="form-error" role="alert">{error}</p> : null}
     <div className="ui-dialog-actions">
       <Button data-dialog-initial-focus disabled={pending} onClick={cancel} type="button" variant="secondary">Cancel</Button>
-      <Button onClick={confirm} pending={pending} type="button" variant="danger">Delete project</Button>
+      <Button onClick={confirm} pending={pending} type="button" variant="danger">{confirmLabel}</Button>
     </div>
   </Dialog>
 )

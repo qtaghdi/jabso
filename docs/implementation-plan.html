@@ -91,7 +91,7 @@
       <h1><span>Jabso</span><br />Implementation Plan</h1>
       <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
     </div>
-    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-26<br />Status: Phase 3.5 complete · Phase 4 designed<br />Scope: MVP → MCP</div>
+    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-27<br />Status: Phase 4 complete<br />Scope: MVP → MCP</div>
   </section>
 
   <h2>현재 위치</h2>
@@ -102,7 +102,7 @@
     <div class="status-step done"><strong>Phase 2</strong><span class="small">Issue workflow<br />완료</span></div>
     <div class="status-step done"><strong>Phase 3</strong><span class="small">Source map<br />완료</span></div>
     <div class="status-step done"><strong>Phase 3.5</strong><span class="small">Workspace auth<br />완료</span></div>
-    <div class="status-step next"><strong>Phase 4</strong><span class="small">Read-only MCP<br />설계 완료</span></div>
+    <div class="status-step done"><strong>Phase 4</strong><span class="small">Read-only MCP<br />구현 완료</span></div>
     <div class="status-step planned"><strong>Later</strong><span class="small">운영·Replay<br />보류</span></div>
   </div>
   <div class="decision" style="margin-top:16px"><strong>기준 문서:</strong> phase 범위와 완료 이력은 이 HTML 한 곳에서 관리한다. README는 현재 제품 상태를 요약하고, 별도의 Markdown 구현 플랜은 만들지 않는다.</div>
@@ -336,7 +336,7 @@ spikes/
   </div>
   <p class="small">이 후속 작업은 MCP를 막지 않는다. 완전 자체 GitHub OAuth는 custom flow로도 해결되지 않는 제품 제약이나 Clerk 비용·한계가 측정될 때 별도 identity migration으로 재검토한다.</p>
 
-  <h2><span class="badge next-badge">설계 완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
+  <h2><span class="badge done-badge">구현 완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 4</span>Read-only MCP</h2>
   <div class="decision"><strong>배포 결정:</strong> 별도 MCP 앱을 만들지 않고 기존 Fastify 서버의 <code>/mcp</code>에 stateless Streamable HTTP adapter를 추가한다. transport·인증·Origin 검증은 adapter가 맡고 모든 도구는 기존 Boundra query implementation을 재사용한다.</div>
   <div class="grid-2">
     <div class="card">
@@ -373,7 +373,7 @@ spikes/
     </tbody>
   </table>
   <div class="note" style="margin-top:16px"><strong>Credential boundary:</strong> MCP는 DSN, <code>JABSO_DASHBOARD_TOKEN</code>, Clerk session, source-map admin token을 재사용하지 않는다. 새 project는 기존 MCP connection에 자동 추가하지 않는다.</div>
-  <p class="small">MCP adapter는 DB를 직접 조회하지 않고 Phase 2와 3에서 만든 Boundra query handler를 호출한다. 상세 결정은 <code>docs/decisions/0003-read-only-mcp-transport-and-authorization.md</code>에 기록한다.</p>
+  <p class="small">MCP tool은 DB를 직접 조회하지 않고 Phase 2와 3에서 만든 Boundra query handler를 호출한다. credential·allowlist·audit만 MCP infrastructure store가 담당하며 audit metadata는 30일 뒤 호출 시점의 정리 작업으로 만료된다. 상세 결정은 <code>docs/decisions/0003-read-only-mcp-transport-and-authorization.md</code>에 기록한다.</p>
 
   <h2><span class="badge done-badge">기반 완료</span><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
   <div class="decision">
@@ -446,7 +446,7 @@ spikes/
     <ul>
       <li><code>packages/db/src/schema.ts</code>와 신규 migration: MCP connection, project allowlist, audit</li>
       <li><code>apps/server/src/mcp/*</code>: transport, authentication, tool registration</li>
-      <li><code>domains/project/mcp</code>, <code>domains/issue/mcp</code>, <code>domains/event/mcp</code>, <code>domains/release/mcp</code>: 기존 query를 호출하는 bounded tool adapter</li>
+      <li><code>domains/mcp</code>: connection 생성·목록·폐기 계약, 기존 project/issue/event/release query는 그대로 재사용</li>
       <li><code>apps/web/src/features/mcp/*</code>: connection 생성·project 선택·one-time credential·폐기</li>
       <li><code>apps/server/test/mcp.test.ts</code>: protocol, revocation, allowlist, audit, privacy integration story</li>
     </ul>
@@ -477,7 +477,7 @@ spikes/
       <h3>Phase 4 story 검증</h3>
       <ol>
         <li>workspace에서 일부 project만 선택한 MCP connection 생성</li>
-        <li>공식 client로 <code>initialize</code>와 <code>tools/list</code> 수행</li>
+        <li>Streamable HTTP JSON-RPC로 <code>tools/list</code>와 tool call 수행</li>
         <li>issue → event → release regression 문맥 조회</li>
         <li>allowlist 밖 project와 다른 workspace의 UUID가 not found인지 확인</li>
         <li>credential 폐기 후 즉시 거부되고 audit에 secret·argument·result가 없는지 확인</li>

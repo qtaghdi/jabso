@@ -22,9 +22,9 @@ export const getEventResultSchema = z.object({
     line: z.number().int().nonnegative().optional(),
     column: z.number().int().nonnegative().optional(),
     inApp: z.boolean().optional(),
-  })),
+  })).max(200),
   tags: z.record(z.string(), z.string()),
-});
+}).nullable();
 
 export type GetEventQueryInput = InferSchema<typeof getEventInputSchema>;
 export type GetEventQueryResult = InferSchema<typeof getEventResultSchema>;

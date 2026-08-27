@@ -6,7 +6,7 @@ Jabso already exposes bounded project, issue, event, and release queries through
 
 ## Decision
 
-Phase 4 adds a Streamable HTTP endpoint at `/mcp` to `apps/server`. The Fastify adapter owns MCP transport, Origin validation, bearer authentication, rate limits, and protocol errors. Each tool delegates to the same Boundra query implementation used by the HTTP dashboard API; the adapter never queries PostgreSQL directly.
+Phase 4 adds a Streamable HTTP endpoint at `/mcp` to `apps/server`. Fastify owns routing, Origin validation, bearer authentication, rate limits, and protocol errors; the official MCP Web-standard transport owns Streamable HTTP framing. Each tool delegates to the same Boundra query implementation used by the HTTP dashboard API. Credential lookup, allowlist resolution, and audit persistence stay in the MCP infrastructure store rather than tool handlers.
 
 The first deployment is stateless and returns JSON responses. It does not require resumable sessions, server notifications, prompts, resources, or a second deployable application. MCP protocol code remains isolated under `apps/server/src/mcp` so it can be extracted later if independent scaling is measured.
 
@@ -24,6 +24,8 @@ The first tools are:
 All tool inputs and outputs are bounded Zod schemas. Every project-bearing call checks the connection allowlist before invoking the domain query. Another workspace's or unlisted project returns not found. Responses contain only the existing safe context allowlist and never expose source-map contents, tokens, cookies, authorization headers, request bodies, user identity, IP addresses, or arbitrary event payloads.
 
 Each call records connection ID, workspace ID, project ID when present, tool name, outcome, duration, and timestamp. Arguments and results are not retained in the audit row because search text and error context can contain sensitive source or customer data. Revocation takes effect on the next request.
+
+Audit rows are retained for 30 days. The store performs a bounded workspace-scoped expiry pass when it records a call, so the MVP does not require a separate scheduler. Connection metadata, token hashes, and revocation timestamps remain until the connection is hard-deleted by a future retention job; token hashes are irreversible values derived from random credentials and the raw credential is never persisted.
 
 ## Consequences
 

@@ -24,8 +24,10 @@ The project intentionally focuses on a narrow workflow: **error collection, issu
 - A Next.js issue inbox with Clerk personal and organization workspaces
 - Optional metadata links to public GitHub repositories
 - Boundra runtime contracts and isolated internal diagnostics
+- Six read-only MCP tools with workspace and project-scoped credentials
+- One-time MCP bearer tokens, immediate revocation, and metadata-only audit logs
 
-Read-only MCP tools are the next planned phase. Session Replay and a first-party browser SDK are intentionally postponed.
+Session Replay and a first-party browser SDK are intentionally postponed.
 
 ## Technology
 
@@ -39,7 +41,7 @@ Read-only MCP tools are the next planned phase. Session Replay and a first-party
 | Symbolication | `@jridgewell/trace-mapping` |
 | Logging | Pino |
 | Tests | Vitest |
-| Client integration | Sentry SDK compatibility |
+| Client integration | Sentry SDK compatibility, MCP Streamable HTTP |
 
 Boundra defines and validates Jabso's domain contracts. Fastify owns the external HTTP and Sentry protocols, while PostgreSQL owns durable state.
 
@@ -50,6 +52,8 @@ Sentry SDK
     |
     v
 Fastify collector ---- Sentry protocol adapter
+    |
+    +------------------ MCP adapter
     |
     v
 Boundra contracts
@@ -64,10 +68,10 @@ Boundra contracts
              |
       +------+------+
       |             |
- Next.js UI    MCP adapter (planned)
+ Next.js UI    AI clients
 ```
 
-Raw envelopes are parsed at the Fastify boundary. Only normalized events enter the domain layer. The dashboard API and future MCP adapter reuse the same project-scoped domain handlers instead of querying PostgreSQL independently.
+Raw envelopes are parsed at the Fastify boundary. Only normalized events enter the domain layer. The dashboard API and MCP tools reuse the same project-scoped domain handlers instead of forking issue, event, or release queries.
 
 ## Run locally
 
@@ -97,6 +101,7 @@ The services start at:
 - SDK smoke test: `http://localhost:3999/smoke-test`
 - Health check: `http://localhost:4000/health`
 - Database readiness check: `http://localhost:4000/ready`
+- MCP endpoint: `http://localhost:4000/mcp`
 
 The seeded local DSN is:
 
@@ -152,6 +157,27 @@ Create or select a project in the dashboard to obtain its DSN. The onboarding vi
 
 The DSN project key identifies the project and is used only for ingestion; it is not an administrator credential.
 
+## Connect an MCP client
+
+Open **MCP** in the dashboard, create a connection, and choose the projects it may inspect. Jabso shows the bearer token once and provides a copyable client configuration:
+
+```json
+{
+  "mcpServers": {
+    "jabso": {
+      "url": "https://your-jabso-server.example/mcp",
+      "headers": {
+        "Authorization": "Bearer jabso_mcp_<one-time-token>"
+      }
+    }
+  }
+}
+```
+
+The connection exposes `list_projects`, `search_issues`, `get_issue`, `get_event`, `get_issue_occurrences`, and `get_release_regressions`. All tools are read-only. A connection can access only its selected projects, and revocation takes effect on its next request.
+
+Jabso stores only the credential hash and a display prefix. MCP audit rows contain connection/workspace/project IDs, tool name, outcome, duration, and timestamp—never tool arguments, results, or the token—and expire after 30 days.
+
 ## Source maps
 
 Source maps are uploaded with the separate `JABSO_ADMIN_TOKEN`, never with a public DSN key. Jabso matches artifacts by project, release, optional dist, and normalized artifact path. Raw source maps and `sourcesContent` are not exposed through the dashboard or read APIs.
@@ -190,6 +216,7 @@ domains/
 |-- event/
 |-- issue/
 |-- release/
+|-- mcp/
 `-- ingestion/              # Boundra contracts and public boundaries
 
 packages/
@@ -239,7 +266,7 @@ Repository-wide architecture, security, testing, and Git conventions are documen
 - [x] Filtering, occurrences, safe context, and issue lifecycle
 - [x] Releases, source maps, symbolication, and backfill
 - [x] Clerk authentication, workspace onboarding, tenant isolation, and shared dashboard UI
-- [ ] Read-only MCP tools with project-scoped authorization and audit logs
+- [x] Read-only MCP tools with project-scoped authorization and audit logs
 - [ ] Operational hardening and retention controls
 - [ ] Session Replay, if the privacy and storage model can support it safely
 
