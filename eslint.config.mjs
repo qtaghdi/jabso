@@ -85,4 +85,81 @@ export default tseslint.config(
       '@next/next/no-html-link-for-pages': 'off',
     },
   },
+  {
+    files: ['apps/web/src/shared/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/app/**', 'src/screens/**', 'src/widgets/**'],
+          message: 'Shared modules cannot depend on app, screens, or widgets.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/web/src/widgets/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/app/**', 'src/screens/**'],
+          message: 'Widgets cannot depend on app or screens.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/web/src/screens/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/app/**'],
+          message: 'Screens cannot depend on the app routing layer.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/server/src/adapters/http/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/adapters/mcp/**', 'src/adapters/persistence/**', 'src/composition/**'],
+          message: 'HTTP adapters depend on ports and domains, not concrete sibling adapters or composition.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/server/src/adapters/mcp/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/adapters/http/**', 'src/adapters/persistence/**', 'src/composition/**'],
+          message: 'MCP adapters depend on ports and domains, not concrete sibling adapters or composition.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/server/src/adapters/persistence/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/adapters/http/**', 'src/adapters/mcp/**', 'src/composition/**'],
+          message: 'Persistence adapters depend on ports and domains, not concrete sibling adapters or composition.',
+        }],
+      }],
+    },
+  },
+  {
+    files: ['apps/server/src/ports/**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [{
+          group: ['src/adapters/**', 'src/composition/**'],
+          message: 'Ports cannot depend on adapters or composition.',
+        }],
+      }],
+    },
+  },
 )

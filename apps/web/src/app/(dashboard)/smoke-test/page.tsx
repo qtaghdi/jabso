@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { SdkSmokeTest } from 'src/features/sdk/components/sdk-smoke-test'
-import { getProjectsResponse } from 'src/lib/dashboard/dashboard-data'
+import { SdkSmokeTest } from 'src/screens/sdk/sdk-smoke-test'
+import { getProjectsResponse } from 'src/shared/query/dashboard-data'
 
 const SmokeTestPageData = async () => {
   const activeProject = (await getProjectsResponse()).items.find((project) => project.active)

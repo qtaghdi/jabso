@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { revokeMcpConnection } from 'src/lib/jabso/mcp'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { revokeMcpConnection } from 'src/shared/api/mcp'
 
 type ConnectionRouteProps = { params: Promise<{ 'connection-id': string }> }
 

@@ -197,6 +197,8 @@ Jabso stores only bounded debugging data needed by the issue workflow.
 
 Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Clerk organization admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
 
+Shared workspace deletion is restricted to organization admins. It permanently deletes the workspace and its projects, issues, events, releases, MCP connections, and member access; Personal workspaces cannot be deleted from Jabso.
+
 ## Boundra dogfooding
 
 Jabso is also a real-world Boundra integration. Boundary violations, runtime contract failures, and host-adapter problems are recorded separately from application events through a recursion-guarded diagnostic sink. Diagnostics never include original inputs, secrets, cookies, request bodies, or raw events.
@@ -208,8 +210,8 @@ Jabso is also a real-world Boundra integration. Boundary violations, runtime con
 
 ```text
 apps/
-|-- web/                    # Next.js dashboard; application code lives in src/
-`-- server/                 # Fastify collector and HTTP adapters
+|-- web/                    # Next.js routes, screens, widgets, and shared web modules
+`-- server/                 # Fastify composition root, ports, and protocol/persistence adapters
 
 domains/
 |-- project/
@@ -230,18 +232,18 @@ spikes/
 `-- replay/                 # Preserved, non-production Replay experiment
 ```
 
-The web workspace uses a shallow, feature-oriented structure:
+The web workspace uses a shallow screen and widget structure:
 
 ```text
 apps/web/src/
 |-- app/                    # Next.js routes, layouts, and HTTP adapters
-|-- features/               # Auth, issues, projects, onboarding, SDK, and shell workflows
-|-- components/             # Feature-agnostic UI, brand, and providers
-|-- lib/                    # Jabso API, dashboard cache contracts, and integrations
+|-- screens/                # Route-specific product presentation
+|-- widgets/                # Dashboard shell and workspace switcher assemblies
+|-- shared/                 # UI, API, auth, query, providers, and integrations
 `-- proxy.ts                # Next.js request proxy
 ```
 
-Internal web imports use `src/...` rather than `@/`. Route modules compose features, features may depend on shared components and libraries, and shared modules never depend on route modules. Concrete module imports are preferred over runtime barrel files. The complete naming and dependency rules live in [`apps/web/AGENTS.md`](./apps/web/AGENTS.md).
+Internal app imports use `src/...`, while server composition imports Boundra public APIs through `@domains/...`. Web dependencies point inward as `app -> screens -> widgets -> shared`. The server is organized as a composition root over HTTP, MCP, and PostgreSQL adapters. Concrete module imports are preferred over runtime barrel files. The complete rules live in [`apps/web/AGENTS.md`](./apps/web/AGENTS.md) and [`apps/server/AGENTS.md`](./apps/server/AGENTS.md).
 
 ## Development commands
 

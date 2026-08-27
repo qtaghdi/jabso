@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
-import { IssueDetailView } from 'src/features/issues/components/issue-detail-view'
-import { getIssue } from 'src/lib/jabso/issues'
+import { IssueDetailView } from 'src/screens/issues/issue-detail-view'
+import { getIssue } from 'src/shared/api/issues'
 
 type IssuePageProps = {
   params: Promise<{ 'issue-id': string }>

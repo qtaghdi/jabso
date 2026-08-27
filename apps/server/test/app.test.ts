@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildServer } from '../src/jabso-app.js'
+import { buildServer } from 'src/composition/create-jabso-app.js'
 import { createTestDatabase } from './pglite.js'
 
 const project = {
@@ -113,6 +113,98 @@ describe('Jabso server', () => {
     expect(root.headers['content-type']).toContain('text/html')
     expect(root.body).toContain('Degraded')
     expect(root.body).toContain('Database</span><strong class="unavailable">Unavailable')
+    await app.close()
+    await database.close()
+  })
+
+  it('renames a workspace only with dashboard credentials', async () => {
+    const { database, executor } = await createTestDatabase()
+    const app = await buildServer({ dashboardToken, database: executor })
+    const workspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a03'
+    await executor.query(
+      `insert into workspaces (id, external_id, kind, name)
+       values ($1, 'org:org_manage', 'team', 'Old name')`,
+      [workspaceId],
+    )
+
+    const unauthorized = await app.inject({
+      method: 'PATCH',
+      url: '/api/workspaces/org%3Aorg_manage',
+      payload: { name: 'New name' },
+    })
+    expect(unauthorized.statusCode).toBe(403)
+
+    const renamed = await app.inject({
+      method: 'PATCH',
+      url: '/api/workspaces/org%3Aorg_manage',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: { name: 'New name' },
+    })
+    expect(renamed.statusCode).toBe(200)
+    expect(renamed.json()).toMatchObject({ externalId: 'org:org_manage', name: 'New name' })
+
+    const missing = await app.inject({
+      method: 'PATCH',
+      url: '/api/workspaces/org%3Aorg_missing',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: { name: 'Missing' },
+    })
+    expect(missing.statusCode).toBe(404)
+    await app.close()
+    await database.close()
+  })
+
+  it('permanently deletes a shared workspace and cascades its project data', async () => {
+    const { database, executor } = await createTestDatabase()
+    const app = await buildServer({ dashboardToken, database: executor })
+    const workspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a04'
+    const projectId = '018f47a2-5d1d-7e19-aab8-6f8cc59d9a04'
+    const retainedWorkspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a05'
+    await executor.query(
+      `insert into workspaces (id, external_id, kind, name)
+       values ($1, 'org:org_delete', 'organization', 'Delete me')`,
+      [workspaceId],
+    )
+    await executor.query(
+      `insert into projects (id, workspace_id, name, slug, dsn_project_id, public_key)
+       values ($1, $2, 'Deleted project', 'deleted-project', 'deleted-42', 'deleted-public-key')`,
+      [projectId, workspaceId],
+    )
+    await executor.query(
+      `insert into workspaces (id, external_id, kind, name)
+       values ($1, 'org:org_retain', 'organization', 'Keep me')`,
+      [retainedWorkspaceId],
+    )
+
+    const personal = await app.inject({
+      method: 'DELETE',
+      url: '/api/workspaces/user%3Auser_test',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(personal.statusCode).toBe(400)
+
+    const deleted = await app.inject({
+      method: 'DELETE',
+      url: '/api/workspaces/org%3Aorg_delete',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(deleted.statusCode).toBe(200)
+    expect(deleted.json()).toEqual({ deleted: true, id: workspaceId })
+    expect((await executor.query<{ count: number }>(
+      'select count(*)::int as count from projects where id = $1',
+      [projectId],
+    )).rows[0]?.count).toBe(0)
+    expect((await executor.query<{ count: number }>(
+      'select count(*)::int as count from workspaces where id = $1',
+      [retainedWorkspaceId],
+    )).rows[0]?.count).toBe(1)
+
+    const missing = await app.inject({
+      method: 'DELETE',
+      url: '/api/workspaces/org%3Aorg_delete',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(missing.statusCode).toBe(404)
     await app.close()
     await database.close()
   })

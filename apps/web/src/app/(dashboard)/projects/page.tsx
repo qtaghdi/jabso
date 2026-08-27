@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { ProjectsView } from 'src/features/projects/components/projects-view'
-import { getProjectsResponse } from 'src/lib/dashboard/dashboard-data'
+import { ProjectsView } from 'src/screens/projects/projects-view'
+import { getProjectsResponse } from 'src/shared/query/dashboard-data'
 
 const ProjectsPageData = async () => <ProjectsView initialData={await getProjectsResponse()} />
 

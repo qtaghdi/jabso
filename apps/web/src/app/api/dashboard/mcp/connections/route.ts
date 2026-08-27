@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 import {
   createMcpConnection,
   listMcpConnections,
-} from 'src/lib/jabso/mcp'
+} from 'src/shared/api/mcp'
 
 export const GET = async () => {
   await requireWorkspace()

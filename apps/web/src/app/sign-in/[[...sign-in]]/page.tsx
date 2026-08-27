@@ -1,6 +1,6 @@
-import { AuthPageShell } from 'src/features/auth/components/auth-page-shell'
-import { JabsoSignIn } from 'src/features/auth/components/jabso-sign-in'
-import { SessionExpiredToast } from 'src/features/auth/components/session-expired-toast'
+import { AuthPageShell } from 'src/screens/auth/auth-page-shell'
+import { JabsoSignIn } from 'src/screens/auth/jabso-sign-in'
+import { SessionExpiredToast } from 'src/screens/auth/session-expired-toast'
 
 type SignInPageProps = {
   searchParams: Promise<{ reason?: string }>
