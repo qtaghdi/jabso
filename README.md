@@ -211,7 +211,7 @@ Jabso is also a real-world Boundra integration. Boundary violations, runtime con
 ```text
 apps/
 |-- web/                    # Next.js routes, screens, widgets, and shared web modules
-`-- server/                 # Fastify composition root and protocol/persistence adapters
+`-- server/                 # Fastify composition root, ports, and protocol/persistence adapters
 
 domains/
 |-- project/

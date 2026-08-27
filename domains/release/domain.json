@@ -13,11 +13,7 @@
       "./server/public.ts"
     ],
     "shared": [
-      "./shared/public.ts",
-      "./shared/contracts/get-release-regressions.ts",
-      "./shared/contracts/list-releases.ts",
-      "./shared/contracts/retry-release-symbolication.ts",
-      "./shared/contracts/upload-source-map.ts"
+      "./shared/public.ts"
     ]
   },
   "version": "0.1.0"

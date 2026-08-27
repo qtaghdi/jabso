@@ -18,17 +18,17 @@ import {
 } from '@domains/issue/shared/public.js'
 import type { createGetReleaseRegressionsImplementation } from '@domains/release/server/public.js'
 import { getReleaseRegressionsResultSchema } from '@domains/release/shared/public.js'
-import {
-  type AuthenticatedMcpConnection,
-  PostgresMcpStore,
-} from 'src/adapters/persistence/postgres-mcp-store.js'
+import type {
+  AuthenticatedMcpConnection,
+  McpTransportStore,
+} from 'src/ports/mcp-transport-store.js'
 
 type McpDependencies = {
   getEvent: ReturnType<typeof createGetEventImplementation>
   getIssue: ReturnType<typeof createGetIssueImplementation>
   getReleaseRegressions: ReturnType<typeof createGetReleaseRegressionsImplementation>
   searchIssues: ReturnType<typeof createSearchIssuesImplementation>
-  store: PostgresMcpStore
+  store: McpTransportStore
 }
 
 type WebTransportResponse = {
@@ -74,7 +74,7 @@ const allowed = (connection: AuthenticatedMcpConnection, projectId: string) =>
   connection.projectIds.includes(projectId)
 
 const audit = async (
-  store: PostgresMcpStore,
+  store: McpTransportStore,
   connection: AuthenticatedMcpConnection,
   input: {
     projectId: string | null
@@ -94,7 +94,7 @@ const audit = async (
 }
 
 const runProjectTool = async <Result extends object>(
-  store: PostgresMcpStore,
+  store: McpTransportStore,
   connection: AuthenticatedMcpConnection,
   projectId: string,
   tool: string,
