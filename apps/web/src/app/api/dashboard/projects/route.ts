@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { createProjectsResponse, getProjectsResponse } from 'src/lib/dashboard/dashboard-data'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { createProjectsResponse, getProjectsResponse } from 'src/shared/query/dashboard-data'
 import {
   clearActiveProject,
   createProject,
@@ -8,7 +8,7 @@ import {
   getActiveProjectFrom,
   listProjects,
   setActiveProjectCookie,
-} from 'src/lib/jabso/projects'
+} from 'src/shared/api/projects'
 
 export const GET = async () => {
   await requireWorkspace()

@@ -1,5 +1,5 @@
 import { SignOutButton } from '@clerk/nextjs'
-import { Button } from 'src/components/ui/button'
+import { Button } from 'src/shared/ui/button'
 
 const NotAuthorizedPage = () => (
   <main className="route-state unauthorized-state">

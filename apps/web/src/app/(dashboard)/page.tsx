@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { IssuesView } from 'src/features/issues/components/issues-view'
-import { getIssuesResponse } from 'src/lib/dashboard/dashboard-data'
+import { IssuesView } from 'src/screens/issues/issues-view'
+import { getIssuesResponse } from 'src/shared/query/dashboard-data'
 
 type IssuesPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

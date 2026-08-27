@@ -14,7 +14,6 @@
   "domain": {
     "manifestFile": "domain.json",
     "publicApi": {
-      "client": ["./client/public.ts"],
       "server": ["./server/public.ts"],
       "shared": ["./shared/public.ts"]
     }

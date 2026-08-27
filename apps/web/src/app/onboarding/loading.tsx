@@ -1,5 +1,5 @@
-import { JabsoWordmark } from 'src/components/brand/jabso-wordmark'
-import { OnboardingLoading } from 'src/features/onboarding/components/onboarding-loading'
+import { JabsoWordmark } from 'src/shared/brand/jabso-wordmark'
+import { OnboardingLoading } from 'src/screens/onboarding/onboarding-loading'
 
 const OnboardingRouteLoading = () => (
   <main className="onboarding-page">

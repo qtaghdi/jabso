@@ -1,7 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { QueryProvider } from 'src/components/providers/query-provider'
+import { QueryProvider } from 'src/shared/providers/query-provider'
 import './globals.css'
 
 export const metadata: Metadata = {

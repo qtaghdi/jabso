@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { getIssue, updateIssueStatus, type IssueSummary } from 'src/lib/jabso/issues'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { getIssue, updateIssueStatus, type IssueSummary } from 'src/shared/api/issues'
 
 type IssueRouteProps = { params: Promise<{ 'issue-id': string }> }
 

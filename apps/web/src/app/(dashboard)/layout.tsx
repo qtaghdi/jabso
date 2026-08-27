@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { AppShell } from 'src/features/shell/components/app-shell'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
+import { AppShell } from 'src/widgets/dashboard-shell/app-shell'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 
 const DashboardLayout = async ({ children }: { children: ReactNode }) => {
   await requireWorkspace()

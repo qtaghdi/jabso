@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { getIssuesResponse } from 'src/lib/dashboard/dashboard-data'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { getIssuesResponse } from 'src/shared/query/dashboard-data'
 
 export const GET = async (request: Request) => {
   await requireWorkspace()
