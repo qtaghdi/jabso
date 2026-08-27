@@ -10,7 +10,13 @@ import {
   SentryEnvelopeParseError,
 } from '@jabso/sentry-compat'
 import { normalizeArtifactPath, validateSourceMap } from '@jabso/symbolication'
+import { createGetEventImplementation } from '../../../domains/event/server/public.js'
 import { createIngestEventImplementation } from '../../../domains/ingestion/server/public.js'
+import {
+  createCreateMcpConnectionImplementation,
+  createListMcpConnectionsImplementation,
+  createRevokeMcpConnectionImplementation,
+} from '../../../domains/mcp/server/public.js'
 import {
   createGetIssueImplementation,
   createGetIssueFacetsImplementation,
@@ -40,8 +46,12 @@ import {
   toBoundraDiagnosticInput,
   toBoundraHttpError,
 } from './boundra-diagnostics.js'
+import { createPostgresEventQueryStore } from './events/postgres-event-query-store.js'
 import { PostgresIngestEventStore } from './ingestion/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from './issues/postgres-issue-query-store.js'
+import { registerMcpManagementRoutes } from './mcp/mcp-management-routes.js'
+import { registerMcpRoutes } from './mcp/mcp-routes.js'
+import { PostgresMcpStore } from './mcp/postgres-mcp-store.js'
 import { openApiDocument } from './openapi-document.js'
 import { createPostgresProjectStore } from './projects/postgres-project-store.js'
 import { PostgresReleaseStore, SourceMapUploadError } from './releases/postgres-release-store.js'
@@ -96,6 +106,8 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const getIssue = createGetIssueImplementation(issueStore)
   const getIssueFacets = createGetIssueFacetsImplementation(issueStore)
   const updateIssueStatus = createUpdateIssueStatusImplementation(issueStore)
+  const eventStore = createPostgresEventQueryStore(database)
+  const getEvent = createGetEventImplementation(eventStore)
   const releaseStore = new PostgresReleaseStore(database)
   const listReleases = createListReleasesImplementation(releaseStore)
   const getReleaseRegressions = createGetReleaseRegressionsImplementation(releaseStore)
@@ -108,6 +120,10 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const deleteProject = createDeleteProjectImplementation(projectStore)
   const setProjectRepository = createSetProjectRepositoryImplementation(projectStore)
   const disconnectProjectRepository = createDisconnectProjectRepositoryImplementation(projectStore)
+  const mcpStore = new PostgresMcpStore(database)
+  const createMcpConnection = createCreateMcpConnectionImplementation(mcpStore)
+  const listMcpConnections = createListMcpConnectionsImplementation(mcpStore)
+  const revokeMcpConnection = createRevokeMcpConnectionImplementation(mcpStore)
   const adminToken = options.adminToken ?? process.env.JABSO_ADMIN_TOKEN
   const dashboardToken = options.dashboardToken
     ?? process.env.JABSO_DASHBOARD_TOKEN
@@ -198,6 +214,21 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   app.get('/ready', async (_request, reply) => {
     await database.query('select 1')
     return reply.send({ status: 'ready' })
+  })
+
+  registerMcpManagementRoutes(app, {
+    createConnection: createMcpConnection,
+    listConnections: listMcpConnections,
+    revokeConnection: revokeMcpConnection,
+    workspaceId: (headers) => dashboardWorkspaceId(headers, dashboardToken),
+  })
+  registerMcpRoutes(app, {
+    allowedOrigin,
+    getEvent,
+    getIssue,
+    getReleaseRegressions,
+    searchIssues,
+    store: mcpStore,
   })
 
   app.get<{ Params: { externalId: string } }>('/api/workspaces/:externalId', async (request, reply) => {

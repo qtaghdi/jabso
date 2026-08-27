@@ -50,6 +50,55 @@ export const projects = pgTable('projects', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (table) => [index('projects_workspace_created_idx').on(table.workspaceId, table.createdAt)])
 
+export const mcpConnections = pgTable(
+  'mcp_connections',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    name: text('name').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    tokenPrefix: text('token_prefix').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('mcp_connections_token_hash_uidx').on(table.tokenHash),
+    index('mcp_connections_workspace_created_idx').on(table.workspaceId, table.createdAt),
+  ],
+)
+
+export const mcpConnectionProjects = pgTable(
+  'mcp_connection_projects',
+  {
+    connectionId: uuid('connection_id').references(() => mcpConnections.id, { onDelete: 'cascade' }).notNull(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('mcp_connection_projects_connection_project_uidx').on(table.connectionId, table.projectId),
+    index('mcp_connection_projects_project_idx').on(table.projectId),
+  ],
+)
+
+export const mcpAuditLogs = pgTable(
+  'mcp_audit_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    connectionId: uuid('connection_id').references(() => mcpConnections.id, { onDelete: 'cascade' }).notNull(),
+    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }),
+    tool: text('tool').notNull(),
+    outcome: text('outcome').notNull(),
+    durationMs: integer('duration_ms').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('mcp_audit_logs_connection_occurred_idx').on(table.connectionId, table.occurredAt),
+    index('mcp_audit_logs_workspace_occurred_idx').on(table.workspaceId, table.occurredAt),
+  ],
+)
+
 export const projectRepositoryConnections = pgTable('project_repository_connections', {
   projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }).primaryKey(),
   provider: text('provider').notNull().default('github'),
