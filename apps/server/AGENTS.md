@@ -4,7 +4,9 @@ The root and `apps/AGENTS.md` instructions apply here.
 
 ## Fastify adapter rules
 
-- `jabso-app.ts` is the composition root. Keep route bodies thin and delegate to Boundra domain handlers.
+- `src/composition/create-jabso-app.ts` is the composition root. Keep route bodies thin and delegate to Boundra domain handlers.
+- Keep protocol code under `src/adapters/http` or `src/adapters/mcp`, and PostgreSQL implementations under `src/adapters/persistence`.
+- Use `src/*` for server-internal imports and `@domains/*` for declared domain public APIs. Do not reintroduce long parent-relative imports.
 - Raw Sentry envelope parsing, request authentication, CORS, rate limits, content types, byte limits, and HTTP status mapping belong in this app.
 - Public DSN keys authenticate ingestion only. Dashboard and release APIs require their dedicated administrator credentials.
 - Never include tokens, request bodies, raw events, private source maps, or environment variables in logs or Boundra diagnostics.
