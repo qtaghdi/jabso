@@ -2,13 +2,14 @@
 
 이 디렉터리는 Jabso를 개발하면서 발견한 Boundra 관련 문제의 사람이 읽을 수 있는 이력이다. `.jabso-diagnostics`의 런타임 NDJSON이나 CI artifact를 대신하지 않으며, 재현·판단·해결 결과만 안전하게 요약한다.
 
-현재 확인된 Boundra 패키지 자체의 결함은 없다. 첫 기록은 Boundra의 result contract가 정상적으로 찾아낸 Jabso/PostgreSQL 어댑터 문제다.
+현재 확인된 Boundra 패키지 자체의 결함은 없다. 기록된 문제들은 Boundra가 정상적으로 찾아낸 Jabso/PostgreSQL 어댑터 문제와 Jabso가 사용하지 않는 선택적 client scaffold를 유지한 통합 문제다.
 
 ## Reports
 
 | Date | Report | Classification | Status | Upstream candidate |
 | --- | --- | --- | --- | --- |
 | 2026-08-25 | [Production project list handler failure](./2026-08-25-production-project-list-contract-rejection.md) | Jabso integration | Resolved | No |
+| 2026-08-27 | [Unused client layer and public API drift](./2026-08-27-unused-client-layer-and-public-api-drift.md) | Jabso integration | Resolved | No |
 
 ## Recording rule
 
