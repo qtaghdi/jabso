@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { provisionWorkspace, type WorkspaceKind } from 'src/lib/jabso/workspaces'
+import { provisionWorkspace, type WorkspaceKind } from 'src/shared/api/workspaces'
 
 const workspaceKinds: WorkspaceKind[] = ['personal', 'team', 'organization']
 

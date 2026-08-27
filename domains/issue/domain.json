@@ -9,9 +9,6 @@
     "allowMcpWrite": false
   },
   "publicApi": {
-    "client": [
-      "./client/public.ts"
-    ],
     "server": [
       "./server/public.ts"
     ],

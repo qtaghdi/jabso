@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildServer } from '../src/jabso-app.js'
+import { buildServer } from 'src/composition/create-jabso-app.js'
 import { createTestDatabase } from './pglite.js'
 
 const dashboardToken = 'mcp-dashboard-token'

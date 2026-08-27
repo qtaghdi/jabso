@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GitHubConnectionError, listGitHubRepositories } from 'src/lib/integrations/github'
+import { GitHubConnectionError, listGitHubRepositories } from 'src/shared/integrations/github'
 
 export const GET = async () => {
   try {

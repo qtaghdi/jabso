@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { listGitHubRepositories } from 'src/lib/integrations/github'
-import { disconnectProjectRepository, listProjects, setProjectRepository } from 'src/lib/jabso/projects'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { listGitHubRepositories } from 'src/shared/integrations/github'
+import { disconnectProjectRepository, listProjects, setProjectRepository } from 'src/shared/api/projects'
 
 const normalizeRootPath = (value: unknown) => {
   if (typeof value !== 'string') return null
