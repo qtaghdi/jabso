@@ -4,7 +4,7 @@ import {
   resolveBoundraDiagnosticPath,
   toBoundraDiagnosticInput,
   toBoundraHttpError,
-} from '../src/boundra-diagnostics.js'
+} from 'src/adapters/http/boundra-diagnostics.js'
 
 describe('toBoundraDiagnosticInput', () => {
   it('only copies the safe Boundra diagnostic shape', () => {

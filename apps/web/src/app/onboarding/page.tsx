@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { OnboardingFlow } from 'src/features/onboarding/components/onboarding-flow'
-import { findWorkspace } from 'src/lib/jabso/workspaces'
+import { OnboardingFlow } from 'src/screens/onboarding/onboarding-flow'
+import { findWorkspace } from 'src/shared/api/workspaces'
 
 const OnboardingPage = async () => {
   const { orgId, userId } = await auth()

@@ -9,18 +9,11 @@
     "allowMcpWrite": false
   },
   "publicApi": {
-    "client": [
-      "./client/public.ts"
-    ],
     "server": [
       "./server/public.ts"
     ],
     "shared": [
-      "./shared/public.ts",
-      "./shared/contracts/search-issues.ts",
-      "./shared/contracts/get-issue.ts",
-      "./shared/contracts/get-issue-facets.ts",
-      "./shared/contracts/update-issue-status.ts"
+      "./shared/public.ts"
     ]
   },
   "version": "0.1.0"

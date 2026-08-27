@@ -7,20 +7,11 @@
     "allowMcpWrite": false
   },
   "publicApi": {
-    "client": [
-      "./client/public.ts"
-    ],
     "server": [
       "./server/public.ts"
     ],
     "shared": [
-      "./shared/public.ts",
-      "./shared/contracts/list-projects.ts",
-      "./shared/contracts/create-project.ts",
-      "./shared/contracts/delete-project.ts",
-      "./shared/contracts/repository-connection.ts",
-      "./shared/contracts/set-project-repository.ts",
-      "./shared/contracts/disconnect-project-repository.ts"
+      "./shared/public.ts"
     ]
   },
   "version": "0.1.0"

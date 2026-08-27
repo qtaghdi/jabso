@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
-import { McpConnectionsView } from 'src/features/mcp/components/mcp-connections-view'
-import { requireWorkspace } from 'src/lib/auth/workspace-auth'
-import { listMcpConnections } from 'src/lib/jabso/mcp'
-import { listProjects } from 'src/lib/jabso/projects'
+import { McpConnectionsView } from 'src/screens/mcp/mcp-connections-view'
+import { requireWorkspace } from 'src/shared/auth/workspace-auth'
+import { listMcpConnections } from 'src/shared/api/mcp'
+import { listProjects } from 'src/shared/api/projects'
 
 const McpPageData = async () => {
   const [workspace, connections, projects] = await Promise.all([

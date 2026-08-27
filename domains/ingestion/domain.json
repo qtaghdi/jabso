@@ -12,15 +12,11 @@
     "allowMcpWrite": false
   },
   "publicApi": {
-    "client": [
-      "./client/public.ts"
-    ],
     "server": [
       "./server/public.ts"
     ],
     "shared": [
-      "./shared/public.ts",
-      "./shared/contracts/ingest-event.ts"
+      "./shared/public.ts"
     ]
   },
   "version": "0.1.0"

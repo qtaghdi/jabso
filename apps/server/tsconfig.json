@@ -7,7 +7,8 @@
     "noEmit": true,
     "rootDir": "../..",
     "paths": {
-      "@domains/*": ["domains/*"]
+      "@domains/*": ["domains/*"],
+      "src/*": ["apps/server/src/*"]
     }
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]

@@ -7,13 +7,11 @@
     "allowMcpWrite": false
   },
   "publicApi": {
-    "client": ["./client/public.ts"],
-    "server": ["./server/public.ts"],
+    "server": [
+      "./server/public.ts"
+    ],
     "shared": [
-      "./shared/public.ts",
-      "./shared/contracts/create-mcp-connection.ts",
-      "./shared/contracts/list-mcp-connections.ts",
-      "./shared/contracts/revoke-mcp-connection.ts"
+      "./shared/public.ts"
     ]
   },
   "version": "0.1.0"
