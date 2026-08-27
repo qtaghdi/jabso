@@ -27,6 +27,14 @@ const ProjectIcon = () => (
   </svg>
 )
 
+const McpIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M8 7.5h8M8 16.5h8M7.5 8v8M16.5 8v8" />
+    <circle cx="7.5" cy="7.5" r="2.5" />
+    <circle cx="16.5" cy="16.5" r="2.5" />
+  </svg>
+)
+
 const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
   <svg aria-hidden="true" viewBox="0 0 20 20">
     <rect x="3" y="3.5" width="14" height="13" rx="2" />
@@ -37,7 +45,9 @@ const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
 
 export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) => {
   const pathname = usePathname()
-  const activeNav = pathname.startsWith('/projects') ? 'projects' : 'issues'
+  const activeNav = pathname.startsWith('/projects')
+    ? 'projects'
+    : pathname.startsWith('/mcp') ? 'mcp' : 'issues'
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [isPending, startTransition] = useTransition()
 
@@ -72,6 +82,16 @@ export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) 
           >
             <IssueIcon />
             <span className="nav-label">Issues</span>
+          </Link>
+          <Link
+            aria-label="MCP"
+            className={`nav-item ${activeNav === 'mcp' ? 'nav-item-active' : ''}`}
+            href="/mcp"
+            prefetch
+            title="MCP"
+          >
+            <McpIcon />
+            <span className="nav-label">MCP</span>
           </Link>
           <Link
             aria-label="Projects"

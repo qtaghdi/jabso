@@ -1,5 +1,6 @@
 import type { IssueFacets, IssueSummary } from 'src/lib/jabso/issues'
 import type { ProjectSummary } from 'src/lib/jabso/projects'
+import type { McpConnection } from 'src/lib/jabso/mcp'
 
 export type DashboardProject = ProjectSummary & {
   active: boolean
@@ -31,4 +32,9 @@ export type IssuesResponse = {
   items: IssueSummary[]
   nextCursor: string | null
   previousCursor: string | null
+}
+
+export type McpConnectionsResponse = {
+  endpoint: string
+  items: McpConnection[]
 }

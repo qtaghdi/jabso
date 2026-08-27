@@ -368,6 +368,47 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .inline-error { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--border); }
 .inline-error p { margin: 0; color: var(--accent); }
 .project-list-error { margin: 12px 0 0; }
+.mcp-endpoint-section { display: grid; grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr); align-items: center; gap: 48px; padding: 28px 0 34px; border-block: 1px solid var(--border); }
+.mcp-endpoint-section h2, .mcp-connections-section h2 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
+.mcp-endpoint-section p { max-width: 520px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.mcp-endpoint { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 11px 11px 11px 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.mcp-endpoint code { min-width: 0; flex: 1; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-connections-section { padding-top: 34px; }
+.mcp-connections-section .section-heading-row { margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.mcp-connections-section .section-heading-row > div { display: flex; align-items: baseline; gap: 10px; }
+.mcp-connections-section .section-heading-row span { color: var(--muted); font-size: 12px; }
+.mcp-empty-state { padding: 44px 0; border-bottom: 1px solid var(--border); }
+.mcp-empty-state strong { font-size: 14px; }
+.mcp-empty-state p { max-width: 560px; margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+.mcp-connection-list { display: grid; }
+.mcp-connection-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr) auto; align-items: center; gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--border); }
+.mcp-connection-name { display: flex; min-width: 0; align-items: flex-start; gap: 10px; }
+.mcp-connection-name > div { min-width: 0; }
+.mcp-connection-name h3 { margin: 0; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-connection-name code { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+.mcp-status-active, .mcp-status-revoked { flex: 0 0 auto; padding: 3px 7px; border: 1px solid; border-radius: 999px; font-size: 10px; font-weight: 700; }
+.mcp-status-active { border-color: #9cc8ac; background: #eff8f2; color: #21623b; }
+.mcp-status-revoked { border-color: #d2d7dd; background: #f3f4f5; color: #6c747d; }
+.mcp-project-chips { display: flex; min-width: 0; flex-wrap: wrap; gap: 6px; }
+.mcp-project-chips span { max-width: 180px; overflow: hidden; padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: #454c55; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-connection-meta { display: grid; gap: 4px; color: var(--muted); font-size: 11px; }
+.mcp-connection-form { display: grid; gap: 20px; margin-top: 22px; }
+.mcp-project-fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.mcp-project-fieldset legend { margin-bottom: 8px; font-size: 12px; font-weight: 650; }
+.mcp-project-options { display: grid; max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.mcp-project-option { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; gap: 10px; padding: 11px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.mcp-project-option:last-child { border-bottom: 0; }
+.mcp-project-option:hover { background: var(--surface); }
+.mcp-project-option input { width: 15px; height: 15px; margin: 0; accent-color: #17191d; }
+.mcp-project-option span { display: grid; min-width: 0; gap: 2px; }
+.mcp-project-option strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.mcp-project-option code { color: var(--muted); font-size: 10px; }
+.mcp-secret-warning { margin-top: 20px; padding: 11px 13px; border: 1px solid #e3c98b; border-radius: 7px; background: #fff9e9; color: #755714; font-size: 12px; line-height: 1.5; }
+.mcp-token-section { margin-top: 16px; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; }
+.mcp-code-heading { display: flex; min-height: 46px; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px 7px 13px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.mcp-code-heading > span { color: var(--muted); font-size: 10px; font-weight: 720; letter-spacing: .06em; text-transform: uppercase; }
+.mcp-token-value { display: block; padding: 15px; overflow-x: auto; font-size: 11px; white-space: nowrap; }
+.mcp-config-code { max-height: 240px; margin: 0; padding: 15px; overflow: auto; background: #191c20; color: #e8ebee; font-size: 11px; line-height: 1.65; }
 .ui-dialog { width: min(560px, calc(100% - 48px)); max-height: calc(100vh - 48px); padding: 0; overflow: auto; border: 1px solid #cbd2da; border-radius: 12px; background: #fff; color: var(--text); box-shadow: 0 24px 70px rgb(17 19 22 / 24%); }
 .ui-dialog::backdrop { background: rgb(17 19 22 / 52%); backdrop-filter: blur(2px); }
 .ui-dialog-sm { width: min(460px, calc(100% - 48px)); }
@@ -619,6 +660,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .auth-form-header { margin-bottom: 28px; }
   .auth-form-header h1 { font-size: 30px; }
   .auth-form-header > p:last-child { font-size: 13px; line-height: 1.45; }
+  .mcp-connection-row { grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr); }
 }
 
 @media (max-width: 620px) {
@@ -679,6 +721,10 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .project-row { grid-template-columns: 1fr; gap: 14px; }
   .project-row-actions { grid-template-columns: 1fr auto; }
   .project-row-actions .ui-button:first-child { width: 100%; }
+  .mcp-endpoint-section { grid-template-columns: 1fr; gap: 22px; }
+  .mcp-connection-row { grid-template-columns: 1fr; gap: 14px; }
+  .mcp-connections-section .section-heading-row { align-items: stretch; flex-direction: column; gap: 16px; }
+  .mcp-connections-section .section-heading-row .ui-button { width: 100%; }
 }
 
 @media (max-width: 520px) {
