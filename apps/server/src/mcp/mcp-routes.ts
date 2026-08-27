@@ -31,6 +31,14 @@ type McpDependencies = {
   store: PostgresMcpStore
 }
 
+type WebTransportResponse = {
+  arrayBuffer: () => Promise<ArrayBuffer>
+  headers: {
+    forEach: (callback: (value: string, name: string) => void) => void
+  }
+  status: number
+}
+
 const readOnlyAnnotations = {
   readOnlyHint: true,
   destructiveHint: false,
@@ -342,7 +350,7 @@ export const registerMcpRoutes = (
     await server.connect(transport)
     const response = await transport.handleRequest(webRequestFromFastify(request), {
       parsedBody: request.body,
-    }) as unknown as Awaited<ReturnType<typeof fetch>>
+    }) as unknown as WebTransportResponse
     const body = Buffer.from(await response.arrayBuffer())
     response.headers.forEach((value, name) => reply.header(name, value))
     await server.close()
