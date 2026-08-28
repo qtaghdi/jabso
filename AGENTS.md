@@ -39,7 +39,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 
 ## Boundra rules
 
-- Keep `boundra` pinned exactly to `0.3.0` while it is in public preview.
+- Keep `boundra` pinned exactly to `0.5.0` while it is in public preview.
 - Generated contracts use Zod and must define bounded input and result schemas before use.
 - Run `pnpm boundra:check` after changing imports, manifests, public APIs, or domain dependencies.
 - Boundra runtime failures must go through `@jabso/diagnostics`; never report them through the failing public ingestion contract.

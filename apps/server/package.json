@@ -26,7 +26,7 @@
     "@jabso/sentry-compat": "workspace:*",
     "@jabso/symbolication": "workspace:*",
     "@modelcontextprotocol/server": "2.0.0",
-    "boundra": "0.3.0",
+    "boundra": "0.5.0",
     "fastify": "5.12.1",
     "openapi-types": "12.1.3",
     "zod": "4.4.3"

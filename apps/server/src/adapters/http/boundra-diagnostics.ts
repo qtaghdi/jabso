@@ -21,7 +21,7 @@ export const toBoundraDiagnosticInput = (error: BoundraRuntimeError): Diagnostic
       path: [...issue.path],
       message: issue.message,
     })),
-    boundraVersion: '0.3.0',
+    boundraVersion: '0.5.0',
     context: {
       phase: safe.phase,
     },
