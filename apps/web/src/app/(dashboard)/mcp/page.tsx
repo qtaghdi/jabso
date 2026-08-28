@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { McpConnectionsView } from 'src/screens/mcp/mcp-connections-view'
+import { McpPageSkeleton } from 'src/screens/mcp/mcp-page-skeleton'
 import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 import { listMcpConnections } from 'src/shared/api/mcp'
 import { listProjects } from 'src/shared/api/projects'
@@ -19,22 +20,8 @@ const McpPageData = async () => {
   )
 }
 
-const McpPageLoading = () => (
-  <div className="dashboard-page-loading" role="status">
-    <div className="page-header-loading">
-      <span className="skeleton-block skeleton-title" />
-      <span className="skeleton-block skeleton-copy" />
-    </div>
-    <span className="skeleton-block skeleton-project-form" />
-    <div className="skeleton-table">
-      {Array.from({ length: 2 }, (_, index) => <span className="skeleton-block" key={index} />)}
-    </div>
-    <span className="sr-only">Loading MCP connections</span>
-  </div>
-)
-
 const McpPage = () => (
-  <Suspense fallback={<McpPageLoading />}>
+  <Suspense fallback={<McpPageSkeleton />}>
     <McpPageData />
   </Suspense>
 )

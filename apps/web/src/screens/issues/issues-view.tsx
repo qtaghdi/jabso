@@ -3,8 +3,9 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { FormEvent } from 'react'
+import { useEffect, type FormEvent } from 'react'
 import { GettingStarted } from 'src/screens/issues/getting-started'
+import { rememberIssuesPageState } from 'src/screens/issues/issues-page-skeleton'
 import { Button, buttonClassName } from 'src/shared/ui/button'
 import { Select } from 'src/shared/ui/select'
 import { issuesQueryOptions, issueQueryOptions } from 'src/shared/query/dashboard-query'
@@ -68,6 +69,10 @@ export const IssuesView = ({ initialData }: IssuesViewProps) => {
     initialData,
     placeholderData: keepPreviousData,
   })
+
+  useEffect(() => {
+    if (issuesQuery.data) rememberIssuesPageState(issuesQuery.data)
+  }, [issuesQuery.data])
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

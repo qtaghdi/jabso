@@ -298,8 +298,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .getting-started-heading h2 { max-width: 620px; margin: 0; font-size: 18px; font-weight: 590; letter-spacing: -0.018em; }
 .getting-started-heading p { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
 .getting-started-heading > a { flex: 0 0 auto; color: #075fb7; font-size: 12px; font-weight: 650; text-underline-offset: 3px; }
-.setup-workspace { display: grid; grid-template-columns: clamp(220px, 18vw, 240px) minmax(0, 1fr); margin-top: 42px; }
-.setup-index { position: relative; display: grid; align-content: start; margin: 0; padding: 0 30px 0 0; border-right: 1px solid var(--border); list-style: none; }
+.setup-workspace { display: grid; grid-template-columns: clamp(220px, 18vw, 240px) minmax(0, 1fr); align-items: start; margin-top: 42px; }
+.setup-index { position: relative; display: grid; min-height: 318px; align-content: start; margin: 0; padding: 0 30px 0 0; border-right: 1px solid var(--border); list-style: none; }
 .setup-index::before { position: absolute; top: 13px; bottom: 13px; left: 4px; width: 1px; background: #c9cfd6; content: ""; }
 .setup-index li { position: relative; display: grid; min-height: 106px; align-content: start; gap: 7px; padding: 9px 0 18px 34px; color: #5f6873; }
 .setup-index li::before { position: absolute; top: 14px; left: 1px; width: 7px; height: 7px; border: 1px solid #9ba4ae; border-radius: 50%; background: #fff; content: ""; }
@@ -623,6 +623,58 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .dashboard-page-loading .skeleton-table { margin-top: 30px; }
 .dashboard-page-loading .skeleton-project-form { width: min(100%, 900px); height: 116px; }
 .dashboard-page-loading .skeleton-code { width: min(100%, 760px); height: 180px; margin-top: 42px; }
+.issues-skeleton-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; margin-bottom: 26px; }
+.issues-skeleton-header > div { flex: 1; }
+.issues-skeleton-project { width: 180px; height: 54px; flex: 0 0 auto; }
+.issues-skeleton-filters { display: grid; grid-template-columns: minmax(220px, 1.6fr) repeat(5, minmax(130px, .75fr)) auto auto; gap: 10px; margin-bottom: 28px; }
+.issues-skeleton-filters .skeleton-block { min-width: 70px; height: 44px; }
+.issues-skeleton-table { border-top: 1px solid var(--border); }
+.issues-skeleton-table-heading { width: 100%; height: 46px; border-radius: 0; }
+.issues-skeleton-row { display: grid; grid-template-columns: 120px 100px minmax(240px, 1fr) minmax(180px, .65fr); align-items: center; gap: 28px; min-height: 72px; border-top: 1px solid var(--border); }
+.issues-skeleton-row .skeleton-block { height: 12px; }
+.issues-skeleton-row .skeleton-block:nth-child(3) { height: 28px; }
+.issues-onboarding-skeleton { padding-top: 30px; border-top: 1px solid var(--border); }
+.issues-onboarding-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.issues-onboarding-heading > div { width: min(620px, 70%); }
+.issues-onboarding-heading > div .skeleton-block:first-child { width: 58%; height: 20px; }
+.issues-onboarding-heading > div .skeleton-block:last-child { width: 74%; height: 13px; margin-top: 9px; }
+.issues-onboarding-heading > .skeleton-block { width: 92px; height: 14px; }
+.issues-onboarding-workspace { display: grid; grid-template-columns: clamp(220px, 18vw, 240px) minmax(0, 1fr); align-items: start; margin-top: 42px; }
+.issues-onboarding-steps { position: relative; display: grid; min-height: 318px; padding-right: 30px; border-right: 1px solid var(--border); }
+.issues-onboarding-steps::before { position: absolute; top: 13px; bottom: 13px; left: 4px; width: 1px; background: #c9cfd6; content: ""; }
+.issues-onboarding-steps > div { position: relative; display: grid; min-height: 106px; grid-template-columns: 9px 1fr; gap: 25px; padding-top: 11px; }
+.issues-onboarding-steps > div > span { z-index: 1; width: 9px; height: 9px; border: 1px solid #9ba4ae; border-radius: 50%; background: #fff; }
+.issues-onboarding-steps > div > div .skeleton-block:first-child { width: 55%; height: 14px; }
+.issues-onboarding-steps > div > div .skeleton-block:last-child { width: 78%; height: 11px; margin-top: 9px; }
+.issues-onboarding-focus { min-width: 0; margin-left: 40px; }
+.issues-onboarding-code { display: grid; min-height: 252px; gap: 0; overflow: hidden; border: 1px solid #292d32; border-radius: 7px; }
+.issues-onboarding-code > div { display: flex; min-height: 62px; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 16px; background: var(--surface); }
+.issues-onboarding-code > div .skeleton-block:first-child { width: 150px; height: 36px; }
+.issues-onboarding-code > div .skeleton-block:last-child { width: 36px; height: 36px; }
+.issues-onboarding-code > .skeleton-block { width: 100%; height: 190px; border-radius: 0; background: #272b30; }
+.issues-onboarding-actions { display: flex; align-items: center; gap: 24px; margin-top: 22px; }
+.issues-onboarding-actions .skeleton-block:first-child { width: 176px; height: 42px; }
+.issues-onboarding-actions .skeleton-block:last-child { width: 72px; height: 12px; }
+.projects-create-skeleton, .mcp-endpoint-skeleton { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(360px, 1.2fr); align-items: center; gap: 48px; padding: 28px 0 34px; border-block: 1px solid var(--border); }
+.projects-create-skeleton > div .skeleton-block:first-child, .mcp-endpoint-skeleton > div .skeleton-block:first-child { width: 150px; height: 20px; }
+.projects-create-skeleton > div .skeleton-block:last-child, .mcp-endpoint-skeleton > div .skeleton-block:last-child { width: min(420px, 80%); height: 13px; margin-top: 10px; }
+.projects-create-skeleton > .skeleton-block { width: 132px; height: 42px; justify-self: end; }
+.mcp-endpoint-skeleton > .skeleton-block { width: 100%; height: 48px; }
+.projects-list-heading-skeleton, .mcp-list-heading-skeleton { display: flex; min-height: 88px; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--border); }
+.projects-list-heading-skeleton .skeleton-block:first-child, .mcp-list-heading-skeleton .skeleton-block:first-child { width: 180px; height: 20px; }
+.projects-list-heading-skeleton .skeleton-block:last-child { width: 220px; height: 36px; }
+.mcp-list-heading-skeleton .skeleton-block:last-child { width: 150px; height: 42px; }
+.projects-row-skeleton { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(360px, 1.35fr) minmax(210px, auto); align-items: center; gap: 28px; min-height: 118px; border-bottom: 1px solid var(--border); }
+.projects-row-skeleton > div:first-child .skeleton-block:first-child { width: 130px; height: 16px; }
+.projects-row-skeleton > div:first-child .skeleton-block:last-child { width: 190px; height: 11px; margin-top: 9px; }
+.projects-row-skeleton > .skeleton-block { width: 100%; height: 54px; }
+.projects-row-skeleton > div:last-child { display: flex; justify-content: flex-end; gap: 10px; }
+.projects-row-skeleton > div:last-child .skeleton-block { width: 112px; height: 40px; }
+.projects-row-skeleton > div:last-child .skeleton-block:last-child { width: 58px; }
+.mcp-row-skeleton { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr) 72px; align-items: center; gap: 24px; min-height: 88px; border-bottom: 1px solid var(--border); }
+.mcp-row-skeleton .skeleton-block { height: 14px; }
+.mcp-row-skeleton .skeleton-block:first-child { height: 28px; }
+.mcp-row-skeleton .skeleton-block:last-child { height: 34px; }
 .issues-inline-loading { padding-top: 8px; }
 .issues-inline-loading .skeleton-table { margin-top: 42px; }
 .query-refreshing { opacity: 0.62; transition: opacity 140ms ease; }
@@ -707,7 +759,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .breadcrumbs-section li { grid-template-columns: 1fr auto; }
   .breadcrumbs-section p { grid-column: 1 / -1; }
   .setup-workspace { grid-template-columns: 1fr; margin-top: 30px; }
-  .setup-index { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .setup-index { min-height: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border); }
   .setup-index::before { top: 4px; right: 12%; bottom: auto; left: 12%; width: auto; height: 1px; }
   .setup-index li { min-height: 84px; padding: 24px 10px 8px 0; }
   .setup-index li::before { top: 0; left: 0; }
@@ -719,6 +771,23 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .getting-started-actions { align-items: stretch; flex-direction: column; gap: 12px; }
   .getting-started-actions > span { text-align: center; }
   .getting-started-heading { display: grid; }
+  .issues-skeleton-header { display: grid; }
+  .issues-skeleton-project { width: 100%; }
+  .issues-skeleton-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .issues-skeleton-filters .skeleton-block:first-child { grid-column: 1 / -1; }
+  .issues-skeleton-row { grid-template-columns: 80px minmax(160px, 1fr); }
+  .issues-skeleton-row .skeleton-block:nth-child(n + 3) { display: none; }
+  .issues-onboarding-heading { display: grid; }
+  .issues-onboarding-heading > div { width: 100%; }
+  .issues-onboarding-workspace { grid-template-columns: 1fr; margin-top: 30px; }
+  .issues-onboarding-steps { min-height: 104px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 0 20px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .issues-onboarding-steps::before { top: 4px; right: 12%; bottom: auto; left: 12%; width: auto; height: 1px; }
+  .issues-onboarding-steps > div { min-height: 84px; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 0 0; }
+  .issues-onboarding-focus { margin: 24px 0 0; }
+  .projects-create-skeleton, .mcp-endpoint-skeleton { grid-template-columns: 1fr; gap: 22px; }
+  .projects-create-skeleton > .skeleton-block { justify-self: start; }
+  .projects-row-skeleton, .mcp-row-skeleton { grid-template-columns: 1fr; gap: 14px; padding-block: 18px; }
+  .projects-row-skeleton > div:last-child { justify-content: flex-start; }
   .project-create-section { grid-template-columns: 1fr; gap: 24px; }
   .project-create-button { width: 100%; }
   .project-list-section .section-heading-row { align-items: stretch; flex-direction: column; }
