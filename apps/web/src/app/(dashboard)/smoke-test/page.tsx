@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { SdkSmokeTest } from 'src/screens/sdk/sdk-smoke-test'
+import { SmokeTestSkeleton } from 'src/screens/sdk/smoke-test-skeleton'
 import { getProjectsResponse } from 'src/shared/query/dashboard-data'
 
 const SmokeTestPageData = async () => {
@@ -19,7 +20,7 @@ const SmokeTestPageData = async () => {
 }
 
 const SmokeTestPage = () => (
-  <Suspense fallback={<div className="dashboard-page-loading smoke-test-page-loading" role="status"><span className="skeleton-block skeleton-title" /><span className="skeleton-block skeleton-code" /><span className="sr-only">Loading smoke test</span></div>}>
+  <Suspense fallback={<SmokeTestSkeleton />}>
     <SmokeTestPageData />
   </Suspense>
 )

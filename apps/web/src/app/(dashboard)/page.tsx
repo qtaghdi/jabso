@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { IssuesPageSkeleton } from 'src/screens/issues/issues-page-skeleton'
 import { IssuesView } from 'src/screens/issues/issues-view'
 import { getIssuesResponse } from 'src/shared/query/dashboard-data'
 
@@ -20,21 +21,8 @@ const IssuesPageData = async ({ searchParams }: IssuesPageProps) => {
   return <IssuesView initialData={initialData} />
 }
 
-const IssuesPageLoading = () => (
-  <div className="dashboard-page-loading issues-page-loading" role="status">
-    <div className="page-header-loading">
-      <span className="skeleton-block skeleton-title" />
-      <span className="skeleton-block skeleton-copy" />
-    </div>
-    <div className="skeleton-table">
-      {Array.from({ length: 4 }, (_, index) => <span className="skeleton-block" key={index} />)}
-    </div>
-    <span className="sr-only">Loading issues</span>
-  </div>
-)
-
 const IssuesPage = ({ searchParams }: IssuesPageProps) => (
-  <Suspense fallback={<IssuesPageLoading />}>
+  <Suspense fallback={<IssuesPageSkeleton />}>
     <IssuesPageData searchParams={searchParams} />
   </Suspense>
 )

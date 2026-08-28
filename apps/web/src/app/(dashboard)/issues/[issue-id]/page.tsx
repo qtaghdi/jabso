@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
+import { IssueDetailSkeleton } from 'src/screens/issues/issue-detail-skeleton'
 import { IssueDetailView } from 'src/screens/issues/issue-detail-view'
 import { getIssue } from 'src/shared/api/issues'
 
@@ -15,7 +16,7 @@ const IssuePageData = async ({ params }: IssuePageProps) => {
 }
 
 const IssuePage = ({ params }: IssuePageProps) => (
-  <Suspense fallback={<div className="dashboard-page-loading issue-detail-page-loading" role="status"><span className="skeleton-block skeleton-title" /><span className="skeleton-block skeleton-copy" /><span className="skeleton-block skeleton-code" /><span className="sr-only">Loading issue</span></div>}>
+  <Suspense fallback={<IssueDetailSkeleton />}>
     <IssuePageData params={params} />
   </Suspense>
 )

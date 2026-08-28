@@ -1,10 +1,6 @@
 import type { ReactNode } from 'react'
 import { AppShell } from 'src/widgets/dashboard-shell/app-shell'
-import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 
-const DashboardLayout = async ({ children }: { children: ReactNode }) => {
-  await requireWorkspace()
-  return <AppShell>{children}</AppShell>
-}
+const DashboardLayout = ({ children }: { children: ReactNode }) => <AppShell>{children}</AppShell>
 
 export default DashboardLayout

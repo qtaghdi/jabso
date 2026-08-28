@@ -157,11 +157,12 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
     }
     setError(null)
     setSwitchingTo(target)
+    setIsOpen(false)
     try {
-      await setActive({ organization: organizationId })
-      window.location.replace(new URL('/', window.location.href).href)
+      await setActive({ organization: organizationId, redirectUrl: '/' })
     } catch {
       setError('Could not switch workspaces. Try again.')
+      setIsOpen(true)
     } finally {
       setSwitchingTo(null)
     }
@@ -177,8 +178,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
         const result = await response.json().catch(() => null) as { error?: string } | null
         throw new Error(result?.error ?? 'Could not delete the workspace')
       }
-      await setActive({ organization: null })
-      window.location.replace(new URL('/', window.location.href).href)
+      await setActive({ organization: null, redirectUrl: '/' })
     } catch (caught) {
       setDeleteError(caught instanceof Error ? caught.message : 'Could not delete the workspace')
       setIsDeleting(false)
