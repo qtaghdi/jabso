@@ -25,7 +25,7 @@
     "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "16.3.1",
     "@types/node": "24.13.3",
-    "boundra": "0.3.0",
+    "boundra": "0.5.0",
     "eslint": "10.8.1",
     "globals": "17.11.0",
     "turbo": "2.10.11",

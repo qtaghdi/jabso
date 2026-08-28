@@ -19,7 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "boundra": "0.3.0",
+    "boundra": "0.5.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
