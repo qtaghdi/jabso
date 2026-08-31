@@ -1,5 +1,7 @@
 # Jabso owns the authentication UI while Clerk remains the identity backend
 
+> Superseded by [0006: Better Auth owns dashboard identity](./0006-better-auth-dashboard-identity.md).
+
 ## Context
 
 The current sign-in and sign-up routes render Clerk's prebuilt components and override their internal elements with CSS. This has repeatedly produced clipped fields, provider badges, browser validation bubbles, transient blank states, and layout changes that Jabso cannot control reliably. Jabso also depends on Clerk sessions, GitHub account linking, Organizations, membership, and server-side identity resolution.

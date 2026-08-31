@@ -21,7 +21,7 @@ The project intentionally focuses on a narrow workflow: **error collection, issu
 - Bounded breadcrumbs and allowlisted runtime context
 - Release- and dist-aware source-map upload and stack symbolication
 - Backfilling events when source maps arrive after ingestion
-- A Next.js issue inbox with Clerk personal and organization workspaces
+- A Next.js issue inbox with Better Auth personal and organization workspaces
 - Workspace-scoped GitHub App installations for selected public and private repository metadata
 - Boundra runtime contracts and isolated internal diagnostics
 - Six read-only MCP tools with workspace and project-scoped credentials
@@ -34,7 +34,7 @@ Session Replay and a first-party browser SDK are intentionally postponed.
 | Area | Technology |
 | --- | --- |
 | Monorepo | pnpm workspaces, Turborepo |
-| Dashboard | Next.js 16, React 19, TanStack Query, Clerk |
+| Dashboard | Next.js 16, React 19, TanStack Query, Better Auth |
 | Collector | Fastify, Node.js 24 |
 | Domain boundaries | Boundra 0.5.0, Zod |
 | Database | PostgreSQL, Drizzle ORM |
@@ -80,7 +80,7 @@ Raw envelopes are parsed at the Fastify boundary. Only normalized events enter t
 - Node.js 24 or newer
 - pnpm 11 through Corepack
 - Docker with Compose, or an existing PostgreSQL database
-- A Clerk application with GitHub sign-in and Organizations enabled
+- A GitHub OAuth App for optional GitHub sign-in
 - A GitHub App when repository connections are required
 
 ### Setup
@@ -116,7 +116,7 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 
 | Variable | Purpose |
 | --- | --- |
-| `JABSO_DATABASE_URL` | PostgreSQL connection string used by the collector |
+| `JABSO_DATABASE_URL` | PostgreSQL connection string used by the collector and Better Auth web route |
 | `JABSO_ALLOWED_ORIGIN` | Allowed dashboard origin for collector CORS |
 | `JABSO_DASHBOARD_TOKEN` | Server-only credential for dashboard API access |
 | `JABSO_ADMIN_TOKEN` | Server-only credential for source-map administration |
@@ -127,22 +127,23 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `JABSO_GITHUB_APP_SLUG` | App URL slug used to start installation |
 | `JABSO_GITHUB_APP_WEBHOOK_SECRET` | Secret used to verify GitHub webhook signatures |
 | `JABSO_API_URL` | Collector URL used by the Next.js server |
-| `JABSO_DEV_CLERK_USER_ID` | Optional Clerk user ID that owns the local seeded project |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk server secret |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Jabso's Clerk sign-in route (`/sign-in`) |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Jabso's Clerk sign-up route (`/sign-up`) |
+| `JABSO_DEV_AUTH_USER_ID` | Optional Better Auth user ID that owns the local seeded project |
+| `BETTER_AUTH_SECRET` | At least 32 random bytes used to sign and encrypt auth data |
+| `BETTER_AUTH_URL` | Canonical dashboard origin, such as `https://jabso.vercel.app` |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated allowed dashboard origins |
+| `JABSO_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth client ID used only for user sign-in |
+| `JABSO_GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth client secret used only for user sign-in |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
-`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, every `JABSO_GITHUB_APP_*` credential, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
+`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `BETTER_AUTH_SECRET`, both `JABSO_GITHUB_OAUTH_*` values, every `JABSO_GITHUB_APP_*` credential, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
-In Clerk, enable GitHub as a social connection and enable Organizations with **Membership optional**. Do not require organization membership: Clerk's required-membership session task inserts its own organization chooser before Jabso onboarding and duplicates workspace creation. After sign-up, Jabso shows an explicit transition state and then asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Clerk user. Team and Organization workspaces both use Clerk Organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active Clerk context and all dashboard API calls are scoped to the corresponding Jabso workspace.
+Configure the GitHub OAuth callback as `https://<your-jabso-web>/api/auth/callback/github`. After sign-up, Jabso asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Better Auth user. Team and Organization workspaces use Better Auth organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active organization and every dashboard API call resolves it to an internal Jabso workspace.
 
-Run `pnpm db:migrate` before deploying this version. Existing projects intentionally remain unassigned and invisible after the migration instead of being claimed by the first user who signs in. Assign legacy rows to a verified workspace with a reviewed, one-time database migration.
+Run `pnpm db:migrate` before deploying this version. Existing Clerk workspaces are never claimed by the first user who signs in. After verifying the old and new identity IDs, relink exactly one workspace with `pnpm --filter @jabso/db db:relink-workspace -- --from=user:<clerk-id> --to=user:<better-auth-id>` or the equivalent `org:` IDs.
 
 ### Connect GitHub repositories
 
-GitHub sign-in in Clerk proves user identity; it does not grant Jabso repository access. Repository connections use a separate GitHub App installation owned by the active Jabso workspace. Configure the GitHub App with:
+GitHub sign-in proves user identity; it does not grant Jabso repository access. Repository connections use a separate GitHub App installation owned by the active Jabso workspace. Configure the GitHub App with:
 
 - Callback URL: `https://<your-jabso-server>/api/github/callback`
 - Webhook URL: `https://<your-jabso-server>/webhooks/github`
@@ -216,7 +217,7 @@ Jabso stores only bounded debugging data needed by the issue workflow.
 - GitHub installation account identifiers are stored until the installation is removed from GitHub or the Jabso workspace is deleted. A project's connected repository metadata remains until it is explicitly disconnected or its owning data is permanently deleted.
 - GitHub OAuth user tokens and short-lived installation access tokens are never persisted.
 
-Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Clerk organization admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
+Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Better Auth organization owner/admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
 
 Shared workspace deletion is restricted to organization admins. It permanently deletes the workspace and its projects, issues, events, releases, MCP connections, and member access; Personal workspaces cannot be deleted from Jabso.
 
@@ -288,7 +289,7 @@ Repository-wide architecture, security, testing, and Git conventions are documen
 - [x] Project-scoped read APIs and the initial issue inbox
 - [x] Filtering, occurrences, safe context, and issue lifecycle
 - [x] Releases, source maps, symbolication, and backfill
-- [x] Clerk authentication, workspace onboarding, tenant isolation, and shared dashboard UI
+- [x] Better Auth authentication, workspace onboarding, tenant isolation, and shared dashboard UI
 - [x] Workspace-scoped GitHub App installations and selected repository discovery
 - [x] Read-only MCP tools with project-scoped authorization and audit logs
 - [ ] Operational hardening and retention controls

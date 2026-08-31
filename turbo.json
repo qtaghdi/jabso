@@ -57,15 +57,17 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
-        "CLERK_SECRET_KEY",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_TRUSTED_ORIGINS",
+        "BETTER_AUTH_URL",
         "JABSO_API_URL",
+        "JABSO_DATABASE_URL",
         "JABSO_DASHBOARD_TOKEN",
+        "JABSO_GITHUB_OAUTH_CLIENT_ID",
+        "JABSO_GITHUB_OAUTH_CLIENT_SECRET",
         "JABSO_PROJECT_ID",
         "JABSO_PROJECT_KEY",
         "NEXT_PUBLIC_APP_VERSION",
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
         "NEXT_PUBLIC_JABSO_DSN"
       ]
     },
