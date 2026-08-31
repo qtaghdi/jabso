@@ -1,4 +1,5 @@
 import { createSign } from 'node:crypto'
+import type { RequestInit, Response } from 'undici-types'
 import { z } from 'zod'
 import type {
   GitHubAppClient,
