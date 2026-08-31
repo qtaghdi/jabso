@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireWorkspace } from 'src/shared/auth/workspace-auth'
-import { listGitHubRepositories } from 'src/shared/integrations/github'
+import { listGitHubRepositories } from 'src/shared/api/github'
 import { disconnectProjectRepository, listProjects, setProjectRepository } from 'src/shared/api/projects'
 
 const normalizeRootPath = (value: unknown) => {
@@ -21,7 +21,7 @@ export const PUT = async (request: Request) => {
   if (typeof body.projectId !== 'string' || typeof body.repositoryId !== 'string' || rootPath === null) {
     return NextResponse.json({ error: 'Choose a repository and enter a valid repository root.' }, { status: 400 })
   }
-  const [{ items: projects }, repositories] = await Promise.all([listProjects(), listGitHubRepositories()])
+  const [{ items: projects }, { items: repositories }] = await Promise.all([listProjects(), listGitHubRepositories()])
   if (!projects.some((project) => project.id === body.projectId)) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 })
   }

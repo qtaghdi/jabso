@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { CopyCodeButton } from 'src/shared/ui/copy-code-button'
 import { ProjectCreateDialog } from 'src/screens/projects/project-create-dialog'
 import { RepositoryConnectionDialog } from 'src/screens/projects/repository-connection-dialog'
+import { GitHubInstallationsPanel } from 'src/screens/projects/github-installations-panel'
 import { AlertDialog } from 'src/shared/ui/alert-dialog'
 import { Button } from 'src/shared/ui/button'
 import { Select } from 'src/shared/ui/select'
@@ -15,10 +16,18 @@ import {
   projectsQueryOptions,
   selectDashboardProject,
 } from 'src/shared/query/dashboard-query'
-import type { DashboardProject, IssuesResponse, ProjectsResponse } from 'src/shared/query/dashboard-types'
+import type {
+  DashboardProject,
+  GitHubInstallationsResponse,
+  IssuesResponse,
+  ProjectsResponse,
+} from 'src/shared/query/dashboard-types'
 
 type ProjectsViewProps = {
+  canManage: boolean
+  githubResult?: string
   initialData: ProjectsResponse
+  initialGitHubData: GitHubInstallationsResponse
 }
 
 const emptyIssuesResponse = (activeProject: DashboardProject | null): IssuesResponse => ({
@@ -29,7 +38,7 @@ const emptyIssuesResponse = (activeProject: DashboardProject | null): IssuesResp
   previousCursor: null,
 })
 
-export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
+export const ProjectsView = ({ canManage, githubResult, initialData, initialGitHubData }: ProjectsViewProps) => {
   const router = useRouter()
   const queryClient = useQueryClient()
   const projectsQuery = useQuery({ ...projectsQueryOptions(), initialData })
@@ -80,12 +89,13 @@ export const ProjectsView = ({ initialData }: ProjectsViewProps) => {
       <section className="project-create-section" aria-labelledby="create-project-title">
         <div>
           <h2 id="create-project-title">New project</h2>
-          <p>Create a standalone DSN or connect a public GitHub repository during setup.</p>
+          <p>Create a standalone DSN or connect a repository selected for this workspace.</p>
         </div>
         <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
           Create project
         </Button>
       </section>
+      <GitHubInstallationsPanel canManage={canManage} connectionResult={githubResult} initialData={initialGitHubData} />
       <section className="project-list-section" aria-labelledby="project-list-title">
         <div className="section-heading-row">
           <div className="project-list-title-group">

@@ -8,6 +8,10 @@ export const ProjectsPageSkeleton = () => (
       <div><span className="skeleton-block" /><span className="skeleton-block" /></div>
       <span className="skeleton-block" />
     </div>
+    <div className="projects-github-skeleton" aria-hidden="true">
+      <div><span className="skeleton-block" /><span className="skeleton-block" /></div>
+      <span className="skeleton-block" />
+    </div>
     <div className="projects-list-heading-skeleton" aria-hidden="true">
       <span className="skeleton-block" /><span className="skeleton-block" />
     </div>
