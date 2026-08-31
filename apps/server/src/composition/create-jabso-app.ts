@@ -46,7 +46,10 @@ import {
   toBoundraDiagnosticInput,
   toBoundraHttpError,
 } from '../adapters/http/boundra-diagnostics.js'
+import { readGitHubAppRuntime, type GitHubAppRuntime } from '../adapters/http/github-app-client.js'
+import { registerGitHubAppRoutes } from '../adapters/http/github-app-routes.js'
 import { createPostgresEventQueryStore } from '../adapters/persistence/postgres-event-query-store.js'
+import { PostgresGitHubInstallationStore } from '../adapters/persistence/postgres-github-installation-store.js'
 import { PostgresIngestEventStore } from '../adapters/persistence/postgres-ingest-event-store.js'
 import { createPostgresIssueQueryStore } from '../adapters/persistence/postgres-issue-query-store.js'
 import { registerMcpManagementRoutes } from '../adapters/mcp/mcp-management-routes.js'
@@ -66,6 +69,7 @@ export type BuildServerOptions = {
   allowedOrigin?: string
   database?: SqlExecutor
   dashboardToken?: string
+  githubAppRuntime?: GitHubAppRuntime | null
 }
 
 const hasValidBearerToken = (authorization: string | undefined, expected: string | undefined) => {
@@ -121,6 +125,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   const setProjectRepository = createSetProjectRepositoryImplementation(projectStore)
   const disconnectProjectRepository = createDisconnectProjectRepositoryImplementation(projectStore)
   const mcpStore = new PostgresMcpStore(database)
+  const githubInstallationStore = new PostgresGitHubInstallationStore(database)
   const createMcpConnection = createCreateMcpConnectionImplementation(mcpStore)
   const listMcpConnections = createListMcpConnectionsImplementation(mcpStore)
   const revokeMcpConnection = createRevokeMcpConnectionImplementation(mcpStore)
@@ -229,6 +234,12 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     getReleaseRegressions,
     searchIssues,
     store: mcpStore,
+  })
+  await registerGitHubAppRoutes(app, {
+    runtime: options.githubAppRuntime === undefined ? readGitHubAppRuntime() : options.githubAppRuntime,
+    store: githubInstallationStore,
+    webOrigin: allowedOrigin,
+    workspaceId: (headers) => dashboardWorkspaceId(headers, dashboardToken),
   })
 
   app.get<{ Params: { externalId: string } }>('/api/workspaces/:externalId', async (request, reply) => {
