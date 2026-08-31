@@ -1,4 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { BoundraDevErrorView } from 'src/shared/boundra/boundra-dev-error-view'
@@ -13,7 +12,7 @@ export const metadata: Metadata = {
 type RootLayoutProps = { children: ReactNode }
 
 const RootLayout = ({ children }: RootLayoutProps) => (
-  <html lang="en"><body><ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up"><QueryProvider>{children}</QueryProvider><BoundraDevErrorView /></ClerkProvider></body></html>
+  <html lang="en"><body><QueryProvider>{children}</QueryProvider><BoundraDevErrorView /></body></html>
 )
 
 export default RootLayout

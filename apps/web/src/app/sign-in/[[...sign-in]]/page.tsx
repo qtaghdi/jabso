@@ -12,7 +12,7 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
   return (
     <>
       {reason === 'session-expired' ? <SessionExpiredToast /> : null}
-      <AuthPageShell description="Use the GitHub account connected to this instance." title="Sign in to Jabso">
+      <AuthPageShell description="Continue with GitHub or your email and password." title="Sign in to Jabso">
         <JabsoSignIn />
       </AuthPageShell>
     </>

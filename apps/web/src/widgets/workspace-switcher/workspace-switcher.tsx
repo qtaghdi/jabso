@@ -1,6 +1,5 @@
 'use client'
 
-import { useAuth, useOrganization, useOrganizationList } from '@clerk/nextjs'
 import {
   useCallback,
   useEffect,
@@ -11,7 +10,9 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { AlertDialog } from 'src/shared/ui/alert-dialog'
+import { authClient } from 'src/shared/auth/auth-client'
 import { WorkspaceCreateDialog } from 'src/widgets/workspace-switcher/workspace-create-dialog'
 import { WorkspaceSettingsDialog } from 'src/widgets/workspace-switcher/workspace-settings-dialog'
 
@@ -48,11 +49,14 @@ const workspaceInitials = (name: string) => name
   .join('') || 'J'
 
 export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
-  const { orgId, orgRole } = useAuth()
-  const { organization } = useOrganization()
-  const { isLoaded, setActive, userMemberships } = useOrganizationList({
-    userMemberships: { infinite: true, pageSize: 20 },
-  })
+  const router = useRouter()
+  const { data: session, isPending: isSessionPending } = authClient.useSession()
+  const { data: organization, isPending: isOrganizationPending } = authClient.useActiveOrganization()
+  const { data: organizations, isPending: areOrganizationsPending } = authClient.useListOrganizations()
+  const { data: activeRole } = authClient.useActiveMemberRole()
+  const orgId = session?.session.activeOrganizationId ?? null
+  const orgRole = activeRole?.role ?? null
+  const isLoaded = !isSessionPending && !isOrganizationPending && !areOrganizationsPending
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -65,7 +69,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   const [switchingTo, setSwitchingTo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [menuStyle, setMenuStyle] = useState<WorkspaceMenuStyle | null>(null)
-  const memberships = userMemberships.data ?? []
+  const memberships = organizations ?? []
   const activeName = organization?.name ?? 'Personal'
   const activeDescription = organization ? 'Shared workspace' : personalName
 
@@ -149,7 +153,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   }
 
   const switchWorkspace = async (organizationId: string | null) => {
-    if (!setActive || switchingTo) return
+    if (switchingTo) return
     const target = organizationId ?? 'personal'
     if ((orgId ?? 'personal') === target) {
       closeMenu()
@@ -159,7 +163,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
     setSwitchingTo(target)
     setIsOpen(false)
     try {
-      await setActive({ organization: organizationId, redirectUrl: '/' })
+      const result = await authClient.organization.setActive({ organizationId })
+      if (result.error) throw new Error(result.error.message)
+      router.replace('/')
+      router.refresh()
     } catch {
       setError('Could not switch workspaces. Try again.')
       setIsOpen(true)
@@ -169,7 +176,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   }
 
   const deleteActiveWorkspace = async () => {
-    if (!setActive || !organization || isDeleting) return
+    if (!organization || isDeleting) return
     setDeleteError(null)
     setIsDeleting(true)
     try {
@@ -178,7 +185,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
         const result = await response.json().catch(() => null) as { error?: string } | null
         throw new Error(result?.error ?? 'Could not delete the workspace')
       }
-      await setActive({ organization: null, redirectUrl: '/' })
+      const result = await authClient.organization.setActive({ organizationId: null })
+      if (result.error) throw new Error(result.error.message)
+      router.replace('/')
+      router.refresh()
     } catch (caught) {
       setDeleteError(caught instanceof Error ? caught.message : 'Could not delete the workspace')
       setIsDeleting(false)
@@ -186,10 +196,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   }
 
   const membershipRows = memberships.map((membership) => ({
-    id: membership.organization.id,
-    initials: workspaceInitials(membership.organization.name),
-    name: membership.organization.name,
-    role: membership.role === 'org:admin' ? 'Admin' : 'Member',
+    id: membership.id,
+    initials: workspaceInitials(membership.name),
+    name: membership.name,
+    role: membership.id === orgId && (orgRole === 'owner' || orgRole === 'admin') ? 'Admin' : 'Member',
   }))
 
   return (
@@ -247,20 +257,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
                 {orgId === workspace.id ? <CheckIcon /> : null}
               </button>
             ))}
-            {userMemberships.hasNextPage ? (
-              <button
-                disabled={userMemberships.isFetching || Boolean(switchingTo)}
-                onClick={() => userMemberships.fetchNext()}
-                role="menuitem"
-                type="button"
-              >
-                <span className="workspace-menu-load-more">Load more</span>
-              </button>
-            ) : null}
           </div>
           {error ? <p className="workspace-menu-error" role="alert">{error}</p> : null}
           <footer className="workspace-menu-footer">
-            {organization && orgRole === 'org:admin' ? (
+            {organization && (orgRole === 'owner' || orgRole === 'admin') ? (
               <button
                 onClick={() => {
                   setIsOpen(false)

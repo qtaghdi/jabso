@@ -1,19 +1,16 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { getSessionCookie } from 'better-auth/cookies'
+import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-export default clerkMiddleware(async (auth, request) => {
-  if (request.nextUrl.pathname.startsWith('/sign-in')
-    || request.nextUrl.pathname.startsWith('/sign-up')) return
+const publicPaths = ['/sign-in', '/sign-up', '/api/auth']
 
-  const { userId } = await auth()
-  const hasStaleSession = !userId && request.cookies.has('__session')
+const proxy = (request: NextRequest) => {
+  if (publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))) return NextResponse.next()
+  if (getSessionCookie(request)) return NextResponse.next()
+  return NextResponse.redirect(new URL('/sign-in', request.url))
+}
 
-  if (hasStaleSession) {
-    return NextResponse.redirect(new URL('/sign-in?reason=session-expired', request.url))
-  }
-
-  await auth.protect({ unauthenticatedUrl: new URL('/sign-in', request.url).toString() })
-}, { signInUrl: '/sign-in' })
+export default proxy
 
 export const config = {
   matcher: [
