@@ -157,6 +157,18 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   await app.register(cors, { origin: allowedOrigin })
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' })
   const recordBoundraError = createBoundraErrorRecorder()
+  const recordMcpBoundraError = async (error: BoundraRuntimeError) => {
+    const diagnostic = toBoundraDiagnosticInput(error)
+    app.log.error({
+      boundra: {
+        code: diagnostic.code,
+        contract: diagnostic.contract,
+        phase: diagnostic.context?.phase,
+        issues: diagnostic.issues,
+      },
+    }, 'Boundra MCP contract failed')
+    await recordBoundraError(diagnostic)
+  }
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof BoundraRuntimeError) {
@@ -232,6 +244,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     getEvent,
     getIssue,
     getReleaseRegressions,
+    onBoundraRuntimeError: recordMcpBoundraError,
     searchIssues,
     store: mcpStore,
   })

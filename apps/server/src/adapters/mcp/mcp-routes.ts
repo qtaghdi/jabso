@@ -3,7 +3,7 @@ import {
   WebStandardStreamableHTTPServerTransport,
 } from '@modelcontextprotocol/server'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { executeContract } from 'boundra'
+import { BoundraRuntimeError, executeContract } from 'boundra'
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import type { createGetEventImplementation } from '@jabso/domain-event/server'
@@ -27,6 +27,7 @@ type McpDependencies = {
   getEvent: ReturnType<typeof createGetEventImplementation>
   getIssue: ReturnType<typeof createGetIssueImplementation>
   getReleaseRegressions: ReturnType<typeof createGetReleaseRegressionsImplementation>
+  onBoundraRuntimeError: (error: BoundraRuntimeError) => Promise<void>
   searchIssues: ReturnType<typeof createSearchIssuesImplementation>
   store: McpTransportStore
 }
@@ -93,12 +94,13 @@ const audit = async (
   }).catch(() => undefined)
 }
 
-const runProjectTool = async <Result extends object>(
+export const runProjectTool = async <Result extends object>(
   store: McpTransportStore,
   connection: AuthenticatedMcpConnection,
   projectId: string,
   tool: string,
   operation: () => Promise<Result | null>,
+  onBoundraRuntimeError: (error: BoundraRuntimeError) => Promise<void>,
 ) => {
   const startedAt = Date.now()
   if (!allowed(connection, projectId)) {
@@ -113,7 +115,10 @@ const runProjectTool = async <Result extends object>(
     }
     await audit(store, connection, { projectId, tool, outcome: 'success', startedAt })
     return textResult(result)
-  } catch {
+  } catch (error) {
+    if (error instanceof BoundraRuntimeError) {
+      await onBoundraRuntimeError(error).catch(() => undefined)
+    }
     await audit(store, connection, { projectId, tool, outcome: 'error', startedAt })
     return errorResult('Jabso could not complete this read-only query.')
   }
@@ -186,6 +191,7 @@ const createJabsoMcpServer = (
       input.projectId,
       'search_issues',
       () => executeContract(dependencies.searchIssues, input),
+      dependencies.onBoundraRuntimeError,
     ),
   )
 
@@ -210,6 +216,7 @@ const createJabsoMcpServer = (
         const issue = await executeContract(dependencies.getIssue, input)
         return issue ? { issue } : null
       },
+      dependencies.onBoundraRuntimeError,
     ),
   )
 
@@ -234,6 +241,7 @@ const createJabsoMcpServer = (
         const event = await executeContract(dependencies.getEvent, input)
         return event ? { event } : null
       },
+      dependencies.onBoundraRuntimeError,
     ),
   )
 
@@ -261,6 +269,7 @@ const createJabsoMcpServer = (
         const issue = await executeContract(dependencies.getIssue, input)
         return issue ? { issueId: issue.id, occurrences: issue.occurrences } : null
       },
+      dependencies.onBoundraRuntimeError,
     ),
   )
 
@@ -284,6 +293,7 @@ const createJabsoMcpServer = (
       input.projectId,
       'get_release_regressions',
       () => executeContract(dependencies.getReleaseRegressions, input),
+      dependencies.onBoundraRuntimeError,
     ),
   )
 
