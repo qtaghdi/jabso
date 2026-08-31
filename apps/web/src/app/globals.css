@@ -233,7 +233,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .ui-select-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
 .ui-select-sm .ui-select-trigger { min-height: 36px; }
 .ui-select-md .ui-select-trigger { min-height: 44px; }
-.ui-select-options { position: fixed; z-index: 1000; margin: 0; padding: 5px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #d3d8de; border-radius: 10px; background: #fff; box-shadow: 0 16px 40px rgb(23 25 29 / 14%); }
+.ui-select-options { position: fixed; z-index: 1000; inset: auto; margin: 0; padding: 5px; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; border: 1px solid #d3d8de; border-radius: 10px; background: #fff; box-shadow: 0 16px 40px rgb(23 25 29 / 14%); }
 .ui-select-option { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 10px; border-radius: 6px; color: #3f4650; font-size: 13px; cursor: pointer; }
 .ui-select-option > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-select-option > svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: #17191d; stroke-width: 1.8; }
