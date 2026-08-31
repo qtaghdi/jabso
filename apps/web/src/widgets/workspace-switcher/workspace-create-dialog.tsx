@@ -1,7 +1,7 @@
 'use client'
 
-import { useOrganizationList } from '@clerk/nextjs'
 import { useState, type FormEvent } from 'react'
+import { authClient } from 'src/shared/auth/auth-client'
 import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
@@ -27,7 +27,6 @@ const WorkspaceIcon = () => (
 )
 
 export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => {
-  const { createOrganization, isLoaded, setActive } = useOrganizationList()
   const [kind, setKind] = useState<Extract<WorkspaceKind, 'team' | 'organization'>>('team')
   const [name, setName] = useState('')
   const [createdOrganizationId, setCreatedOrganizationId] = useState<string | null>(null)
@@ -53,18 +52,24 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
       setError('Enter a workspace name')
       return
     }
-    if (!isLoaded || !createOrganization || !setActive) return
-
     setError(null)
     setIsSubmitting(true)
     try {
       let organizationId = createdOrganizationId
       if (!organizationId) {
-        const organization = await createOrganization({ name: workspaceName })
-        organizationId = organization.id
+        const slugBase = workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'workspace'
+        const organization = await authClient.organization.create({
+          name: workspaceName,
+          slug: `${slugBase}-${crypto.randomUUID().slice(0, 8)}`,
+        })
+        if (organization.error || !organization.data) {
+          throw new Error(organization.error?.message ?? 'Could not create the workspace')
+        }
+        organizationId = organization.data.id
         setCreatedOrganizationId(organizationId)
       }
-      await setActive({ organization: organizationId })
+      const active = await authClient.organization.setActive({ organizationId })
+      if (active.error) throw new Error(active.error.message)
       await provision(workspaceName)
       close()
       window.location.replace(new URL('/', window.location.href).href)
@@ -78,7 +83,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
   return (
     <Dialog
       close={close}
-      description="Create a shared error inbox. You can invite members from Clerk after setup."
+      description="Create a shared error inbox. You can invite members after setup."
       icon={<WorkspaceIcon />}
       size="sm"
       title="Create a workspace"

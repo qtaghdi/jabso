@@ -5,7 +5,7 @@ const database = createSqlExecutor()
 try {
   const dsnProjectId = process.env.JABSO_DEV_PROJECT_ID ?? '1'
   const publicKey = process.env.JABSO_DEV_PROJECT_KEY ?? '0123456789abcdef0123456789abcdef'
-  const externalId = `user:${process.env.JABSO_DEV_CLERK_USER_ID ?? 'user_local_seed'}`
+  const externalId = `user:${process.env.JABSO_DEV_AUTH_USER_ID ?? 'user_local_seed'}`
   const workspace = await database.query<{ id: string }>(
     `insert into workspaces (external_id, kind, name)
      values ($1, 'personal', 'Local workspace')

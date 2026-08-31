@@ -24,15 +24,15 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Import the concrete module that owns a symbol. Do not add runtime barrel files solely to shorten import paths; type-only barrels are allowed only when they define a deliberate public contract.
 - Start with a single focused file. Add another subfolder only when it represents a real runtime or ownership boundary; do not mirror a full layered architecture inside every screen.
 - Keep browser-only code behind a client boundary and server-only authentication or secret-bearing calls in `server` modules. Never import a server module into a client component.
-- Keep Clerk-to-workspace authorization in `src/shared/auth/workspace-auth.ts`; screen and widget UI must not duplicate workspace resolution or trust client-selected tenant values.
+- Keep Better Auth-to-workspace authorization in `src/shared/auth/workspace-auth.ts`; screen and widget UI must not duplicate workspace resolution or trust client-selected tenant values.
 
 ## Rendering and data access
 
 - Use React Server Components for dashboard reads. Add client components only for interaction such as copy, filters, toasts, SDK execution, or local selection state.
-- Read Jabso through the focused adapters under `src/shared/api` and the authenticated server API. Never connect to PostgreSQL from Next.js.
+- Read Jabso product data through the focused adapters under `src/shared/api` and the authenticated server API. The only direct PostgreSQL connection in Next.js is the server-only Better Auth adapter; screens, widgets, route pages, and product API adapters must never query it directly.
 - Resolve the active project through the authorized project list before using its cookie value. Never trust a client cookie as project authorization.
-- Resolve Clerk's active user or organization to a persisted Jabso workspace before every dashboard read. Forward only the internal workspace ID to the collector and never rely on a client-selected workspace value.
-- Personal workspaces belong to one Clerk user. Team and Organization workspaces use Clerk Organization membership, and destructive project actions require the organization admin role.
+- Resolve Better Auth's active user or organization to a persisted Jabso workspace before every dashboard read. Forward only the internal workspace ID to the collector and never rely on a client-selected workspace value.
+- Personal workspaces belong to one Better Auth user. Team and Organization workspaces use Better Auth organization membership, and destructive project actions require the owner or admin role.
 - Never auto-claim legacy projects for the first user who signs in. Legacy ownership changes require a reviewed one-time migration.
 - Keep `JABSO_DASHBOARD_TOKEN`, database credentials, and project administration values server-only. Generated public DSNs may be rendered for the signed-in owner.
 - Deduplicate request-scoped reads with React `cache` and start independent work together with `Promise.all`.
@@ -51,8 +51,8 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Keep asynchronous action labels and geometry stable. Do not change `Delete` to `Removing`, `Create` to `Creating`, or otherwise swap the action verb while pending; use the shared spinner, `aria-busy`, and disabled state without changing column width or causing layout shift.
 - Use real framework file paths and runnable snippets in SDK setup. Avoid placeholder names such as `anywhere-in-your-app.ts`.
 - Distinguish the current Sentry-compatible integration from a first-party Jabso SDK in code, documentation, and handoff notes. The smoke test must wait for the SDK transport to flush; calling `captureException` alone is not proof of delivery.
-- GitHub repository discovery uses the active workspace's GitHub App installations and may include selected public or private repositories. Never fall back to Clerk's user OAuth token or imply that signing in automatically grants repository access.
-- Workspace switching and shared-workspace creation use Jabso-owned UI over Clerk hooks. Do not reintroduce Clerk's prebuilt `OrganizationSwitcher`, `OrganizationList`, or `CreateOrganization` components into the dashboard.
+- GitHub repository discovery uses the active workspace's GitHub App installations and may include selected public or private repositories. Never fall back to the sign-in OAuth token or imply that signing in automatically grants repository access.
+- Workspace switching and shared-workspace creation use Jabso-owned UI over Better Auth's organization API. Do not introduce provider-owned prebuilt workspace UI into the dashboard.
 - For layout changes, verify desktop and narrow breakpoints, long DSNs, active badges, empty states, and connected/disconnected repository states. If browser verification is unavailable, state that limitation instead of presenting build success as visual verification.
 
 ## Route states and errors
@@ -60,7 +60,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Each data route needs a shape-matched `loading.tsx` plus useful empty, not-found, and error states.
 - Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
 - Keep redirects server-side where possible and avoid full-page client auth gates.
-- Give every Clerk sign-out control an explicit `/sign-in` redirect. Do not rely on Clerk's default `/` destination, which adds a protected-route bounce and can leave the sign-in shell temporarily empty.
-- Keep Clerk Organizations enabled with membership optional. Jabso owns the Personal, Team, or Organization choice after sign-up; required Clerk organization membership creates a duplicate pre-onboarding organization task.
-- Keep sign-in and sign-up on explicit routes. Successful sign-up must transition through a visible loading state before `/onboarding`; never leave the mounted Clerk shell blank while session state settles.
+- Give every sign-out control an explicit `/sign-in` redirect and refresh server state after revoking the session.
+- Jabso owns the Personal, Team, or Organization choice after sign-up; do not insert a provider-owned organization task before onboarding.
+- Keep sign-in and sign-up on explicit routes. Successful sign-up must transition through a visible loading state before `/onboarding`; never leave the auth shell blank while session state settles.
 - Maintain `app/icon.svg` and a working `/favicon.ico` response.

@@ -54,8 +54,8 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Session Replay masking must default to safe settings when Replay is eventually reintroduced.
 - Breadcrumb persistence is limited to timestamp, category, level, and scrubbed message. Never persist breadcrumb data objects.
 - Safe context uses an explicit browser/runtime/OS/device-family allowlist. Reject user identity, IP, auth, cookie, session, token, and raw request fields.
-- Every dashboard-owned project belongs to one persisted workspace. Personal workspaces map to a Clerk user; team and organization workspaces map to a Clerk Organization.
-- Treat the active Clerk context as identity input, resolve it server-side to an internal workspace ID, and include that workspace ID in every project-scoped query and mutation. Never authorize with a client cookie, project UUID, or organization label alone.
+- Every dashboard-owned project belongs to one persisted workspace. Personal workspaces map to a Better Auth user; team and organization workspaces map to a Better Auth organization.
+- Treat the validated Better Auth session and active organization as identity input, resolve them server-side to an internal workspace ID, and include that workspace ID in every project-scoped query and mutation. Never authorize with an unvalidated cookie, project UUID, or organization label alone.
 - New tenant-aware code requires a negative cross-workspace integration test. Return not found for another workspace's project to avoid leaking resource existence.
 - Never auto-claim unassigned legacy rows during sign-in or onboarding. Ownership backfills require a reviewed one-time migration with an explicit target workspace.
 
@@ -105,7 +105,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Repository connections store provider metadata and an optional normalized repository-relative root only. Never persist OAuth access tokens, refresh tokens, Git credentials, source archives, or arbitrary provider responses.
 - Treat private repository names and paths as sensitive metadata. Do not expose them through public ingestion, diagnostics, logs, or unauthenticated APIs.
 - Revalidate a repository selection against the provider response on the server before persisting it; never trust repository metadata submitted by the browser.
-- Discover GitHub repositories only through a workspace-bound GitHub App installation. Installation access may include selected public or private repositories, must stay read-only for metadata, and must never be inferred from the Clerk sign-in connection.
+- Discover GitHub repositories only through a workspace-bound GitHub App installation. Installation access may include selected public or private repositories, must stay read-only for metadata, and must never be inferred from the GitHub sign-in connection.
 
 ## Web conventions
 

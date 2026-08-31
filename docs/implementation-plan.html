@@ -131,7 +131,7 @@
       <tr><td>Architecture</td><td>Boundra + Zod</td><td>도메인 공개 API와 client/server 경계를 강제하고 UI/MCP 계약을 공유</td></tr>
       <tr><td>Persistence</td><td>PostgreSQL + Drizzle</td><td>초기 검색·JSONB·transaction·migration을 하나의 저장소로 처리</td></tr>
       <tr><td>Client intake</td><td>Sentry SDK compatibility</td><td>초기에는 검증된 capture, breadcrumb, framework integration을 재사용</td></tr>
-      <tr><td>Dashboard auth</td><td>Clerk backend + Jabso custom UI</td><td>세션·조직은 유지하고 prebuilt 로그인 폼 의존과 UI 제약은 제거</td></tr>
+      <tr><td>Dashboard auth</td><td>Better Auth + Jabso custom UI</td><td>PostgreSQL 세션·조직과 Jabso 소유 로그인·온보딩 UI</td></tr>
       <tr><td>MCP</td><td>공식 TypeScript SDK, Streamable HTTP</td><td>REST와 같은 domain handler를 호출하는 얇은 읽기 전용 adapter</td></tr>
       <tr><td>Replay</td><td>Later</td><td>개인정보·대용량 저장·segment 처리보다 오류 inbox의 가치 검증이 먼저</td></tr>
     </tbody>
@@ -293,8 +293,8 @@ spikes/
     <div class="card">
       <h3>접근 경계</h3>
       <ul>
-        <li>Clerk GitHub 로그인과 개인·팀·조직 workspace 온보딩</li>
-        <li>Clerk user/organization context를 Jabso workspace로 해석</li>
+        <li>Better Auth GitHub·email/password 로그인과 개인·팀·조직 workspace 온보딩</li>
+        <li>Better Auth user/organization context를 Jabso workspace로 해석</li>
         <li>프로젝트·이슈·릴리즈·GitHub 연결을 workspace 단위로 격리</li>
         <li>조직의 프로젝트 변경·삭제는 admin 역할로 제한</li>
         <li>공개 DSN key는 envelope 수집에만 사용</li>
@@ -314,7 +314,7 @@ spikes/
   <p class="small">완료 근거: 공개 DSN key의 dashboard 접근 거부와 workspace 간 프로젝트·issue 격리를 통합 테스트로 검증하고, lint·typecheck·test·Boundra boundary check·production build를 확인했다.</p>
 
   <h2><span class="badge p1">P1</span>인증 UI 후속 결정</h2>
-  <div class="decision"><strong>결정:</strong> Clerk를 즉시 제거하지 않고 identity·session·Organizations backend로 유지한다. 대신 prebuilt <code>SignIn</code>/<code>SignUp</code> 컴포넌트는 제거하고 Clerk v7 custom-flow API 위에 Jabso 로그인·회원가입·검증·오류·로딩 UI를 직접 구현한다.</div>
+  <div class="decision"><strong>결정:</strong> Clerk를 제거하고 Better Auth의 PostgreSQL session, GitHub OAuth, email/password, organization plugin 위에 Jabso 로그인·회원가입·검증·오류·로딩 UI를 구현한다.</div>
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
       <h3>Jabso가 소유</h3>
@@ -326,7 +326,7 @@ spikes/
       </ul>
     </div>
     <div class="card">
-      <h3>Clerk가 계속 소유</h3>
+      <h3>Better Auth가 소유</h3>
       <ul>
         <li>OAuth state/PKCE와 계정 연결</li>
         <li>session 생성·회전·폐기</li>
@@ -335,10 +335,10 @@ spikes/
       </ul>
     </div>
   </div>
-  <p class="small">이 후속 작업은 MCP를 막지 않는다. 완전 자체 GitHub OAuth는 custom flow로도 해결되지 않는 제품 제약이나 Clerk 비용·한계가 측정될 때 별도 identity migration으로 재검토한다.</p>
+  <p class="small">MCP는 별도 Jabso credential을 계속 사용한다. 인증 제공자 교체는 MCP transport와 권한 모델에 영향을 주지 않는다.</p>
 
   <h2><span class="badge done-badge">완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 3.6</span>Workspace GitHub App 연결</h2>
-  <div class="decision"><strong>결정:</strong> Clerk GitHub 로그인은 사용자 identity에만 사용하고, repository 접근은 active Jabso workspace에 연결된 별도 GitHub App installation이 담당한다. 한 workspace는 여러 개인·조직 installation을 가질 수 있지만 하나의 installation은 다른 workspace로 이동할 수 없다.</div>
+  <div class="decision"><strong>결정:</strong> Better Auth GitHub 로그인은 사용자 identity에만 사용하고, repository 접근은 active Jabso workspace에 연결된 별도 GitHub App installation이 담당한다. 한 workspace는 여러 개인·조직 installation을 가질 수 있지만 하나의 installation은 다른 workspace로 이동할 수 없다.</div>
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
       <h3>연결 흐름</h3>
@@ -397,7 +397,7 @@ spikes/
       <tr><td>4.5 Story</td><td>설정 예제, audit, protocol·integration test</td><td>agent가 project를 선택해 issue → event → release 문맥을 조회</td></tr>
     </tbody>
   </table>
-  <div class="note" style="margin-top:16px"><strong>Credential boundary:</strong> MCP는 DSN, <code>JABSO_DASHBOARD_TOKEN</code>, Clerk session, source-map admin token을 재사용하지 않는다. 새 project는 기존 MCP connection에 자동 추가하지 않는다.</div>
+  <div class="note" style="margin-top:16px"><strong>Credential boundary:</strong> MCP는 DSN, <code>JABSO_DASHBOARD_TOKEN</code>, Better Auth session, source-map admin token을 재사용하지 않는다. 새 project는 기존 MCP connection에 자동 추가하지 않는다.</div>
   <p class="small">MCP tool은 DB를 직접 조회하지 않고 Phase 2와 3에서 만든 Boundra query handler를 호출한다. credential·allowlist·audit만 MCP infrastructure store가 담당하며 audit metadata는 30일 뒤 호출 시점의 정리 작업으로 만료된다. 상세 결정은 <code>docs/decisions/0003-read-only-mcp-transport-and-authorization.md</code>에 기록한다.</p>
 
   <h2><span class="badge done-badge">기반 완료</span><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
@@ -429,7 +429,7 @@ spikes/
       <tr><td>Phase 1.5</td><td>UI와 향후 MCP가 재사용할 project-scoped read path 확보</td><td>Boundra queries, Fastify read API, Next.js inbox/detail</td></tr>
       <tr><td>Phase 2</td><td>개인 프로젝트 오류를 실제로 분류하고 조사할 수 있는 workflow 완성</td><td>filters, cursors, occurrences, safe context, lifecycle, regression</td></tr>
       <tr><td>Phase 3</td><td>minified production stack을 원본 위치로 변환하고 release별 발생·회귀 문맥 확보</td><td>artifact upload, PostgreSQL storage, symbolication, backfill, release history UI</td></tr>
-      <tr><td>Phase 3.5</td><td>개인·팀·조직 workspace를 격리하고 첫 error까지의 사용 흐름 제공</td><td>Clerk auth/Organizations, workspace-scoped API, onboarding, shared Button/Select</td></tr>
+      <tr><td>Phase 3.5</td><td>개인·팀·조직 workspace를 격리하고 첫 error까지의 사용 흐름 제공</td><td>Better Auth organizations, workspace-scoped API, onboarding, shared Button/Select</td></tr>
       <tr><td>Phase 3.6</td><td>workspace가 선택한 GitHub repository metadata를 최소 권한으로 연결</td><td>GitHub App install/callback/webhook, private repository discovery, tenant isolation</td></tr>
     </tbody>
   </table>
@@ -534,7 +534,7 @@ spikes/
       <tr><td>2. Issue workflow</td><td>완료</td><td>—</td><td>UI에서 오류 조사·상태 관리</td></tr>
       <tr><td>3. Source maps</td><td>완료</td><td>—</td><td>production stack symbolication</td></tr>
       <tr><td>3.5. Workspace auth</td><td>완료</td><td>—</td><td>사용자·조직 workspace 격리</td></tr>
-      <tr><td>Auth UI follow-up</td><td>Small–Medium</td><td>중간</td><td>prebuilt Clerk form 없이 전체 인증 story</td></tr>
+      <tr><td>Auth hardening follow-up</td><td>Small–Medium</td><td>중간</td><td>email verification, password reset, rate limiting</td></tr>
       <tr><td>4. Read-only MCP</td><td>Medium</td><td>중간</td><td>agent가 project-scoped 조회</td></tr>
       <tr><td>Later. Replay</td><td>XL</td><td>높음</td><td>privacy-safe replay 연결</td></tr>
     </tbody>
