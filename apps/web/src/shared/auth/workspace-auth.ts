@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { findWorkspace } from 'src/shared/api/workspaces'
@@ -22,15 +22,4 @@ export const requireWorkspace = cache(async () => {
     orgRole,
     userId,
   }
-})
-
-export const requireGitHubUser = cache(async () => {
-  const workspace = await requireWorkspace()
-  const user = await currentUser()
-  if (!user) redirect('/sign-in')
-  const githubAccount = user.externalAccounts.find((account) =>
-    account.provider === 'github' || account.provider === 'oauth_github',
-  )
-  if (!githubAccount?.username) throw new Error('Connect a GitHub account before browsing repositories')
-  return { ...workspace, githubLogin: githubAccount.username }
 })

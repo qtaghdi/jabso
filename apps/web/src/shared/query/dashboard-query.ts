@@ -4,6 +4,7 @@ import { queryOptions } from '@tanstack/react-query'
 import type { IssueDetail, IssueSummary } from 'src/shared/api/issues'
 import type {
   GitHubRepositoriesResponse,
+  GitHubInstallationsResponse,
   IssuesResponse,
   McpConnectionsResponse,
   ProjectsResponse,
@@ -29,6 +30,7 @@ export const dashboardQueryKeys = {
   mcpConnections: ['dashboard', 'mcp-connections'] as const,
   projects: ['dashboard', 'projects'] as const,
   repositories: ['dashboard', 'github-repositories'] as const,
+  githubInstallations: ['dashboard', 'github-installations'] as const,
 }
 
 export const mcpConnectionsQueryOptions = () => queryOptions({
@@ -48,6 +50,15 @@ export const githubRepositoriesQueryOptions = () => queryOptions({
   queryFn: () => dashboardFetch<GitHubRepositoriesResponse>('/api/dashboard/github/repositories'),
   staleTime: 5 * 60 * 1000,
 })
+
+export const githubInstallationsQueryOptions = () => queryOptions({
+  queryKey: dashboardQueryKeys.githubInstallations,
+  queryFn: () => dashboardFetch<GitHubInstallationsResponse>('/api/dashboard/github/installations'),
+  staleTime: 60 * 1000,
+})
+
+export const startDashboardGitHubInstallation = () =>
+  dashboardFetch<{ url: string }>('/api/dashboard/github/installations', { method: 'POST' })
 
 export const issuesQueryOptions = (search: string) => queryOptions({
   queryKey: dashboardQueryKeys.issues(search),

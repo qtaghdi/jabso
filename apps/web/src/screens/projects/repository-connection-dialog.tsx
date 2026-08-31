@@ -6,10 +6,12 @@ import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
 import { Select } from 'src/shared/ui/select'
+import { GitHubAppEmptyState } from 'src/screens/projects/github-app-empty-state'
 import {
   connectDashboardRepository,
   dashboardQueryKeys,
   disconnectDashboardRepository,
+  githubInstallationsQueryOptions,
   githubRepositoriesQueryOptions,
 } from 'src/shared/query/dashboard-query'
 import type { DashboardProject, ProjectsResponse } from 'src/shared/query/dashboard-types'
@@ -27,7 +29,11 @@ const GitHubIcon = () => (
 
 export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnectionDialogProps) => {
   const queryClient = useQueryClient()
-  const repositoriesQuery = useQuery(githubRepositoriesQueryOptions())
+  const installationsQuery = useQuery(githubInstallationsQueryOptions())
+  const repositoriesQuery = useQuery({
+    ...githubRepositoriesQueryOptions(),
+    enabled: (installationsQuery.data?.items.length ?? 0) > 0,
+  })
   const [repositoryId, setRepositoryId] = useState(project.repository?.externalId ?? '')
   const [rootPath, setRootPath] = useState(project.repository?.rootPath ?? '')
 
@@ -63,12 +69,16 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
   return (
     <Dialog
       close={closeDialog}
-      description="Choose a public repository owned by you, shared with you, or available through your GitHub organizations."
+      description="Choose a repository that this Jabso workspace can access through its GitHub App installations."
       eyebrow="Repository connection"
       icon={<GitHubIcon />}
       title={`Connect ${project.name}`}
     >
-      {repositoriesQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub repositories</span></div> : repositoriesQuery.isError ? (
+      {installationsQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub App installations</span></div> : installationsQuery.isError ? (
+        <div className="inline-error" role="alert"><p>{installationsQuery.error.message}</p><Button onClick={() => installationsQuery.refetch()} variant="secondary">Try again</Button></div>
+      ) : !installationsQuery.data.configured ? (
+        <p className="form-error" role="alert">GitHub App credentials are not available on the Jabso server.</p>
+      ) : installationsQuery.data.items.length === 0 ? <GitHubAppEmptyState /> : repositoriesQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub repositories</span></div> : repositoriesQuery.isError ? (
         <div className="inline-error" role="alert"><p>{repositoriesQuery.error.message}</p><Button onClick={() => repositoriesQuery.refetch()} variant="secondary">Try again</Button></div>
       ) : <form className="repository-connection-form" onSubmit={submit}>
         <Select label="GitHub repository" name="repository" value={repositoryId} onChange={(event) => setRepositoryId(event.target.value)}>

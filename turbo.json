@@ -1,5 +1,22 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "HOST",
+    "JABSO_ADMIN_TOKEN",
+    "JABSO_ALLOWED_ORIGIN",
+    "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
+    "JABSO_DATABASE_URL",
+    "JABSO_DASHBOARD_TOKEN",
+    "JABSO_GITHUB_APP_CLIENT_ID",
+    "JABSO_GITHUB_APP_CLIENT_SECRET",
+    "JABSO_GITHUB_APP_ID",
+    "JABSO_GITHUB_APP_PRIVATE_KEY_BASE64",
+    "JABSO_GITHUB_APP_SLUG",
+    "JABSO_GITHUB_APP_WEBHOOK_SECRET",
+    "PORT",
+    "POSTGRES_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -26,6 +43,12 @@
         "JABSO_BOUNDRA_DIAGNOSTIC_PATH",
         "JABSO_DATABASE_URL",
         "JABSO_DASHBOARD_TOKEN",
+        "JABSO_GITHUB_APP_CLIENT_ID",
+        "JABSO_GITHUB_APP_CLIENT_SECRET",
+        "JABSO_GITHUB_APP_ID",
+        "JABSO_GITHUB_APP_PRIVATE_KEY_BASE64",
+        "JABSO_GITHUB_APP_SLUG",
+        "JABSO_GITHUB_APP_WEBHOOK_SECRET",
         "PORT",
         "POSTGRES_URL"
       ]

@@ -233,7 +233,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .ui-select-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
 .ui-select-sm .ui-select-trigger { min-height: 36px; }
 .ui-select-md .ui-select-trigger { min-height: 44px; }
-.ui-select-options { position: fixed; z-index: 1000; margin: 0; padding: 5px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid #d3d8de; border-radius: 10px; background: #fff; box-shadow: 0 16px 40px rgb(23 25 29 / 14%); }
+.ui-select-options { position: fixed; z-index: 1000; inset: auto; margin: 0; padding: 5px; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; border: 1px solid #d3d8de; border-radius: 10px; background: #fff; box-shadow: 0 16px 40px rgb(23 25 29 / 14%); }
 .ui-select-option { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 10px; border-radius: 6px; color: #3f4650; font-size: 13px; cursor: pointer; }
 .ui-select-option > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-select-option > svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: #17191d; stroke-width: 1.8; }
@@ -334,9 +334,26 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .setup-note { max-width: 720px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 
 .project-create-section { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 48px; padding: 30px 0 36px; border-block: 1px solid var(--border); }
-.project-create-section h2, .project-list-section h2 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
+.project-create-section h2, .github-installations-section h2, .project-list-section h2 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
 .project-create-section p { max-width: 440px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .project-create-button { min-width: 132px; }
+.github-installations-section { padding: 30px 0 34px; border-bottom: 1px solid var(--border); }
+.github-connection-notice { margin: 0 0 22px; padding: 11px 13px; border: 1px solid #9cc8ac; border-radius: 7px; background: #eff8f2; color: #21623b; font-size: 13px; }
+.github-connection-notice-error { border-color: #efb6aa; background: var(--accent-soft); color: #9d2d19; }
+.github-installations-heading { display: grid; grid-template-columns: minmax(240px, 1fr) auto; align-items: center; gap: 32px; }
+.github-installations-heading p { max-width: 560px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.github-installations-empty { margin: 22px 0 0; color: var(--muted); font-size: 13px; }
+.github-installation-list { display: grid; margin-top: 20px; }
+.github-installation-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) auto; align-items: center; gap: 24px; padding: 16px 0; border-top: 1px solid var(--border); }
+.github-installation-row > div { display: grid; gap: 4px; }
+.github-installation-row strong { font-size: 14px; }
+.github-installation-row > div span { color: var(--muted); font-size: 11px; }
+.github-installation-status { width: fit-content; padding: 3px 7px; border: 1px solid #9cc8ac; border-radius: 999px; background: #eff8f2; color: #21623b; font-size: 10px; font-weight: 700; }
+.github-installation-status.suspended { border-color: #e2b5ae; background: #fff2f0; color: #8d2c1f; }
+.github-app-empty-state { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 18px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.github-app-empty-state strong { font-size: 13px; }
+.github-app-empty-state p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.github-app-empty-state .form-error { grid-column: 1 / -1; color: var(--accent); }
 .project-list-section { padding-top: 34px; }
 .project-list-section .section-heading-row { align-items: end; margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 .project-list-title-group { display: flex; align-items: baseline; gap: 10px; }
@@ -659,6 +676,10 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .projects-create-skeleton > div .skeleton-block:first-child, .mcp-endpoint-skeleton > div .skeleton-block:first-child { width: 150px; height: 20px; }
 .projects-create-skeleton > div .skeleton-block:last-child, .mcp-endpoint-skeleton > div .skeleton-block:last-child { width: min(420px, 80%); height: 13px; margin-top: 10px; }
 .projects-create-skeleton > .skeleton-block { width: 132px; height: 42px; justify-self: end; }
+.projects-github-skeleton { display: grid; grid-template-columns: minmax(260px, 1fr) auto; align-items: center; gap: 48px; padding: 30px 0 34px; border-bottom: 1px solid var(--border); }
+.projects-github-skeleton > div .skeleton-block:first-child { width: 120px; height: 20px; }
+.projects-github-skeleton > div .skeleton-block:last-child { width: min(520px, 80%); height: 13px; margin-top: 10px; }
+.projects-github-skeleton > .skeleton-block { width: 144px; height: 42px; }
 .mcp-endpoint-skeleton > .skeleton-block { width: 100%; height: 48px; }
 .projects-list-heading-skeleton, .mcp-list-heading-skeleton { display: flex; min-height: 88px; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--border); }
 .projects-list-heading-skeleton .skeleton-block:first-child, .mcp-list-heading-skeleton .skeleton-block:first-child { width: 180px; height: 20px; }
@@ -784,12 +805,16 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .issues-onboarding-steps::before { top: 4px; right: 12%; bottom: auto; left: 12%; width: auto; height: 1px; }
   .issues-onboarding-steps > div { min-height: 84px; grid-template-columns: 1fr; gap: 10px; padding: 0 10px 0 0; }
   .issues-onboarding-focus { margin: 24px 0 0; }
-  .projects-create-skeleton, .mcp-endpoint-skeleton { grid-template-columns: 1fr; gap: 22px; }
+  .projects-create-skeleton, .projects-github-skeleton, .mcp-endpoint-skeleton { grid-template-columns: 1fr; gap: 22px; }
   .projects-create-skeleton > .skeleton-block { justify-self: start; }
   .projects-row-skeleton, .mcp-row-skeleton { grid-template-columns: 1fr; gap: 14px; padding-block: 18px; }
   .projects-row-skeleton > div:last-child { justify-content: flex-start; }
   .project-create-section { grid-template-columns: 1fr; gap: 24px; }
   .project-create-button { width: 100%; }
+  .github-installations-heading, .github-installation-row, .github-app-empty-state { grid-template-columns: 1fr; }
+  .github-installations-heading .ui-button, .github-app-empty-state .ui-button { width: 100%; }
+  .github-installation-row { gap: 12px; }
+  .github-installation-row .ui-button { justify-self: start; }
   .project-list-section .section-heading-row { align-items: stretch; flex-direction: column; }
   .project-picker { width: 100%; }
   .project-row { grid-template-columns: 1fr; gap: 14px; }

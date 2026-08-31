@@ -6,10 +6,12 @@ import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
 import { Select } from 'src/shared/ui/select'
+import { GitHubAppEmptyState } from 'src/screens/projects/github-app-empty-state'
 import {
   connectDashboardRepository,
   createDashboardProject,
   deleteDashboardProject,
+  githubInstallationsQueryOptions,
   githubRepositoriesQueryOptions,
 } from 'src/shared/query/dashboard-query'
 import type { ProjectsResponse } from 'src/shared/query/dashboard-types'
@@ -33,9 +35,13 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
   const [name, setName] = useState('')
   const [repositoryId, setRepositoryId] = useState('')
   const [rootPath, setRootPath] = useState('')
+  const installationsQuery = useQuery({
+    ...githubInstallationsQueryOptions(),
+    enabled: source === 'github',
+  })
   const repositoriesQuery = useQuery({
     ...githubRepositoriesQueryOptions(),
-    enabled: source === 'github',
+    enabled: source === 'github' && (installationsQuery.data?.items.length ?? 0) > 0,
   })
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -73,7 +79,7 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
   return (
     <Dialog
       close={closeDialog}
-      description="Start with a standalone project or connect one public GitHub repository during setup."
+      description="Start with a standalone project or connect a repository granted to this workspace."
       eyebrow="New project"
       icon={<ProjectIcon />}
       title="Create an issue inbox"
@@ -88,12 +94,24 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
             </label>
             <label className={source === 'github' ? 'project-source-option project-source-option-active' : 'project-source-option'}>
               <input checked={source === 'github'} name="project-source" onChange={() => setSource('github')} type="radio" value="github" />
-              <span><strong>GitHub project</strong><small>Connect a public personal or organization repository.</small></span>
+              <span><strong>GitHub project</strong><small>Connect an installed personal or organization repository.</small></span>
             </label>
           </div>
         </fieldset>
 
-        {source === 'github' ? repositoriesQuery.isPending ? (
+        {source === 'github' ? installationsQuery.isPending ? (
+          <div className="project-dialog-loading" role="status">
+            <span className="skeleton-block" />
+            <span className="sr-only">Loading GitHub App installations</span>
+          </div>
+        ) : installationsQuery.isError ? (
+          <div className="inline-error" role="alert">
+            <p>{installationsQuery.error.message}</p>
+            <Button onClick={() => installationsQuery.refetch()} type="button" variant="secondary">Try again</Button>
+          </div>
+        ) : !installationsQuery.data.configured ? (
+          <p className="form-error" role="alert">GitHub App credentials are not available on the Jabso server.</p>
+        ) : installationsQuery.data.items.length === 0 ? <GitHubAppEmptyState /> : repositoriesQuery.isPending ? (
           <div className="project-dialog-loading" role="status">
             <span className="skeleton-block" />
             <span className="sr-only">Loading GitHub repositories</span>

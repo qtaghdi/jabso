@@ -1,5 +1,7 @@
 # GitHub connection starts with public repositories
 
+> Superseded by [0005. Use workspace-scoped GitHub App installations](./0005-workspace-github-app-installations.md). This document records the original public-only phase.
+
 ## Context
 
 Jabso needs repository identity and an optional monorepo root so future release, source context, and MCP features can map an issue back to code. Reusing the Clerk sign-in token with GitHub's broad `repo` scope would grant access to every private repository available to the owner, which is wider than this feature requires.

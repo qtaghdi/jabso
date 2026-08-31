@@ -251,7 +251,7 @@ export const Select = ({
               </div>
             ))}
           </div>,
-          document.body,
+          rootRef.current?.closest('dialog') ?? document.body,
         ) : null}
         {name ? <input name={name} type="hidden" value={selectedValue} /> : null}
       </span>

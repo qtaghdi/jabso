@@ -69,6 +69,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: 'System', description: 'Collector health and database readiness.' },
     { name: 'Ingestion', description: 'Sentry-compatible event ingestion.' },
     { name: 'Projects', description: 'Dashboard project creation, listing, and removal.' },
+    { name: 'GitHub', description: 'Workspace-scoped GitHub App installations and repository discovery.' },
     { name: 'Workspaces', description: 'Internal Clerk identity to Jabso workspace resolution.' },
     { name: 'Issues', description: 'Issue search, detail, facets, and status workflow.' },
     { name: 'Releases', description: 'Release visibility and source-map symbolication.' },
@@ -217,6 +218,85 @@ export const openApiDocument: OpenAPIV3.Document = {
           '201': response('The project was created.', { $ref: '#/components/schemas/Project' }),
           '400': response('The project name is invalid.', { $ref: '#/components/schemas/Error' }),
           '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/github/installations': {
+      get: {
+        tags: ['GitHub'],
+        summary: 'List workspace GitHub App installations',
+        operationId: 'listGitHubInstallations',
+        security: dashboardSecurity,
+        parameters: [workspaceHeaderParameter],
+        responses: {
+          '200': response('The GitHub App configuration state and workspace installations.', {
+            $ref: '#/components/schemas/GitHubInstallationList',
+          }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/github/installations/session': {
+      post: {
+        tags: ['GitHub'],
+        summary: 'Start a GitHub App installation',
+        operationId: 'startGitHubInstallation',
+        security: dashboardSecurity,
+        parameters: [workspaceHeaderParameter],
+        responses: {
+          '201': response('A short-lived GitHub installation URL.', {
+            type: 'object',
+            required: ['url'],
+            properties: { url: { type: 'string', format: 'uri' } },
+          }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+          '503': response('The GitHub App is not configured.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/github/repositories': {
+      get: {
+        tags: ['GitHub'],
+        summary: 'List repositories selected for this workspace',
+        operationId: 'listGitHubRepositories',
+        security: dashboardSecurity,
+        parameters: [workspaceHeaderParameter],
+        responses: {
+          '200': response('A bounded list across active workspace installations.', {
+            $ref: '#/components/schemas/GitHubRepositoryList',
+          }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+          '503': response('The GitHub App is not configured.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
+    '/api/github/callback': {
+      get: {
+        tags: ['GitHub'],
+        summary: 'Complete a GitHub App installation',
+        description: 'Consumes a single-use installation state, verifies the authorizing GitHub user, and redirects to the Jabso projects page.',
+        operationId: 'completeGitHubInstallation',
+        parameters: [
+          { name: 'code', in: 'query', schema: { type: 'string' } },
+          { name: 'installation_id', in: 'query', schema: { type: 'string' } },
+          { name: 'setup_action', in: 'query', schema: { type: 'string', enum: ['install', 'request', 'update'] } },
+          { name: 'state', in: 'query', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '302': response('Redirects to the projects page with a connection result.'),
+        },
+      },
+    },
+    '/webhooks/github': {
+      post: {
+        tags: ['GitHub'],
+        summary: 'Receive GitHub App installation events',
+        description: 'Requires a valid X-Hub-Signature-256 signature over the raw request body.',
+        operationId: 'receiveGitHubWebhook',
+        responses: {
+          '202': response('The installation event was accepted.'),
+          '400': response('The webhook payload is invalid.', { $ref: '#/components/schemas/Error' }),
+          '401': response('The webhook signature is invalid.', { $ref: '#/components/schemas/Error' }),
         },
       },
     },
@@ -536,6 +616,73 @@ export const openApiDocument: OpenAPIV3.Document = {
         properties: {
           items: { type: 'array', maxItems: 100, items: { $ref: '#/components/schemas/Project' } },
           nextCursor: { type: 'string', format: 'uuid', nullable: true },
+        },
+      },
+      GitHubInstallationList: {
+        type: 'object',
+        required: ['configured', 'items'],
+        properties: {
+          configured: { type: 'boolean' },
+          items: {
+            type: 'array',
+            maxItems: 20,
+            items: {
+              type: 'object',
+              required: [
+                'accountId',
+                'accountLogin',
+                'accountType',
+                'installationId',
+                'manageUrl',
+                'repositorySelection',
+                'suspendedAt',
+              ],
+              properties: {
+                accountId: { type: 'string' },
+                accountLogin: { type: 'string' },
+                accountType: { type: 'string', enum: ['Organization', 'User'] },
+                installationId: { type: 'string' },
+                manageUrl: { type: 'string', format: 'uri' },
+                repositorySelection: { type: 'string', enum: ['all', 'selected'] },
+                suspendedAt: { type: 'string', format: 'date-time', nullable: true },
+              },
+            },
+          },
+        },
+      },
+      GitHubRepositoryList: {
+        type: 'object',
+        required: ['items'],
+        properties: {
+          items: {
+            type: 'array',
+            maxItems: 100,
+            items: {
+              type: 'object',
+              required: [
+                'archived',
+                'defaultBranch',
+                'externalId',
+                'installationId',
+                'name',
+                'owner',
+                'private',
+                'updatedAt',
+                'url',
+              ],
+              properties: {
+                archived: { type: 'boolean' },
+                defaultBranch: { type: 'string' },
+                externalId: { type: 'string' },
+                installationId: { type: 'string' },
+                name: { type: 'string' },
+                owner: { type: 'string' },
+                private: { type: 'boolean' },
+                updatedAt: { type: 'string', format: 'date-time' },
+                url: { type: 'string', format: 'uri' },
+              },
+            },
+          },
         },
       },
       ProjectDeletion: {

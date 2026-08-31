@@ -60,6 +60,9 @@ describe('Jabso server', () => {
       paths: {
         '/api/{projectId}/envelope': expect.any(Object),
         '/api/{projectId}/issues': expect.any(Object),
+        '/api/github/installations': expect.any(Object),
+        '/api/github/repositories': expect.any(Object),
+        '/webhooks/github': expect.any(Object),
       },
     })
     expect(documentation.statusCode).toBe(200)

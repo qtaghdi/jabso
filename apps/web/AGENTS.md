@@ -51,7 +51,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Keep asynchronous action labels and geometry stable. Do not change `Delete` to `Removing`, `Create` to `Creating`, or otherwise swap the action verb while pending; use the shared spinner, `aria-busy`, and disabled state without changing column width or causing layout shift.
 - Use real framework file paths and runnable snippets in SDK setup. Avoid placeholder names such as `anywhere-in-your-app.ts`.
 - Distinguish the current Sentry-compatible integration from a first-party Jabso SDK in code, documentation, and handoff notes. The smoke test must wait for the SDK transport to flush; calling `captureException` alone is not proof of delivery.
-- GitHub repository discovery supports public repositories owned by the user, shared as a collaborator, or accessible through organization membership. Do not imply that private repositories are available until a least-privilege GitHub App flow is implemented and verified.
+- GitHub repository discovery uses the active workspace's GitHub App installations and may include selected public or private repositories. Never fall back to Clerk's user OAuth token or imply that signing in automatically grants repository access.
 - Workspace switching and shared-workspace creation use Jabso-owned UI over Clerk hooks. Do not reintroduce Clerk's prebuilt `OrganizationSwitcher`, `OrganizationList`, or `CreateOrganization` components into the dashboard.
 - For layout changes, verify desktop and narrow breakpoints, long DSNs, active badges, empty states, and connected/disconnected repository states. If browser verification is unavailable, state that limitation instead of presenting build success as visual verification.
 

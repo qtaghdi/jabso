@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { GitHubConnectionError, listGitHubRepositories } from 'src/shared/integrations/github'
+import { listGitHubRepositories } from 'src/shared/api/github'
 
 export const GET = async () => {
   try {
-    return NextResponse.json({ items: await listGitHubRepositories() })
+    return NextResponse.json(await listGitHubRepositories())
   } catch (error) {
-    if (error instanceof GitHubConnectionError) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
-    }
-    throw error
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'GitHub repositories are temporarily unavailable.',
+    }, { status: 502 })
   }
 }

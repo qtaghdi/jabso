@@ -39,6 +39,37 @@ export const workspaces = pgTable(
   (table) => [uniqueIndex('workspaces_external_id_uidx').on(table.externalId)],
 )
 
+export const githubInstallations = pgTable(
+  'github_installations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    installationId: text('installation_id').notNull(),
+    accountId: text('account_id').notNull(),
+    accountLogin: text('account_login').notNull(),
+    accountType: text('account_type').notNull(),
+    repositorySelection: text('repository_selection').notNull(),
+    suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('github_installations_installation_id_uidx').on(table.installationId),
+    index('github_installations_workspace_account_idx').on(table.workspaceId, table.accountLogin),
+  ],
+)
+
+export const githubInstallationStates = pgTable(
+  'github_installation_states',
+  {
+    stateHash: text('state_hash').primaryKey(),
+    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('github_installation_states_expires_idx').on(table.expiresAt)],
+)
+
 export const projects = pgTable('projects', {
   id: uuid('id').defaultRandom().primaryKey(),
   workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),

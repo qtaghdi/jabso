@@ -1,6 +1,11 @@
 import type { IssueFacets, IssueSummary } from 'src/shared/api/issues'
 import type { ProjectSummary } from 'src/shared/api/projects'
 import type { McpConnection } from 'src/shared/api/mcp'
+import type {
+  GitHubInstallationsResponse,
+  GitHubRepositoriesResponse,
+  GitHubRepository,
+} from 'src/shared/api/github'
 
 export type DashboardProject = ProjectSummary & {
   active: boolean
@@ -11,20 +16,7 @@ export type ProjectsResponse = {
   items: DashboardProject[]
 }
 
-export type GitHubRepository = {
-  archived: boolean
-  defaultBranch: string
-  externalId: string
-  name: string
-  owner: string
-  private: boolean
-  updatedAt: string
-  url: string
-}
-
-export type GitHubRepositoriesResponse = {
-  items: GitHubRepository[]
-}
+export type { GitHubInstallationsResponse, GitHubRepositoriesResponse, GitHubRepository }
 
 export type IssuesResponse = {
   activeProject: DashboardProject | null

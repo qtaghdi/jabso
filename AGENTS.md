@@ -105,7 +105,7 @@ Do not broaden a change into APM, metrics, profiling, billing, or Session Replay
 - Repository connections store provider metadata and an optional normalized repository-relative root only. Never persist OAuth access tokens, refresh tokens, Git credentials, source archives, or arbitrary provider responses.
 - Treat private repository names and paths as sensitive metadata. Do not expose them through public ingestion, diagnostics, logs, or unauthenticated APIs.
 - Revalidate a repository selection against the provider response on the server before persisting it; never trust repository metadata submitted by the browser.
-- Public GitHub repository discovery may use unauthenticated APIs. Private repository access requires a separately approved GitHub App design with installation access limited to selected repositories.
+- Discover GitHub repositories only through a workspace-bound GitHub App installation. Installation access may include selected public or private repositories, must stay read-only for metadata, and must never be inferred from the Clerk sign-in connection.
 
 ## Web conventions
 
