@@ -22,7 +22,7 @@ The project intentionally focuses on a narrow workflow: **error collection, issu
 - Release- and dist-aware source-map upload and stack symbolication
 - Backfilling events when source maps arrive after ingestion
 - A Next.js issue inbox with Clerk personal and organization workspaces
-- Optional metadata links to public GitHub repositories
+- Workspace-scoped GitHub App installations for selected public and private repository metadata
 - Boundra runtime contracts and isolated internal diagnostics
 - Six read-only MCP tools with workspace and project-scoped credentials
 - One-time MCP bearer tokens, immediate revocation, and metadata-only audit logs
@@ -81,6 +81,7 @@ Raw envelopes are parsed at the Fastify boundary. Only normalized events enter t
 - pnpm 11 through Corepack
 - Docker with Compose, or an existing PostgreSQL database
 - A Clerk application with GitHub sign-in and Organizations enabled
+- A GitHub App when repository connections are required
 
 ### Setup
 
@@ -119,6 +120,12 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `JABSO_ALLOWED_ORIGIN` | Allowed dashboard origin for collector CORS |
 | `JABSO_DASHBOARD_TOKEN` | Server-only credential for dashboard API access |
 | `JABSO_ADMIN_TOKEN` | Server-only credential for source-map administration |
+| `JABSO_GITHUB_APP_ID` | Numeric GitHub App ID used to sign app JWTs |
+| `JABSO_GITHUB_APP_CLIENT_ID` | GitHub App OAuth client ID used to verify the installing user |
+| `JABSO_GITHUB_APP_CLIENT_SECRET` | GitHub App OAuth client secret |
+| `JABSO_GITHUB_APP_PRIVATE_KEY_BASE64` | Base64-encoded GitHub App private key; decode only in server memory |
+| `JABSO_GITHUB_APP_SLUG` | App URL slug used to start installation |
+| `JABSO_GITHUB_APP_WEBHOOK_SECRET` | Secret used to verify GitHub webhook signatures |
 | `JABSO_API_URL` | Collector URL used by the Next.js server |
 | `JABSO_DEV_CLERK_USER_ID` | Optional Clerk user ID that owns the local seeded project |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
@@ -127,11 +134,23 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Jabso's Clerk sign-up route (`/sign-up`) |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
-`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
+`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, every `JABSO_GITHUB_APP_*` credential, `CLERK_SECRET_KEY`, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
 In Clerk, enable GitHub as a social connection and enable Organizations with **Membership optional**. Do not require organization membership: Clerk's required-membership session task inserts its own organization chooser before Jabso onboarding and duplicates workspace creation. After sign-up, Jabso shows an explicit transition state and then asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Clerk user. Team and Organization workspaces both use Clerk Organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active Clerk context and all dashboard API calls are scoped to the corresponding Jabso workspace.
 
 Run `pnpm db:migrate` before deploying this version. Existing projects intentionally remain unassigned and invisible after the migration instead of being claimed by the first user who signs in. Assign legacy rows to a verified workspace with a reviewed, one-time database migration.
+
+### Connect GitHub repositories
+
+GitHub sign-in in Clerk proves user identity; it does not grant Jabso repository access. Repository connections use a separate GitHub App installation owned by the active Jabso workspace. Configure the GitHub App with:
+
+- Callback URL: `https://<your-jabso-server>/api/github/callback`
+- Webhook URL: `https://<your-jabso-server>/webhooks/github`
+- **Request user authorization during installation** enabled
+- Repository metadata permission set to read-only; no contents permission is required
+- Installation target set to **Any account** when organizations outside the owner account should install it
+
+After running the latest database migration, open **Projects** and choose **Install GitHub App**. GitHub lets the installer select all repositories or specific repositories. Jabso then lists only repositories visible to installations connected to the active workspace. Installation access tokens are minted on demand and never stored in PostgreSQL.
 
 ## Send an error
 
@@ -194,6 +213,8 @@ Jabso stores only bounded debugging data needed by the issue workflow.
 - Tag keys related to users, email, tokens, sessions, cookies, and IP addresses are removed during ingestion.
 - Original stack frames are retained separately from mapped frames.
 - Source-map contents are treated as private source code.
+- GitHub installation account identifiers are stored until the installation is removed from GitHub or the Jabso workspace is deleted. A project's connected repository metadata remains until it is explicitly disconnected or its owning data is permanently deleted.
+- GitHub OAuth user tokens and short-lived installation access tokens are never persisted.
 
 Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Clerk organization admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
 
@@ -268,6 +289,7 @@ Repository-wide architecture, security, testing, and Git conventions are documen
 - [x] Filtering, occurrences, safe context, and issue lifecycle
 - [x] Releases, source maps, symbolication, and backfill
 - [x] Clerk authentication, workspace onboarding, tenant isolation, and shared dashboard UI
+- [x] Workspace-scoped GitHub App installations and selected repository discovery
 - [x] Read-only MCP tools with project-scoped authorization and audit logs
 - [ ] Operational hardening and retention controls
 - [ ] Session Replay, if the privacy and storage model can support it safely
