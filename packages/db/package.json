@@ -18,6 +18,7 @@
     "build": "tsc -p tsconfig.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -e ../../.env -- drizzle-kit migrate",
+    "db:relink-workspace": "dotenv -e ../../.env -- tsx scripts/relink-workspace.ts",
     "db:seed": "dotenv -e ../../.env -- tsx scripts/seed.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
