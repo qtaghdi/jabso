@@ -3,11 +3,12 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { findWorkspace } from 'src/shared/api/workspaces'
-import { auth } from 'src/shared/auth/auth'
+import { getAuth } from 'src/shared/auth/auth'
 
 export const requireWorkspace = cache(async () => {
   const startedAt = performance.now()
   const requestHeaders = await headers()
+  const auth = getAuth()
   const session = await auth.api.getSession({ headers: requestHeaders })
   if (!session) redirect(getSessionCookie(requestHeaders) ? '/sign-in?reason=session-expired' : '/sign-in')
   const userId = session.user.id

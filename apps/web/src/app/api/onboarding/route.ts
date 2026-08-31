@@ -1,12 +1,12 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { provisionWorkspace, type WorkspaceKind } from 'src/shared/api/workspaces'
-import { auth } from 'src/shared/auth/auth'
+import { getAuth } from 'src/shared/auth/auth'
 
 const workspaceKinds: WorkspaceKind[] = ['personal', 'team', 'organization']
 
 export const POST = async (request: Request) => {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuth().api.getSession({ headers: await headers() })
   if (!session) return NextResponse.json({ error: 'authentication required' }, { status: 401 })
   const userId = session.user.id
   const orgId = session.session.activeOrganizationId ?? null

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { auth } from 'src/shared/auth/auth'
+import { getAuth } from 'src/shared/auth/auth'
 import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 import { deleteWorkspace, renameWorkspace } from 'src/shared/api/workspaces'
 
@@ -16,7 +16,7 @@ export const PATCH = async (request: Request) => {
   const requestHeaders = await headers()
   await renameWorkspace(`org:${workspace.orgId}`, name)
   try {
-    await auth.api.updateOrganization({
+    await getAuth().api.updateOrganization({
       body: { organizationId: workspace.orgId, data: { name } },
       headers: requestHeaders,
     })
@@ -35,7 +35,7 @@ export const DELETE = async () => {
 
   const requestHeaders = await headers()
   await deleteWorkspace(`org:${workspace.orgId}`)
-  await auth.api.deleteOrganization({
+  await getAuth().api.deleteOrganization({
     body: { organizationId: workspace.orgId },
     headers: requestHeaders,
   })

@@ -10,7 +10,7 @@ import { organization } from 'better-auth/plugins'
 const githubClientId = process.env.JABSO_GITHUB_OAUTH_CLIENT_ID?.trim()
 const githubClientSecret = process.env.JABSO_GITHUB_OAUTH_CLIENT_SECRET?.trim()
 
-export const auth = betterAuth({
+const createAuth = () => betterAuth({
   appName: 'Jabso',
   baseURL: process.env.BETTER_AUTH_URL?.trim(),
   secret: process.env.BETTER_AUTH_SECRET,
@@ -39,3 +39,10 @@ export const auth = betterAuth({
     .map((origin) => origin.trim())
     .filter(Boolean),
 })
+
+let authInstance: ReturnType<typeof createAuth> | undefined
+
+export const getAuth = () => {
+  authInstance ??= createAuth()
+  return authInstance
+}

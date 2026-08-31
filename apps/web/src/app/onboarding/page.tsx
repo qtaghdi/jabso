@@ -3,11 +3,11 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { OnboardingFlow } from 'src/screens/onboarding/onboarding-flow'
 import { findWorkspace } from 'src/shared/api/workspaces'
-import { auth } from 'src/shared/auth/auth'
+import { getAuth } from 'src/shared/auth/auth'
 
 const OnboardingPage = async () => {
   const requestHeaders = await headers()
-  const session = await auth.api.getSession({ headers: requestHeaders })
+  const session = await getAuth().api.getSession({ headers: requestHeaders })
   if (!session) redirect(getSessionCookie(requestHeaders) ? '/sign-in?reason=session-expired' : '/sign-in')
   const userId = session.user.id
   const orgId = session.session.activeOrganizationId ?? null
