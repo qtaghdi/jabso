@@ -18,4 +18,4 @@ Existing Clerk IDs are not claimed automatically. A reviewed operator may relink
 - The web deployment now needs database access because the Better Auth route runs in Next.js.
 - Better Auth schema migration `0009` must run before the new web deployment receives traffic.
 - Existing Clerk sessions, users, and organizations are not portable; users authenticate again and legacy workspaces require explicit relinking.
-- Password reset and email verification remain follow-up work and must be completed before public self-service onboarding.
+- Email verification, password reset, and shared serverless rate limits are defined by [0007](./0007-auth-email-and-rate-limits.md).

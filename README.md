@@ -133,13 +133,15 @@ Copy [`.env.example`](./.env.example) and replace every placeholder before deplo
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated allowed dashboard origins |
 | `JABSO_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth client ID used only for user sign-in |
 | `JABSO_GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth client secret used only for user sign-in |
+| `RESEND_API_KEY` | Resend credential used for verification and password-reset email |
+| `JABSO_AUTH_EMAIL_FROM` | Verified Resend sender, such as `Jabso <auth@example.com>` |
 | `NEXT_PUBLIC_JABSO_DSN` | DSN used by the built-in smoke test |
 
-`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `BETTER_AUTH_SECRET`, both `JABSO_GITHUB_OAUTH_*` values, every `JABSO_GITHUB_APP_*` credential, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
+`JABSO_DASHBOARD_TOKEN`, `JABSO_ADMIN_TOKEN`, `BETTER_AUTH_SECRET`, `RESEND_API_KEY`, both `JABSO_GITHUB_OAUTH_*` values, every `JABSO_GITHUB_APP_*` credential, and the database URL must remain server-only. Never expose them through a `NEXT_PUBLIC_*` variable.
 
-Configure the GitHub OAuth callback as `https://<your-jabso-web>/api/auth/callback/github`. After sign-up, Jabso asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Better Auth user. Team and Organization workspaces use Better Auth organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active organization and every dashboard API call resolves it to an internal Jabso workspace.
+Configure the GitHub OAuth callback as `https://<your-jabso-web>/api/auth/callback/github`. Verify the domain used by `JABSO_AUTH_EMAIL_FROM` in Resend before enabling email sign-up. Email/password accounts must verify their address before workspace setup; trusted GitHub OAuth accounts continue directly to onboarding. Password-reset links expire after one hour and revoke existing sessions when used. After sign-up, Jabso asks whether the first workspace is Personal, Team, or Organization. Personal workspaces are scoped to a Better Auth user. Team and Organization workspaces use Better Auth organizations for membership; Jabso stores their product kind separately. The sidebar switcher changes the active organization and every dashboard API call resolves it to an internal Jabso workspace.
 
-Run `pnpm db:migrate` before deploying this version. Existing Clerk workspaces are never claimed by the first user who signs in. After verifying the old and new identity IDs, relink exactly one workspace with `pnpm --filter @jabso/db db:relink-workspace -- --from=user:<clerk-id> --to=user:<better-auth-id>` or the equivalent `org:` IDs.
+Run `pnpm db:migrate` before deploying this version. Migration `0010` adds the database-backed rate-limit table required by serverless authentication routes; deploy the migration before the web build receives traffic. Existing Clerk workspaces are never claimed by the first user who signs in. After verifying the old and new identity IDs, relink exactly one workspace with `pnpm --filter @jabso/db db:relink-workspace -- --from=user:<clerk-id> --to=user:<better-auth-id>` or the equivalent `org:` IDs.
 
 ### Connect GitHub repositories
 
@@ -216,6 +218,7 @@ Jabso stores only bounded debugging data needed by the issue workflow.
 - Source-map contents are treated as private source code.
 - GitHub installation account identifiers are stored until the installation is removed from GitHub or the Jabso workspace is deleted. A project's connected repository metadata remains until it is explicitly disconnected or its owning data is permanently deleted.
 - GitHub OAuth user tokens and short-lived installation access tokens are never persisted.
+- Verification and password-reset tokens are stored only in Better Auth's expiring verification table. Jabso sends the requested address and transactional email content to Resend, but does not persist email bodies.
 
 Projects, issues, releases, and repository connections are authorized through the active workspace. Cross-workspace reads return not found, and project administration requires a personal workspace owner or Better Auth organization owner/admin. Review these constraints before exposing a Jabso instance beyond a trusted environment.
 

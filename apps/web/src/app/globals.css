@@ -502,6 +502,13 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-divider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; color: #7d8691; font-size: 12px; }
 .auth-divider::before, .auth-divider::after { height: 1px; background: var(--border); content: ''; }
 .auth-form .ui-input input { min-height: 50px; border-radius: 8px; }
+.auth-forgot-link { width: fit-content; margin: -8px 0 -2px auto; color: #4e5864; font-size: 12px; font-weight: 620; text-decoration: none; }
+.auth-forgot-link:hover { color: var(--text); text-decoration: underline; }
+.auth-callout { padding: 16px 18px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.auth-callout strong { font-size: 14px; }
+.auth-callout p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.auth-callout-error { border-color: color-mix(in srgb, var(--accent) 32%, var(--border)); background: var(--accent-soft); }
+.auth-callout-error strong { color: var(--accent); }
 .auth-alternate { margin: 2px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
 .auth-alternate a { color: var(--text); font-weight: 650; }
 .auth-sign-in-fallback { display: grid; gap: 20px; width: 100%; animation: pulse 1.4s ease-in-out infinite; }

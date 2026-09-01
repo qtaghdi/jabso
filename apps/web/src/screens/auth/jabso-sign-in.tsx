@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { AuthFormFallback } from 'src/screens/auth/auth-form-fallback'
 import { AuthTransition } from 'src/screens/auth/auth-transition'
 import { authClient } from 'src/shared/auth/auth-client'
+import { getAuthErrorMessage, isEmailNotVerifiedError, rememberPendingEmail } from 'src/shared/auth/auth-client-error'
 import { GitHubIcon } from 'src/shared/brand/github-icon'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
@@ -27,7 +28,7 @@ export const JabsoSignIn = () => {
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL: '/' })
     if (result.error) {
-      setError(result.error.message ?? 'Could not continue with GitHub')
+      setError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
       setIsSubmitting(false)
     }
   }
@@ -42,7 +43,12 @@ export const JabsoSignIn = () => {
     setIsSubmitting(true)
     const result = await authClient.signIn.email({ email: email.trim(), password, callbackURL: '/' })
     if (result.error) {
-      setError(result.error.message ?? 'Email or password is incorrect')
+      if (isEmailNotVerifiedError(result.error)) {
+        rememberPendingEmail(email.trim())
+        router.push('/verify-email')
+        return
+      }
+      setError(getAuthErrorMessage(result.error, 'Email or password is incorrect'))
       setIsSubmitting(false)
       return
     }
@@ -59,6 +65,7 @@ export const JabsoSignIn = () => {
       <div className="auth-divider"><span>or</span></div>
       <Input autoComplete="email" error={error ?? undefined} label="Email address" onChange={(event) => { setEmail(event.target.value); setError(null) }} required type="email" value={email} />
       <Input autoComplete="current-password" label="Password" minLength={10} onChange={(event) => { setPassword(event.target.value); setError(null) }} required type="password" value={password} />
+      <Link className="auth-forgot-link" href="/forgot-password">Forgot password?</Link>
       <Button pending={isSubmitting} type="submit">Sign in</Button>
       <p className="auth-alternate">New to Jabso? <Link href="/sign-up">Create an account</Link></p>
     </form>

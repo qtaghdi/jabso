@@ -6,6 +6,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { AuthFormFallback } from 'src/screens/auth/auth-form-fallback'
 import { AuthTransition } from 'src/screens/auth/auth-transition'
 import { authClient } from 'src/shared/auth/auth-client'
+import { getAuthErrorMessage, rememberPendingEmail } from 'src/shared/auth/auth-client-error'
 import { GitHubIcon } from 'src/shared/brand/github-icon'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
@@ -24,7 +25,7 @@ export const JabsoSignUp = () => {
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL: '/onboarding' })
     if (result.error) {
-      setError(result.error.message ?? 'Could not continue with GitHub')
+      setError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
       setIsSubmitting(false)
     }
   }
@@ -47,12 +48,12 @@ export const JabsoSignUp = () => {
     setIsSubmitting(true)
     const result = await authClient.signUp.email({ email: email.trim(), name: name.trim(), password, callbackURL: '/onboarding' })
     if (result.error) {
-      setError(result.error.message ?? 'Could not create your account')
+      setError(getAuthErrorMessage(result.error, 'Could not create your account'))
       setIsSubmitting(false)
       return
     }
-    router.replace('/onboarding')
-    router.refresh()
+    rememberPendingEmail(email.trim())
+    router.replace('/verify-email')
   }
 
   if (isSessionPending) return <AuthFormFallback label="Loading sign up" />
