@@ -6,12 +6,22 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { AuthFormFallback } from 'src/screens/auth/auth-form-fallback'
 import { AuthTransition } from 'src/screens/auth/auth-transition'
 import { authClient } from 'src/shared/auth/auth-client'
-import { getAuthErrorMessage, isEmailNotVerifiedError, rememberPendingEmail } from 'src/shared/auth/auth-client-error'
+import {
+  getAuthErrorMessage,
+  isEmailNotVerifiedError,
+  rememberPendingAuthRedirect,
+  rememberPendingEmail,
+} from 'src/shared/auth/auth-client-error'
+import { getAuthRoute } from 'src/shared/auth/auth-redirect'
 import { GitHubIcon } from 'src/shared/brand/github-icon'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
-export const JabsoSignIn = () => {
+type JabsoSignInProps = {
+  callbackURL?: string
+}
+
+export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
   const router = useRouter()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [email, setEmail] = useState('')
@@ -20,13 +30,13 @@ export const JabsoSignIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    if (session) router.replace('/')
-  }, [router, session])
+    if (session) router.replace(callbackURL)
+  }, [callbackURL, router, session])
 
   const signInWithGitHub = async () => {
     setError(null)
     setIsSubmitting(true)
-    const result = await authClient.signIn.social({ provider: 'github', callbackURL: '/' })
+    const result = await authClient.signIn.social({ provider: 'github', callbackURL })
     if (result.error) {
       setError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
       setIsSubmitting(false)
@@ -41,10 +51,11 @@ export const JabsoSignIn = () => {
       return
     }
     setIsSubmitting(true)
-    const result = await authClient.signIn.email({ email: email.trim(), password, callbackURL: '/' })
+    const result = await authClient.signIn.email({ email: email.trim(), password, callbackURL })
     if (result.error) {
       if (isEmailNotVerifiedError(result.error)) {
         rememberPendingEmail(email.trim())
+        rememberPendingAuthRedirect(callbackURL)
         router.push('/verify-email')
         return
       }
@@ -52,7 +63,7 @@ export const JabsoSignIn = () => {
       setIsSubmitting(false)
       return
     }
-    router.replace('/')
+    router.replace(callbackURL)
     router.refresh()
   }
 
@@ -67,7 +78,7 @@ export const JabsoSignIn = () => {
       <Input autoComplete="current-password" label="Password" minLength={10} onChange={(event) => { setPassword(event.target.value); setError(null) }} required type="password" value={password} />
       <Link className="auth-forgot-link" href="/forgot-password">Forgot password?</Link>
       <Button pending={isSubmitting} type="submit">Sign in</Button>
-      <p className="auth-alternate">New to Jabso? <Link href="/sign-up">Create an account</Link></p>
+      <p className="auth-alternate">New to Jabso? <Link href={getAuthRoute('/sign-up', callbackURL)}>Create an account</Link></p>
     </form>
   )
 }

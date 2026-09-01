@@ -2,7 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-const publicPaths = ['/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/auth']
+const publicPaths = ['/accept-invitation', '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/auth']
 
 const proxy = (request: NextRequest) => {
   if (publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))) return NextResponse.next()

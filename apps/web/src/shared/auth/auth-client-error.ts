@@ -19,3 +19,15 @@ export const rememberPendingEmail = (email: string) => {
 }
 
 export const readPendingEmail = () => window.sessionStorage.getItem('jabso-pending-email') ?? ''
+
+export const rememberPendingAuthRedirect = (redirect: string) => {
+  window.sessionStorage.setItem('jabso-pending-auth-redirect', redirect)
+}
+
+export const readPendingAuthRedirect = (fallback: string) =>
+  window.sessionStorage.getItem('jabso-pending-auth-redirect') ?? fallback
+
+export const clearPendingAuth = () => {
+  window.sessionStorage.removeItem('jabso-pending-email')
+  window.sessionStorage.removeItem('jabso-pending-auth-redirect')
+}

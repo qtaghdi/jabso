@@ -314,7 +314,7 @@ spikes/
   <p class="small">완료 근거: 공개 DSN key의 dashboard 접근 거부와 workspace 간 프로젝트·issue 격리를 통합 테스트로 검증하고, lint·typecheck·test·Boundra boundary check·production build를 확인했다.</p>
 
   <h2><span class="badge done-badge">완료</span><span class="badge p1">P1</span>인증 UI 후속 결정</h2>
-  <div class="decision"><strong>결정:</strong> Clerk를 제거하고 Better Auth의 PostgreSQL session, GitHub OAuth, email/password, organization plugin 위에 Jabso 로그인·회원가입·검증·오류·로딩 UI를 구현한다.</div>
+  <div class="decision"><strong>결정:</strong> Better Auth의 PostgreSQL session, GitHub OAuth, email/password, organization plugin 위에 Jabso 로그인·회원가입·검증·오류·로딩 UI를 구현한다.</div>
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
       <h3>Jabso가 소유</h3>
@@ -323,6 +323,7 @@ spikes/
         <li>클라이언트 검증과 inline error</li>
         <li>OAuth callback·missing requirement·verification 화면</li>
         <li>loading, expired session, redirect, toast</li>
+        <li>workspace 초대·멤버·역할 관리와 초대 수락 화면</li>
       </ul>
     </div>
     <div class="card">
@@ -335,7 +336,7 @@ spikes/
       </ul>
     </div>
   </div>
-  <p class="small">완료 근거: email/password 가입은 1시간 만료 인증 링크를 거치며, 비밀번호 재설정은 기존 session을 폐기한다. 인증 요청 제한은 Vercel instance 메모리가 아닌 PostgreSQL에 공유 저장하고, 메일은 Resend background task로 발송한다. MCP는 별도 Jabso credential을 계속 사용한다.</p>
+  <p class="small">완료 근거: email/password 가입은 1시간 만료 인증 링크를 거치며, 비밀번호 재설정은 기존 session을 폐기한다. 인증 요청 제한은 Vercel instance 메모리가 아닌 PostgreSQL에 공유 저장하고, 메일은 Resend background task로 발송한다. Workspace owner/admin은 초대·역할 변경·멤버 제거를 관리하고, 초대 수락은 검증된 수신 이메일 session만 허용한다. MCP는 별도 Jabso credential을 계속 사용한다.</p>
 
   <h2><span class="badge done-badge">완료</span><span class="badge p1">P1</span><span class="badge phase">Phase 3.6</span>Workspace GitHub App 연결</h2>
   <div class="decision"><strong>결정:</strong> Better Auth GitHub 로그인은 사용자 identity에만 사용하고, repository 접근은 active Jabso workspace에 연결된 별도 GitHub App installation이 담당한다. 한 workspace는 여러 개인·조직 installation을 가질 수 있지만 하나의 installation은 다른 workspace로 이동할 수 없다.</div>

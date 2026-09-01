@@ -6,9 +6,9 @@ Email/password authentication was available after the Better Auth migration, but
 
 ## Decision
 
-Jabso requires email verification for credential accounts and uses Resend for verification and password-reset messages. Better Auth creates one-hour tokens, stores them in its existing verification table, and dispatches delivery through Vercel background tasks. Successful password resets revoke existing sessions. Password-reset requests always return the same user-facing result whether an address exists or not.
+Jabso requires email verification for credential accounts and uses Resend for verification, password-reset, and organization-invitation messages. Better Auth creates one-hour credential tokens and 48-hour opaque invitation IDs, stores them in its existing tables, and dispatches delivery through Vercel background tasks. Successful password resets revoke existing sessions. Password-reset requests always return the same user-facing result whether an address exists or not.
 
-Authentication endpoints use Better Auth's database rate limiter with stricter rules for email sign-in, sign-up, verification resend, reset request, and reset completion. Migration `0010` adds the `rate_limit` table to the same PostgreSQL database used by Better Auth.
+Authentication endpoints use Better Auth's database rate limiter with stricter rules for email sign-in, sign-up, verification resend, reset request, reset completion, and organization invitations. Invitation acceptance requires a verified session email because invitation IDs can be listed by organization administrators. Migration `0010` adds the `rate_limit` table to the same PostgreSQL database used by Better Auth.
 
 GitHub OAuth remains a trusted identity path and does not require a second Jabso verification email.
 
@@ -16,7 +16,7 @@ GitHub OAuth remains a trusted identity path and does not require a second Jabso
 
 - The web deployment requires `RESEND_API_KEY` and a Resend-verified `JABSO_AUTH_EMAIL_FROM` sender before email self-service is usable.
 - Operators must apply migration `0010` before deploying the web change.
-- Verification and reset links expire after one hour. Reset links are single-use.
+- Verification and reset links expire after one hour. Reset links are single-use; organization invitations expire after 48 hours.
 - Jabso sends the destination address and transactional content to Resend; email bodies are not stored by Jabso.
 - The database limiter is consistent across serverless instances but adds a small database read/write cost to protected authentication requests.
-- Organization invitation and membership management remain separate product work.
+- Workspace owners and admins manage invitations and membership through Jabso-owned UI over Better Auth's organization permission checks.

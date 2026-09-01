@@ -11,10 +11,18 @@ import { sendAuthEmail } from 'src/shared/auth/auth-email'
 
 const githubClientId = process.env.JABSO_GITHUB_OAUTH_CLIENT_ID?.trim()
 const githubClientSecret = process.env.JABSO_GITHUB_OAUTH_CLIENT_SECRET?.trim()
+const authBaseUrl = process.env.BETTER_AUTH_URL?.trim()
+
+const getInvitationUrl = (invitationId: string) => {
+  if (!authBaseUrl) throw new Error('BETTER_AUTH_URL is required to send organization invitations')
+  const url = new URL('/accept-invitation', authBaseUrl)
+  url.searchParams.set('invitationId', invitationId)
+  return url.toString()
+}
 
 const createAuth = () => betterAuth({
   appName: 'Jabso',
-  baseURL: process.env.BETTER_AUTH_URL?.trim(),
+  baseURL: authBaseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(getDatabase(), { provider: 'pg', schema: databaseSchema }),
   emailAndPassword: {
@@ -37,6 +45,7 @@ const createAuth = () => betterAuth({
     customRules: {
       '/request-password-reset': { window: 5 * 60, max: 3 },
       '/reset-password': { window: 5 * 60, max: 5 },
+      '/organization/invite-member': { window: 5 * 60, max: 10 },
       '/send-verification-email': { window: 5 * 60, max: 3 },
       '/sign-in/email': { window: 60, max: 5 },
       '/sign-up/email': { window: 5 * 60, max: 3 },
@@ -49,6 +58,16 @@ const createAuth = () => betterAuth({
   plugins: [
     organization({
       allowUserToCreateOrganization: true,
+      invitationExpiresIn: 48 * 60 * 60,
+      invitationLimit: 100,
+      requireEmailVerificationOnInvitation: true,
+      sendInvitationEmail: ({ email, id, inviter, organization: invitedOrganization }) => sendAuthEmail({
+        inviterName: inviter.user.name || inviter.user.email,
+        kind: 'organization-invitation',
+        organizationName: invitedOrganization.name,
+        to: email,
+        url: getInvitationUrl(id),
+      }),
     }),
     nextCookies(),
   ],
