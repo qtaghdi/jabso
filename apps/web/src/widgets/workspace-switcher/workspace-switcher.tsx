@@ -292,7 +292,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
       {isSettingsOpen && organization ? (
         <WorkspaceSettingsDialog
           close={() => setIsSettingsOpen(false)}
+          currentRole={orgRole === 'owner' ? 'owner' : 'admin'}
+          currentUserId={session?.user.id ?? ''}
           name={organization.name}
+          organizationId={organization.id}
           openDelete={() => {
             setDeleteError(null)
             setIsDeleteOpen(true)

@@ -8,7 +8,7 @@ type DialogProps = {
   description?: string
   eyebrow?: string
   icon?: ReactNode
-  size?: 'sm' | 'md'
+  size?: 'lg' | 'sm' | 'md'
   title: string
 }
 

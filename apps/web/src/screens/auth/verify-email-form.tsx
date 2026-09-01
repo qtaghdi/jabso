@@ -4,7 +4,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
-import { getAuthErrorMessage, readPendingEmail, rememberPendingEmail } from 'src/shared/auth/auth-client-error'
+import {
+  clearPendingAuth,
+  getAuthErrorMessage,
+  readPendingAuthRedirect,
+  readPendingEmail,
+  rememberPendingEmail,
+} from 'src/shared/auth/auth-client-error'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
@@ -15,11 +21,17 @@ export const VerifyEmailForm = () => {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSent, setIsSent] = useState(false)
+  const [callbackURL, setCallbackURL] = useState('/onboarding')
 
-  useEffect(() => setEmail(readPendingEmail()), [])
   useEffect(() => {
-    if (session) router.replace('/onboarding')
-  }, [router, session])
+    setEmail(readPendingEmail())
+    setCallbackURL(readPendingAuthRedirect('/onboarding'))
+  }, [])
+  useEffect(() => {
+    if (!session) return
+    clearPendingAuth()
+    router.replace(callbackURL)
+  }, [callbackURL, router, session])
 
   const resend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -32,7 +44,7 @@ export const VerifyEmailForm = () => {
     setIsSubmitting(true)
     const result = await authClient.sendVerificationEmail({
       email: email.trim(),
-      callbackURL: '/onboarding',
+      callbackURL,
     })
     setIsSubmitting(false)
 

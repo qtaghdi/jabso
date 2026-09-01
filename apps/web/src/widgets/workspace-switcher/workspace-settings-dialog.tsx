@@ -4,10 +4,14 @@ import { useState, type FormEvent } from 'react'
 import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
+import { WorkspaceMembersPanel } from 'src/widgets/workspace-switcher/workspace-members-panel'
 
 type WorkspaceSettingsDialogProps = {
   close: () => void
+  currentRole: 'admin' | 'owner'
+  currentUserId: string
   name: string
+  organizationId: string
   openDelete: () => void
 }
 
@@ -20,7 +24,10 @@ const SettingsIcon = () => (
 
 export const WorkspaceSettingsDialog = ({
   close,
+  currentRole,
+  currentUserId,
   name: initialName,
+  organizationId,
   openDelete,
 }: WorkspaceSettingsDialogProps) => {
   const [name, setName] = useState(initialName)
@@ -56,9 +63,9 @@ export const WorkspaceSettingsDialog = ({
   return (
     <Dialog
       close={close}
-      description="Rename the active shared workspace."
+      description="Manage this workspace's details and access."
       icon={<SettingsIcon />}
-      size="sm"
+      size="lg"
       title="Workspace settings"
     >
       <form className="workspace-settings-form" onSubmit={save}>
@@ -79,6 +86,11 @@ export const WorkspaceSettingsDialog = ({
           <Button pending={isSubmitting} type="submit">Save changes</Button>
         </footer>
       </form>
+      <WorkspaceMembersPanel
+        currentRole={currentRole}
+        currentUserId={currentUserId}
+        organizationId={organizationId}
+      />
       <section className="workspace-danger-zone">
         <div>
           <strong>Delete workspace</strong>
