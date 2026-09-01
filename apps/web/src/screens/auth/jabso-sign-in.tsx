@@ -26,7 +26,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -34,20 +34,20 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
   }, [callbackURL, router, session])
 
   const signInWithGitHub = async () => {
-    setError(null)
+    setFormError(null)
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
+      setFormError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
       setIsSubmitting(false)
     }
   }
 
   const signInWithEmail = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setError(null)
+    setFormError(null)
     if (!email.trim() || !password) {
-      setError('Enter both your email address and password')
+      setFormError('Enter both your email address and password')
       return
     }
     setIsSubmitting(true)
@@ -59,7 +59,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
         router.push('/verify-email')
         return
       }
-      setError(getAuthErrorMessage(result.error, 'Email or password is incorrect'))
+      setFormError(getAuthErrorMessage(result.error, 'Email or password is incorrect'))
       setIsSubmitting(false)
       return
     }
@@ -72,10 +72,16 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
 
   return (
     <form className="auth-form" noValidate onSubmit={signInWithEmail}>
+      {formError ? (
+        <div className="auth-callout auth-callout-error" role="alert">
+          <strong>Could not sign in</strong>
+          <p>{formError}</p>
+        </div>
+      ) : null}
       <Button className="auth-github-button" disabled={isSubmitting} onClick={signInWithGitHub} type="button"><GitHubIcon /> Continue with GitHub</Button>
       <div className="auth-divider"><span>or</span></div>
-      <Input autoComplete="email" error={error ?? undefined} label="Email address" onChange={(event) => { setEmail(event.target.value); setError(null) }} required type="email" value={email} />
-      <Input autoComplete="current-password" label="Password" minLength={10} onChange={(event) => { setPassword(event.target.value); setError(null) }} required type="password" value={password} />
+      <Input autoComplete="email" label="Email address" onChange={(event) => { setEmail(event.target.value); setFormError(null) }} required type="email" value={email} />
+      <Input autoComplete="current-password" label="Password" minLength={10} onChange={(event) => { setPassword(event.target.value); setFormError(null) }} required type="password" value={password} />
       <Link className="auth-forgot-link" href="/forgot-password">Forgot password?</Link>
       <Button pending={isSubmitting} type="submit">Sign in</Button>
       <p className="auth-alternate">New to Jabso? <Link href={getAuthRoute('/sign-up', callbackURL)}>Create an account</Link></p>
