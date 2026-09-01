@@ -61,6 +61,7 @@ The root and `apps/AGENTS.md` instructions also apply here.
 - Production React Server Component errors hide their cause. Reproduce them in development and inspect the upstream API response before changing UI error handling.
 - Keep redirects server-side where possible and avoid full-page client auth gates.
 - Give every sign-out control an explicit `/sign-in` redirect and refresh server state after revoking the session.
+- Keep credential verification, password reset, and authentication rate limits in Better Auth. Use database-backed limits in serverless deployments, return account-neutral reset responses, never log auth tokens or full action URLs, and dispatch transactional email through the approved server-only adapter.
 - Jabso owns the Personal, Team, or Organization choice after sign-up; do not insert a provider-owned organization task before onboarding.
 - Keep sign-in and sign-up on explicit routes. Successful sign-up must transition through a visible loading state before `/onboarding`; never leave the auth shell blank while session state settles.
 - Maintain `app/icon.svg` and a working `/favicon.ico` response.
