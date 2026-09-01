@@ -61,6 +61,7 @@
         "BETTER_AUTH_TRUSTED_ORIGINS",
         "BETTER_AUTH_URL",
         "JABSO_API_URL",
+        "JABSO_AUTH_EMAIL_FROM",
         "JABSO_DATABASE_URL",
         "JABSO_DASHBOARD_TOKEN",
         "JABSO_GITHUB_OAUTH_CLIENT_ID",
@@ -68,7 +69,8 @@
         "JABSO_PROJECT_ID",
         "JABSO_PROJECT_KEY",
         "NEXT_PUBLIC_APP_VERSION",
-        "NEXT_PUBLIC_JABSO_DSN"
+        "NEXT_PUBLIC_JABSO_DSN",
+        "RESEND_API_KEY"
       ]
     },
     "dev": {
