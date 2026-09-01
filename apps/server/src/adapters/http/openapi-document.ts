@@ -70,7 +70,7 @@ export const openApiDocument: OpenAPIV3.Document = {
     { name: 'Ingestion', description: 'Sentry-compatible event ingestion.' },
     { name: 'Projects', description: 'Dashboard project creation, listing, and removal.' },
     { name: 'GitHub', description: 'Workspace-scoped GitHub App installations and repository discovery.' },
-    { name: 'Workspaces', description: 'Internal Clerk identity to Jabso workspace resolution.' },
+    { name: 'Workspaces', description: 'Authenticated identity to internal Jabso workspace resolution.' },
     { name: 'Issues', description: 'Issue search, detail, facets, and status workflow.' },
     { name: 'Releases', description: 'Release visibility and source-map symbolication.' },
   ],

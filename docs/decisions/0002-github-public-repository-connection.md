@@ -4,7 +4,7 @@
 
 ## Context
 
-Jabso needs repository identity and an optional monorepo root so future release, source context, and MCP features can map an issue back to code. Reusing the Clerk sign-in token with GitHub's broad `repo` scope would grant access to every private repository available to the owner, which is wider than this feature requires.
+Jabso needs repository identity and an optional monorepo root so future release, source context, and MCP features can map an issue back to code. Reusing the sign-in OAuth token with GitHub's broad `repo` scope would grant access to every private repository available to the owner, which is wider than this feature requires.
 
 ## Decision
 
@@ -23,7 +23,7 @@ Connections remain while a project is soft-deleted and are removed if the projec
 
 ## Rejected alternatives
 
-- Clerk's GitHub OAuth token with the classic `repo` scope was rejected because it grants broad private-repository access.
+- The sign-in GitHub OAuth token with the classic `repo` scope was rejected because it grants broad private-repository access.
 - Accepting a repository URL directly from the browser was rejected because it would allow unverified metadata to enter the project boundary.
 - A personal access token was rejected because Jabso would have to collect and protect a long-lived credential.
 

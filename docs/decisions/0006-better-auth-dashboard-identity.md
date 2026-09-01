@@ -2,7 +2,7 @@
 
 ## Context
 
-Clerk's hosted script and provider-owned UI repeatedly failed on Jabso's production domain and constrained form, validation, loading, and organization flows. Jabso already keeps product authorization behind an internal workspace boundary, so changing the identity provider does not require changing collector, DSN, GitHub App, or MCP authorization.
+The previous hosted identity integration repeatedly failed on Jabso's production domain and constrained form, validation, loading, and organization flows. Jabso already keeps product authorization behind an internal workspace boundary, so changing the identity provider does not require changing collector, DSN, GitHub App, or MCP authorization.
 
 ## Decision
 
@@ -10,12 +10,12 @@ Jabso uses Better Auth with its Drizzle adapter, PostgreSQL session storage, ema
 
 The GitHub OAuth provider proves user identity only. Repository discovery continues to use a separate, workspace-bound GitHub App installation. MCP continues to use its own scoped bearer credentials.
 
-Existing Clerk IDs are not claimed automatically. A reviewed operator may relink exactly one legacy workspace with `pnpm --filter @jabso/db db:relink-workspace -- --from=<old-external-id> --to=<new-external-id>` after verifying both identities.
+Existing external identity IDs are not claimed automatically. A reviewed operator may relink exactly one legacy workspace with `pnpm --filter @jabso/db db:relink-workspace -- --from=<old-external-id> --to=<new-external-id>` after verifying both identities.
 
 ## Consequences
 
 - Jabso controls authentication markup, validation, loading, redirects, and session expiry behavior.
 - The web deployment now needs database access because the Better Auth route runs in Next.js.
 - Better Auth schema migration `0009` must run before the new web deployment receives traffic.
-- Existing Clerk sessions, users, and organizations are not portable; users authenticate again and legacy workspaces require explicit relinking.
+- Previous sessions, users, and organizations are not portable; users authenticate again and legacy workspaces require explicit relinking.
 - Email verification, password reset, and shared serverless rate limits are defined by [0007](./0007-auth-email-and-rate-limits.md).

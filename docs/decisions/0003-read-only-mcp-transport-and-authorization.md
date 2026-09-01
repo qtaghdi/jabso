@@ -2,7 +2,7 @@
 
 ## Context
 
-Jabso already exposes bounded project, issue, event, and release queries through Boundra domain implementations. Coding agents need the same safe debugging context without receiving the dashboard credential, a Clerk browser session, or a public ingestion DSN. The initial MCP surface is read-only and must work with Jabso's serverless deployment.
+Jabso already exposes bounded project, issue, event, and release queries through Boundra domain implementations. Coding agents need the same safe debugging context without receiving the dashboard credential, a browser identity session, or a public ingestion DSN. The initial MCP surface is read-only and must work with Jabso's serverless deployment.
 
 ## Decision
 
@@ -10,7 +10,7 @@ Phase 4 adds a Streamable HTTP endpoint at `/mcp` to `apps/server`. Fastify owns
 
 The first deployment is stateless and returns JSON responses. It does not require resumable sessions, server notifications, prompts, resources, or a second deployable application. MCP protocol code remains isolated under `apps/server/src/adapters/mcp` so it can be extracted later if independent scaling is measured.
 
-An MCP connection belongs to one internal workspace and an explicit allowlist of one or more projects. A new project is never added to an existing connection automatically. Its bearer credential is generated from at least 32 random bytes, shown once, and stored only as a SHA-256 hash plus a non-secret display prefix. The public DSN, global dashboard token, Clerk token, and source-map administrator token cannot authenticate MCP.
+An MCP connection belongs to one internal workspace and an explicit allowlist of one or more projects. A new project is never added to an existing connection automatically. Its bearer credential is generated from at least 32 random bytes, shown once, and stored only as a SHA-256 hash plus a non-secret display prefix. The public DSN, global dashboard token, browser session token, and source-map administrator token cannot authenticate MCP.
 
 The first tools are:
 
@@ -40,7 +40,7 @@ Audit rows are retained for 30 days. The store performs a bounded workspace-scop
 - A separate MCP service was rejected for Phase 4 because it would duplicate deployment configuration and database adapters before scaling requires it.
 - Reusing the DSN key was rejected because it is intentionally public and authorizes ingestion only.
 - Reusing `JABSO_DASHBOARD_TOKEN` was rejected because it is an application-to-application credential with access to every workspace.
-- Reusing a Clerk session was rejected because MCP clients are not browser sessions and the MCP lifecycle must not depend on the dashboard identity provider.
+- Reusing a dashboard session was rejected because MCP clients are not browser sessions and the MCP lifecycle must not depend on the dashboard identity provider.
 - Direct SQL in tools was rejected because it would fork validation, privacy, and workspace authorization from the existing domain query path.
 - Write tools were deferred until a separate product, authorization, and confirmation design is approved.
 
