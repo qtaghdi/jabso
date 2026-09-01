@@ -12,6 +12,8 @@ export const getAuthErrorMessage = (
   fallback: string,
 ) => error?.status === 429
   ? 'Too many attempts. Wait a few minutes and try again.'
+  : error?.status && error.status >= 500
+    ? fallback
   : error?.message ?? fallback
 
 export const rememberPendingEmail = (email: string) => {
