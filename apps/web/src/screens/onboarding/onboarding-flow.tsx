@@ -54,11 +54,9 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
       const result = await authClient.organization.setActive({ organizationId: null })
       if (result.error) throw new Error(result.error.message)
       await provision('personal')
-      router.replace('/')
-      router.refresh()
+      window.location.replace('/')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create your workspace')
-    } finally {
       setIsSubmitting(false)
     }
   }
@@ -81,11 +79,9 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
         if (activated.error) throw new Error(activated.error.message)
       }
       await provision(kind, workspaceName)
-      router.replace('/')
-      router.refresh()
+      window.location.replace('/')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create the workspace')
-    } finally {
       setIsSubmitting(false)
     }
   }

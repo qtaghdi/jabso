@@ -53,9 +53,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const { data: organization, isPending: isOrganizationPending } = authClient.useActiveOrganization()
   const { data: organizations, isPending: areOrganizationsPending } = authClient.useListOrganizations()
-  const { data: activeRole } = authClient.useActiveMemberRole()
   const orgId = session?.session.activeOrganizationId ?? null
-  const orgRole = activeRole?.role ?? null
+  const orgRole = organization?.id === orgId
+    ? organization.members.find((member) => member.userId === session?.user.id)?.role ?? null
+    : null
   const isLoaded = !isSessionPending && !isOrganizationPending && !areOrganizationsPending
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
