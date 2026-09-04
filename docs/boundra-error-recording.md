@@ -16,10 +16,10 @@ Jabso는 Boundra를 사용하면서 Boundra 자체의 문제도 실전 환경에
 
 1. Boundra diagnostics never call the public event ingestion endpoint.
 2. Diagnostics never pass through the same failing Boundra contract.
-3. The recorder accepts a minimal sink adapter. The current server adapter writes NDJSON locally; a database sink is still pending.
+3. The recorder accepts a minimal sink adapter. The server writes directly to PostgreSQL without using the public ingestion contract.
 4. A process-local recursion guard drops nested diagnostic attempts after logging one line to stderr.
-5. Local development writes `.jabso-diagnostics/boundra.ndjson`; when a database sink is added, this file may remain its local fallback.
-6. Production fallback behavior must match the selected deployment runtime; ephemeral local files are not considered durable storage.
+5. Local development falls back to the permission-restricted `.jabso-diagnostics/boundra.ndjson` file if PostgreSQL is unavailable.
+6. Vercel falls back to one safe structured runtime-log line. Ephemeral function files are not used as durable storage.
 
 ## Safe diagnostic shape
 
@@ -74,7 +74,7 @@ internal_diagnostics
 └── occurred_at timestamptz
 ```
 
-The `internal_diagnostics` table exists in the current Drizzle schema and is intentionally separate from customer `events` and `issues`. Internal diagnostics do not affect issue counts, alerts, quotas, or retention calculations. The server does not yet use this table as its primary sink.
+The `internal_diagnostics` table is intentionally separate from customer `events` and `issues`. Internal diagnostics do not affect issue counts, alerts, or quotas. The server uses it as the primary sink and deletes at most 100 rows older than 30 days after each successful diagnostic write. This bounded opportunistic cleanup avoids an unbounded delete in the failure path; a future scheduled cleanup may supplement it if diagnostic volume grows.
 
 ## CI boundary violations
 
@@ -87,10 +87,10 @@ Current implementation status:
 - [x] permission-restricted local NDJSON sink
 - [x] fallback and recursion tests
 - [x] isolated `internal_diagnostics` schema
-- [ ] direct PostgreSQL sink
-- [ ] deployment-specific durable fallback and retention
+- [x] direct PostgreSQL sink with PostgreSQL JSONB integration coverage
+- [x] deployment-specific fallback and 30-day retention
 
-Direct database persistence should be added before an external deployment needs durable Boundra diagnostics. It must remain outside the failing public ingestion contract.
+PostgreSQL is the durable source of truth. Vercel's structured runtime log and the local NDJSON file are best-effort fallback evidence only, and their availability follows the platform or local filesystem retention policy. All three paths receive only the safe bounded diagnostic shape above.
 
 ## Human-readable issue history
 

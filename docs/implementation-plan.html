@@ -91,7 +91,7 @@
       <h1><span>Jabso</span><br />Implementation Plan</h1>
       <p class="tagline">앱이 내는 잡소리에서 원인을 찾는 개인용 오류 관측 도구. 오류 수집과 issue grouping을 먼저 완성하고, 같은 도메인 서비스를 UI와 MCP가 공유한다.</p>
     </div>
-    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-08-31<br />Status: Phase 4 complete<br />Scope: MVP → MCP</div>
+    <div class="meta">작성일 2026-08-21<br />최종 업데이트 2026-09-04<br />Status: Phase 4 complete<br />Scope: MVP → MCP</div>
   </section>
 
   <h2>현재 위치</h2>
@@ -401,18 +401,18 @@ spikes/
   <div class="note" style="margin-top:16px"><strong>Credential boundary:</strong> MCP는 DSN, <code>JABSO_DASHBOARD_TOKEN</code>, Better Auth session, source-map admin token을 재사용하지 않는다. 새 project는 기존 MCP connection에 자동 추가하지 않는다.</div>
   <p class="small">MCP tool은 DB를 직접 조회하지 않고 Phase 2와 3에서 만든 Boundra query handler를 호출한다. credential·allowlist·audit만 MCP infrastructure store가 담당하며 audit metadata는 30일 뒤 호출 시점의 정리 작업으로 만료된다. 상세 결정은 <code>docs/decisions/0003-read-only-mcp-transport-and-authorization.md</code>에 기록한다.</p>
 
-  <h2><span class="badge done-badge">기반 완료</span><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
+  <h2><span class="badge done-badge">운영 연결 완료</span><span class="badge p0">P0</span>Boundra 자체 오류 기록</h2>
   <div class="decision">
     <strong>재귀 방지 설계:</strong> Boundra runtime/adapter 오류는 일반 Jabso ingestion과 failing contract를 통과하지 않는다. 최소 diagnostic sink가 safe shape를 직접 기록하며 nested attempt는 recursion guard로 차단한다.
   </div>
   <div class="grid-2" style="margin-top:16px">
     <div class="card">
       <h3>현재 구현</h3>
-      <p>safe serialization, 길이 제한, process-local recursion guard, 권한이 제한된 NDJSON sink와 테스트가 구현됐다. <code>internal_diagnostics</code> 스키마도 일반 event와 분리되어 있다.</p>
+      <p>safe serialization, 길이 제한, process-local recursion guard를 거친 진단을 일반 event와 분리된 <code>internal_diagnostics</code>에 직접 저장한다. JSONB 저장과 30일 만료를 PGlite 통합 테스트로 검증한다.</p>
     </div>
     <div class="card">
-      <h3>남은 운영 결정</h3>
-      <p>현재 server recorder의 primary는 <code>.jabso-diagnostics/boundra.ndjson</code>다. 외부 배포 전 DB direct sink와 durable fallback을 연결하고 retention을 정한다.</p>
+      <h3>Fallback과 보존</h3>
+      <p>PostgreSQL 실패 시 Vercel은 safe structured runtime log, 로컬은 권한이 제한된 NDJSON로 fallback한다. 진단은 30일 보존하며 write마다 오래된 행을 최대 100개 정리한다.</p>
     </div>
   </div>
   <ul>
@@ -535,8 +535,9 @@ spikes/
       <tr><td>2. Issue workflow</td><td>완료</td><td>—</td><td>UI에서 오류 조사·상태 관리</td></tr>
       <tr><td>3. Source maps</td><td>완료</td><td>—</td><td>production stack symbolication</td></tr>
       <tr><td>3.5. Workspace auth</td><td>완료</td><td>—</td><td>사용자·조직 workspace 격리</td></tr>
-      <tr><td>Auth hardening follow-up</td><td>Small–Medium</td><td>중간</td><td>email verification, password reset, rate limiting</td></tr>
-      <tr><td>4. Read-only MCP</td><td>Medium</td><td>중간</td><td>agent가 project-scoped 조회</td></tr>
+      <tr><td>Auth hardening follow-up</td><td>완료</td><td>—</td><td>email verification, password reset, rate limiting</td></tr>
+      <tr><td>4. Read-only MCP</td><td>완료</td><td>—</td><td>agent가 project-scoped 조회</td></tr>
+      <tr><td>Operations and retention</td><td>진행 중</td><td>중간</td><td>diagnostic 완료, event·artifact 보존 정책 확정</td></tr>
       <tr><td>Later. Replay</td><td>XL</td><td>높음</td><td>privacy-safe replay 연결</td></tr>
     </tbody>
   </table>

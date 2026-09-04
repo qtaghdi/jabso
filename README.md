@@ -228,7 +228,7 @@ Shared workspace deletion is restricted to organization admins. It permanently d
 
 ## Boundra dogfooding
 
-Jabso is also a real-world Boundra integration. Boundary violations, runtime contract failures, and host-adapter problems are recorded separately from application events through a recursion-guarded diagnostic sink. Diagnostics never include original inputs, secrets, cookies, request bodies, or raw events.
+Jabso is also a real-world Boundra integration. Boundary violations, runtime contract failures, and host-adapter problems are recorded separately from application events through a recursion-guarded diagnostic sink. Server diagnostics use PostgreSQL as the durable primary store with 30-day retention, a safe structured Vercel log fallback, and a permission-restricted local NDJSON fallback. Diagnostics never include original inputs, secrets, cookies, request bodies, or raw events.
 
 - [Boundra diagnostic policy](./docs/boundra-error-recording.md)
 - [Boundra issue reports](./docs/boundra-report/README.md)

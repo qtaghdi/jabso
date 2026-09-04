@@ -1,7 +1,9 @@
 import {
   createDiagnosticRecorder,
   createNdjsonFileSink,
+  type BoundraDiagnostic,
   type DiagnosticInput,
+  type DiagnosticSink,
 } from '@jabso/diagnostics'
 import { BoundraRuntimeError } from 'boundra'
 import { resolve } from 'node:path'
@@ -50,12 +52,51 @@ export const resolveBoundraDiagnosticPath = (
     : resolve(cwd, '.jabso-diagnostics', 'boundra.ndjson')
 }
 
-export const createBoundraErrorRecorder = (path = process.env.JABSO_BOUNDRA_DIAGNOSTIC_PATH) => {
-  const filePath = resolveBoundraDiagnosticPath(path)
+type BoundraFallbackLog = (line: string) => void
+
+export const createBoundraFallbackSink = (options: {
+  path?: string
+  vercel?: string
+  cwd?: string
+  log?: BoundraFallbackLog
+} = {}): DiagnosticSink => {
+  if ((options.vercel ?? process.env.VERCEL) === '1') {
+    const log = options.log ?? console.error
+    return async (diagnostic: BoundraDiagnostic) => {
+      log(JSON.stringify({
+        level: 'error',
+        message: 'Boundra diagnostic database persistence failed',
+        diagnostic,
+      }))
+    }
+  }
+
+  return createNdjsonFileSink(resolveBoundraDiagnosticPath(
+    options.path,
+    options.vercel,
+    options.cwd,
+  ))
+}
+
+export const createBoundraErrorRecorder = (options: {
+  primary?: DiagnosticSink
+  fallback?: DiagnosticSink
+  path?: string
+  vercel?: string
+  cwd?: string
+  log?: BoundraFallbackLog
+} = {}) => {
+  const fallbackSink = createBoundraFallbackSink(options)
   return createDiagnosticRecorder({
-    primary: createNdjsonFileSink(filePath),
-    onDropped: (diagnostic, reason) => {
-      console.error('[jabso:boundra-diagnostic:dropped]', diagnostic.code, reason)
+    primary: options.primary ?? fallbackSink,
+    fallback: options.primary ? options.fallback ?? fallbackSink : options.fallback,
+    onDropped: (diagnostic) => {
+      console.error(JSON.stringify({
+        level: 'error',
+        message: 'Boundra diagnostic dropped',
+        diagnosticId: diagnostic.id,
+        diagnosticCode: diagnostic.code,
+      }))
     },
   })
 }
