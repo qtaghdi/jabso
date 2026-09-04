@@ -1,6 +1,7 @@
 import { BoundraRuntimeError } from 'boundra'
 import { describe, expect, it } from 'vitest'
 import {
+  createBoundraFallbackSink,
   resolveBoundraDiagnosticPath,
   toBoundraDiagnosticInput,
   toBoundraHttpError,
@@ -61,5 +62,35 @@ describe('toBoundraDiagnosticInput', () => {
     expect(resolveBoundraDiagnosticPath(' custom.ndjson ', undefined, '/workspace')).toBe('custom.ndjson')
     expect(resolveBoundraDiagnosticPath(undefined, undefined, '/workspace'))
       .toBe('/workspace/.jabso-diagnostics/boundra.ndjson')
+  })
+
+  it('uses a safe structured runtime log as the Vercel fallback', async () => {
+    const lines: string[] = []
+    const sink = createBoundraFallbackSink({
+      vercel: '1',
+      log: (line) => lines.push(line),
+    })
+
+    await sink({
+      id: 'c721d311-ad3f-4d58-984c-ce7f6cf1ccb2',
+      kind: 'runtime_contract',
+      code: 'RUNTIME-001',
+      message: 'contract rejected input',
+      contract: 'ingest-event',
+      issues: [{ path: ['eventId'], message: 'required' }],
+      boundraVersion: '0.5.0',
+      occurredAt: '2026-09-04T00:00:00.000Z',
+      context: { phase: 'input' },
+    })
+
+    expect(lines).toHaveLength(1)
+    expect(JSON.parse(lines[0] ?? '{}')).toEqual({
+      level: 'error',
+      message: 'Boundra diagnostic database persistence failed',
+      diagnostic: expect.objectContaining({
+        code: 'RUNTIME-001',
+        contract: 'ingest-event',
+      }),
+    })
   })
 })

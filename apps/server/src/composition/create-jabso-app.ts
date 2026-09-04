@@ -48,6 +48,7 @@ import {
 } from '../adapters/http/boundra-diagnostics.js'
 import { readGitHubAppRuntime, type GitHubAppRuntime } from '../adapters/http/github-app-client.js'
 import { registerGitHubAppRoutes } from '../adapters/http/github-app-routes.js'
+import { createPostgresBoundraDiagnosticSink } from '../adapters/persistence/postgres-boundra-diagnostic-sink.js'
 import { createPostgresEventQueryStore } from '../adapters/persistence/postgres-event-query-store.js'
 import { PostgresGitHubInstallationStore } from '../adapters/persistence/postgres-github-installation-store.js'
 import { PostgresIngestEventStore } from '../adapters/persistence/postgres-ingest-event-store.js'
@@ -156,7 +157,9 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
   })
   await app.register(cors, { origin: allowedOrigin })
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' })
-  const recordBoundraError = createBoundraErrorRecorder()
+  const recordBoundraError = createBoundraErrorRecorder({
+    primary: createPostgresBoundraDiagnosticSink(database),
+  })
   const recordMcpBoundraError = async (error: BoundraRuntimeError) => {
     const diagnostic = toBoundraDiagnosticInput(error)
     app.log.error({
