@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jabso Architecture"
+  short_description: "Jabso system boundaries and integration guide"
+  default_prompt: "Use $jabso-architecture to plan or review this Jabso technical change."
