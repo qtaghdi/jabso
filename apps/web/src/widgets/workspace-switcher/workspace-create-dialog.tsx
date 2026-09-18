@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
@@ -11,15 +12,6 @@ type WorkspaceCreateDialogProps = {
   close: () => void
 }
 
-const sharedWorkspaceOptions: Array<{
-  description: string
-  kind: Extract<WorkspaceKind, 'team' | 'organization'>
-  label: string
-}> = [
-  { kind: 'team', label: 'Team', description: 'For a small group sharing projects and errors.' },
-  { kind: 'organization', label: 'Organization', description: 'For multiple teams and managed membership.' },
-]
-
 const WorkspaceIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 24 24">
     <path d="M4 19.5v-12L12 4l8 3.5v12M8 19.5v-7h8v7M8.5 9h.01M12 9h.01M15.5 9h.01" />
@@ -27,11 +19,20 @@ const WorkspaceIcon = () => (
 )
 
 export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => {
+  const { t } = useI18n()
   const [kind, setKind] = useState<Extract<WorkspaceKind, 'team' | 'organization'>>('team')
   const [name, setName] = useState('')
   const [createdOrganizationId, setCreatedOrganizationId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const sharedWorkspaceOptions: Array<{
+    description: string
+    kind: Extract<WorkspaceKind, 'team' | 'organization'>
+    label: string
+  }> = [
+    { kind: 'team', label: t('workspace.typeTeam'), description: t('workspace.typeTeamDescription') },
+    { kind: 'organization', label: t('workspace.typeOrganization'), description: t('workspace.typeOrganizationDescription') },
+  ]
 
   const provision = async (organizationName: string) => {
     const response = await fetch('/api/onboarding', {
@@ -41,7 +42,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
     })
     if (!response.ok) {
       const result = await response.json().catch(() => null) as { error?: string } | null
-      throw new Error(result?.error ?? 'Could not create the workspace')
+      throw new Error(result?.error ?? t('workspace.createError'))
     }
   }
 
@@ -49,7 +50,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
     event.preventDefault()
     const workspaceName = name.trim()
     if (!workspaceName) {
-      setError('Enter a workspace name')
+      setError(t('workspace.enterName'))
       return
     }
     setError(null)
@@ -63,7 +64,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
           slug: `${slugBase}-${crypto.randomUUID().slice(0, 8)}`,
         })
         if (organization.error || !organization.data) {
-          throw new Error(organization.error?.message ?? 'Could not create the workspace')
+          throw new Error(organization.error?.message ?? t('workspace.createError'))
         }
         organizationId = organization.data.id
         setCreatedOrganizationId(organizationId)
@@ -74,7 +75,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
       close()
       window.location.replace(new URL('/', window.location.href).href)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not create the workspace')
+      setError(caught instanceof Error ? caught.message : t('workspace.createError'))
     } finally {
       setIsSubmitting(false)
     }
@@ -83,14 +84,14 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
   return (
     <Dialog
       close={close}
-      description="Create a shared error inbox. You can invite members after setup."
+      description={t('workspace.createDescription')}
       icon={<WorkspaceIcon />}
       size="sm"
-      title="Create a workspace"
+      title={t('workspace.create')}
     >
       <form className="workspace-create-form" onSubmit={createWorkspace}>
         <fieldset className="workspace-kind-fieldset">
-          <legend>Workspace type</legend>
+          <legend>{t('workspace.type')}</legend>
           <div className="workspace-kind-options">
             {sharedWorkspaceOptions.map((option) => (
               <label
@@ -112,21 +113,21 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
         </fieldset>
         <Input
           autoComplete="organization"
-          autoFocus
           disabled={Boolean(createdOrganizationId)}
           error={error ?? undefined}
-          label="Workspace name"
+          label={t('workspace.name')}
           maxLength={80}
+          name="workspace-name"
           onChange={(event) => {
             setName(event.target.value)
             if (error) setError(null)
           }}
-          placeholder={kind === 'team' ? 'Acme engineering' : 'Acme, Inc.'}
+          placeholder={t(kind === 'team' ? 'workspace.teamPlaceholder' : 'workspace.organizationPlaceholder')}
           value={name}
         />
         <footer className="ui-dialog-actions">
-          <Button onClick={close} type="button" variant="ghost">Cancel</Button>
-          <Button pending={isSubmitting} type="submit">Create workspace</Button>
+          <Button onClick={close} type="button" variant="ghost">{t('common.cancel')}</Button>
+          <Button pending={isSubmitting} type="submit">{t('workspace.create')}</Button>
         </footer>
       </form>
     </Dialog>

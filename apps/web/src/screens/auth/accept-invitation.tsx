@@ -7,6 +7,7 @@ import { AuthFormFallback } from 'src/screens/auth/auth-form-fallback'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
 import { getAuthRoute } from 'src/shared/auth/auth-redirect'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button, buttonClassName } from 'src/shared/ui/button'
 
 type AcceptInvitationProps = {
@@ -14,6 +15,7 @@ type AcceptInvitationProps = {
 }
 
 export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [organizationName, setOrganizationName] = useState<string | null>(null)
@@ -28,14 +30,14 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
       const result = await authClient.organization.getInvitation({ query: { id: invitationId } })
       if (!active) return
       if (result.error) {
-        setError(getAuthErrorMessage(result.error, 'This invitation is invalid or has expired'))
+        setError(getAuthErrorMessage(result.error, t('auth.invitationExpired'), t('auth.rateLimited')))
         return
       }
       setOrganizationName(result.data.organizationName)
     }
     void loadInvitation()
     return () => { active = false }
-  }, [invitationId, session])
+  }, [invitationId, session, t])
 
   const accept = async () => {
     if (!invitationId || isLoading) return
@@ -43,7 +45,7 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
     setIsLoading(true)
     const result = await authClient.organization.acceptInvitation({ invitationId })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not accept this invitation'))
+      setError(getAuthErrorMessage(result.error, t('auth.invitationUnavailable'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }
@@ -51,7 +53,7 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
       organizationId: result.data.member.organizationId,
     })
     if (activeResult.error) {
-      setError(getAuthErrorMessage(activeResult.error, 'The invitation was accepted, but the workspace could not be opened'))
+      setError(getAuthErrorMessage(activeResult.error, t('auth.acceptedOpenError'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }
@@ -59,17 +61,17 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
     router.refresh()
   }
 
-  if (isSessionPending) return <AuthFormFallback label="Loading invitation" />
+  if (isSessionPending) return <AuthFormFallback label={t('auth.loadingInvitation')} />
 
   if (!session) {
     return (
       <div className="auth-form">
         <div className="auth-callout">
-          <strong>Sign in to continue</strong>
-          <p>Use the invited email address so Jabso can verify that this invitation belongs to you.</p>
+          <strong>{t('auth.signInContinue')}</strong>
+          <p>{t('auth.signInContinueDescription')}</p>
         </div>
-        <Link className={buttonClassName()} href={getAuthRoute('/sign-in', callbackURL)}>Sign in</Link>
-        <Link className={buttonClassName('secondary')} href={getAuthRoute('/sign-up', callbackURL)}>Create an account</Link>
+        <Link className={buttonClassName()} href={getAuthRoute('/sign-in', callbackURL)}>{t('auth.signIn')}</Link>
+        <Link className={buttonClassName('secondary')} href={getAuthRoute('/sign-up', callbackURL)}>{t('auth.createAccount')}</Link>
       </div>
     )
   }
@@ -77,11 +79,11 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
   return (
     <div className="auth-form">
       <div className={['auth-callout', error && 'auth-callout-error'].filter(Boolean).join(' ')} role={error ? 'alert' : 'status'}>
-        <strong>{error ? 'Invitation unavailable' : organizationName ? `Join ${organizationName}` : 'Workspace invitation'}</strong>
-        <p>{error ?? `Accept as ${session.user.email}. You can switch workspaces at any time.`}</p>
+        <strong>{error ? t('auth.invitationUnavailable') : organizationName ? t('auth.joinWorkspace', { name: organizationName }) : t('auth.workspaceInvitation')}</strong>
+        <p>{error ?? t('auth.acceptAs', { email: session.user.email })}</p>
       </div>
-      <Button disabled={Boolean(error)} onClick={accept} pending={isLoading} type="button">Accept invitation</Button>
-      <Link className="auth-forgot-link" href="/">Return to Jabso</Link>
+      <Button disabled={Boolean(error)} onClick={accept} pending={isLoading} type="button">{t('auth.acceptInvitation')}</Button>
+      <Link className="auth-forgot-link" href="/">{t('auth.returnToJabso')}</Link>
     </div>
   )
 }

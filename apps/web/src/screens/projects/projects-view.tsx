@@ -10,6 +10,7 @@ import { GitHubInstallationsPanel } from 'src/screens/projects/github-installati
 import { AlertDialog } from 'src/shared/ui/alert-dialog'
 import { Button } from 'src/shared/ui/button'
 import { Select } from 'src/shared/ui/select'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import {
   dashboardQueryKeys,
   deleteDashboardProject,
@@ -39,6 +40,7 @@ const emptyIssuesResponse = (activeProject: DashboardProject | null): IssuesResp
 })
 
 export const ProjectsView = ({ canManage, githubResult, initialData, initialGitHubData }: ProjectsViewProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const queryClient = useQueryClient()
   const projectsQuery = useQuery({ ...projectsQueryOptions(), initialData })
@@ -83,30 +85,30 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
   return (
     <>
       <header className="page-header compact-page-header">
-        <h1>Projects</h1>
-        <p>Create an isolated issue inbox and DSN for each application.</p>
+        <h1>{t('projects.title')}</h1>
+        <p>{t('projects.description')}</p>
       </header>
       <section className="project-create-section" aria-labelledby="create-project-title">
         <div>
-          <h2 id="create-project-title">New project</h2>
-          <p>Create a standalone DSN or connect a repository selected for this workspace.</p>
+          <h2 id="create-project-title">{t('projects.new')}</h2>
+          <p>{t('projects.newDescription')}</p>
         </div>
         <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
-          Create project
+          {t('projects.create')}
         </Button>
       </section>
       <GitHubInstallationsPanel canManage={canManage} connectionResult={githubResult} initialData={initialGitHubData} />
       <section className="project-list-section" aria-labelledby="project-list-title">
         <div className="section-heading-row">
           <div className="project-list-title-group">
-            <h2 id="project-list-title">Connected projects</h2>
-            <span>{items.length} {items.length === 1 ? 'project' : 'projects'}</span>
+            <h2 id="project-list-title">{t('projects.connected')}</h2>
+            <span>{t('projects.projectCount', { count: items.length })}</span>
           </div>
           {items.length > 0 ? <Select
             className="project-picker"
             controlSize="sm"
             disabled={selectMutation.isPending || deleteMutation.isPending}
-            label="Active project"
+            label={t('projects.activeProject')}
             onChange={(event) => selectMutation.mutate(event.target.value)}
             value={items.find((project) => project.active)?.dsnProjectId ?? ''}
           >
@@ -118,15 +120,15 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
           <div className="project-list-loading" role="status">
             <span className="skeleton-block" />
             <span className="skeleton-block" />
-            <span className="sr-only">Loading projects</span>
+            <span className="sr-only">{t('projects.loading')}</span>
           </div>
         ) : projectsQuery.isError ? (
           <div className="inline-error" role="alert">
             <p>{projectsQuery.error.message}</p>
-            <Button onClick={() => projectsQuery.refetch()} variant="secondary">Try again</Button>
+            <Button onClick={() => projectsQuery.refetch()} variant="secondary">{t('common.tryAgain')}</Button>
           </div>
         ) : items.length === 0 ? (
-          <p className="muted-copy">No projects are connected yet.</p>
+          <p className="muted-copy">{t('projects.empty')}</p>
         ) : (
           <div className="project-list">
             {items.map((project) => {
@@ -138,13 +140,13 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
                       <code>{project.slug}</code>
                       {project.repository ? <a className="project-repository-link" href={project.repository.url} rel="noreferrer" target="_blank">
                         {project.repository.owner}/{project.repository.name}{project.repository.rootPath ? `/${project.repository.rootPath}` : ''}
-                      </a> : <span className="project-repository-empty">No repository connected</span>}
+                      </a> : <span className="project-repository-empty">{t('projects.noRepository')}</span>}
                     </div>
-                    {project.active ? <span className="active-project-label">Active</span> : null}
+                    {project.active ? <span className="active-project-label">{t('common.active')}</span> : null}
                   </div>
                   <div className="project-dsn">
                     <span><span>DSN</span><code>{project.dsn}</code></span>
-                    <CopyCodeButton iconOnly label={`Copy ${project.name} DSN`} value={project.dsn} />
+                    <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('projects.copyDsn', { name: project.name })} value={project.dsn} />
                   </div>
                   <div className="project-row-actions">
                     <Button
@@ -154,7 +156,7 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
                       type="button"
                       variant="secondary"
                     >
-                      {project.repository ? 'Manage GitHub' : 'Connect GitHub'}
+                      {project.repository ? t('projects.manageGitHub') : t('projects.connectGitHub')}
                     </Button>
                     <Button
                       className="project-delete-button"
@@ -166,7 +168,7 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
                       type="button"
                       variant="ghost"
                     >
-                      Delete
+                      {t('common.delete')}
                     </Button>
                   </div>
                 </article>
@@ -181,10 +183,10 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
           if (!deleteMutation.isPending) setDeleteProject(null)
         }}
         confirm={() => deleteMutation.mutate(deleteProject.id)}
-        description={`New events for ${deleteProject.name} will be rejected. Existing issue data is retained for recovery.`}
+        description={t('projects.deleteDescription', { name: deleteProject.name })}
         error={deleteMutation.error?.message}
         pending={deleteMutation.isPending}
-        title={`Delete ${deleteProject.name}?`}
+        title={t('projects.deleteTitle', { name: deleteProject.name })}
       /> : null}
       {repositoryProject ? <RepositoryConnectionDialog close={() => setRepositoryProject(null)} key={repositoryProject.id} project={repositoryProject} /> : null}
     </>

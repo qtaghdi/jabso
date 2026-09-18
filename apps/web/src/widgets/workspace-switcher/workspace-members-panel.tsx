@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { AlertDialog } from 'src/shared/ui/alert-dialog'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
@@ -48,6 +49,7 @@ export const WorkspaceMembersPanel = ({
   currentUserId,
   organizationId,
 }: WorkspaceMembersPanelProps) => {
+  const { t } = useI18n()
   const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [invitations, setInvitations] = useState<WorkspaceInvitation[]>([])
   const [email, setEmail] = useState('')
@@ -64,14 +66,14 @@ export const WorkspaceMembersPanel = ({
       authClient.organization.listInvitations({ query: { organizationId } }),
     ])
     if (membersResult.error || invitationsResult.error) {
-      setError(getAuthErrorMessage(membersResult.error ?? invitationsResult.error, 'Could not load workspace access'))
+      setError(getAuthErrorMessage(membersResult.error ?? invitationsResult.error, t('workspace.couldNotLoadAccess'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }
     setMembers(membersResult.data.members as WorkspaceMember[])
     setInvitations((invitationsResult.data as WorkspaceInvitation[]).filter((invitation) => invitation.status === 'pending'))
     setIsLoading(false)
-  }, [organizationId])
+  }, [organizationId, t])
 
   useEffect(() => {
     void loadAccess()
@@ -81,7 +83,7 @@ export const WorkspaceMembersPanel = ({
     event.preventDefault()
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail) {
-      setError('Enter an email address')
+      setError(t('workspace.enterEmail'))
       return
     }
     setError(null)
@@ -92,7 +94,7 @@ export const WorkspaceMembersPanel = ({
       role: inviteRole,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not send the invitation'))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotSendInvitation'), t('auth.rateLimited')))
       setPendingAction(null)
       return
     }
@@ -111,7 +113,7 @@ export const WorkspaceMembersPanel = ({
       role,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not update the member role'))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotUpdateRole'), t('auth.rateLimited')))
     } else {
       setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role } : item))
     }
@@ -127,7 +129,7 @@ export const WorkspaceMembersPanel = ({
       organizationId,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not remove the member'))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotRemoveMember'), t('auth.rateLimited')))
       setPendingAction(null)
       return
     }
@@ -142,7 +144,7 @@ export const WorkspaceMembersPanel = ({
     setPendingAction(`cancel:${invitation.id}`)
     const result = await authClient.organization.cancelInvitation({ invitationId: invitation.id })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not cancel the invitation'))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotCancelInvitation'), t('auth.rateLimited')))
     } else {
       setInvitations((current) => current.filter((item) => item.id !== invitation.id))
     }
@@ -157,14 +159,15 @@ export const WorkspaceMembersPanel = ({
   return (
     <section className="workspace-access-section">
       <header className="workspace-settings-section-heading">
-        <div><strong>Members</strong><p>Invite people and control their access to this workspace.</p></div>
+        <div><strong>{t('workspace.members')}</strong><p>{t('workspace.membersDescription')}</p></div>
         {!isLoading ? <span>{members.length}</span> : null}
       </header>
 
       <form className="workspace-invite-form" onSubmit={invite}>
         <Input
           autoComplete="email"
-          label="Email address"
+          label={t('workspace.email')}
+          name="member-email"
           onChange={(event) => { setEmail(event.target.value); setError(null) }}
           placeholder="teammate@example.com"
           type="email"
@@ -173,19 +176,19 @@ export const WorkspaceMembersPanel = ({
         <Select
           controlSize="md"
           disabled={pendingAction === 'invite'}
-          label="Role"
+          label={t('workspace.role')}
           onChange={(event) => setInviteRole(event.target.value as 'admin' | 'member')}
           value={inviteRole}
         >
-          <option value="member">Member</option>
-          {currentRole === 'owner' ? <option value="admin">Admin</option> : null}
+          <option value="member">{t('common.member')}</option>
+          {currentRole === 'owner' ? <option value="admin">{t('common.admin')}</option> : null}
         </Select>
-        <Button pending={pendingAction === 'invite'} type="submit">Send invite</Button>
+        <Button pending={pendingAction === 'invite'} type="submit">{t('workspace.invite')}</Button>
       </form>
 
       {error ? <p className="form-error workspace-access-error" role="alert">{error}</p> : null}
       {isLoading ? (
-        <div aria-label="Loading workspace members" className="workspace-member-loading">
+        <div aria-label={t('workspace.loadingMembers')} className="workspace-member-loading">
           <span /><span /><span />
         </div>
       ) : (
@@ -197,23 +200,23 @@ export const WorkspaceMembersPanel = ({
               <div className="workspace-member-row" key={member.id}>
                 <span className="workspace-member-avatar" aria-hidden="true">{getInitials(member.user.name, member.user.email)}</span>
                 <span className="workspace-member-identity">
-                  <strong>{member.user.name || member.user.email}{member.userId === currentUserId ? ' (you)' : ''}</strong>
+                  <strong>{member.user.name || member.user.email}{member.userId === currentUserId ? ` (${t('workspace.you')})` : ''}</strong>
                   <small>{member.user.email}</small>
                 </span>
                 {member.role === 'owner' ? (
-                  <span className="workspace-role-label">Owner</span>
+                  <span className="workspace-role-label">{t('common.owner')}</span>
                 ) : (
                   <Select
                     className="workspace-role-select"
                     controlSize="sm"
                     disabled={!canManage || isRolePending}
                     hideLabel
-                    label={`Role for ${member.user.name || member.user.email}`}
+                    label={t('workspace.roleFor', { name: member.user.name || member.user.email })}
                     onChange={(event) => void updateRole(member, event.target.value as 'admin' | 'member')}
                     value={member.role}
                   >
-                    <option value="member">Member</option>
-                    {currentRole === 'owner' || member.role === 'admin' ? <option value="admin">Admin</option> : null}
+                    <option value="member">{t('common.member')}</option>
+                    {currentRole === 'owner' || member.role === 'admin' ? <option value="admin">{t('common.admin')}</option> : null}
                   </Select>
                 )}
                 <Button
@@ -223,7 +226,7 @@ export const WorkspaceMembersPanel = ({
                   type="button"
                   variant="ghost"
                 >
-                  Remove
+                  {t('workspace.remove')}
                 </Button>
               </div>
             )
@@ -233,10 +236,10 @@ export const WorkspaceMembersPanel = ({
 
       {invitations.length > 0 ? (
         <div className="workspace-invitation-list">
-          <strong>Pending invitations</strong>
+          <strong>{t('workspace.pendingInvitations')}</strong>
           {invitations.map((invitation) => (
             <div className="workspace-invitation-row" key={invitation.id}>
-              <span><strong>{invitation.email}</strong><small>{invitation.role === 'admin' ? 'Admin' : 'Member'}</small></span>
+              <span><strong>{invitation.email}</strong><small>{invitation.role === 'admin' ? t('common.admin') : t('common.member')}</small></span>
               <Button
                 disabled={Boolean(pendingAction)}
                 onClick={() => void cancelInvitation(invitation)}
@@ -244,7 +247,7 @@ export const WorkspaceMembersPanel = ({
                 type="button"
                 variant="ghost"
               >
-                Cancel invite
+                {t('workspace.cancelInvite')}
               </Button>
             </div>
           ))}
@@ -255,10 +258,10 @@ export const WorkspaceMembersPanel = ({
         <AlertDialog
           cancel={() => { if (!pendingAction) setRemoveTarget(null) }}
           confirm={removeMember}
-          confirmLabel="Remove member"
-          description={`${removeTarget.user.name || removeTarget.user.email} will immediately lose access to this workspace and its projects.`}
+          confirmLabel={t('workspace.removeMember')}
+          description={t('workspace.removeConfirm', { name: removeTarget.user.name || removeTarget.user.email })}
           pending={pendingAction === `remove:${removeTarget.id}`}
-          title="Remove workspace member?"
+          title={t('workspace.removeTitle')}
         />,
         document.body,
       ) : null}

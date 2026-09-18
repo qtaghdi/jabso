@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
@@ -14,6 +15,7 @@ type ResetPasswordFormProps = {
 }
 
 export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
@@ -24,10 +26,10 @@ export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) 
     return (
       <div className="auth-form">
         <div className="auth-callout auth-callout-error" role="alert">
-          <strong>This reset link is no longer valid</strong>
-          <p>Request a new link to reset your password.</p>
+          <strong>{t('auth.resetInvalidTitle')}</strong>
+          <p>{t('auth.resetInvalidDescription')}</p>
         </div>
-        <Link className="ui-button ui-button-primary" href="/forgot-password">Request another link</Link>
+        <Link className="ui-button ui-button-primary" href="/forgot-password">{t('auth.requestAnotherLink')}</Link>
       </div>
     )
   }
@@ -36,18 +38,18 @@ export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) 
     event.preventDefault()
     setError(null)
     if (password.length < 10) {
-      setError('Use a password with at least 10 characters')
+      setError(t('auth.passwordTooShort'))
       return
     }
     if (password !== confirmation) {
-      setError('Passwords do not match')
+      setError(t('auth.passwordMismatch'))
       return
     }
 
     setIsSubmitting(true)
     const result = await authClient.resetPassword({ newPassword: password, token })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not reset your password'))
+      setError(getAuthErrorMessage(result.error, t('auth.resetError'), t('auth.rateLimited')))
       setIsSubmitting(false)
       return
     }
@@ -57,9 +59,9 @@ export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) 
 
   return (
     <form className="auth-form" noValidate onSubmit={resetPassword}>
-      <Input autoComplete="new-password" hint="Use at least 10 characters." label="New password" minLength={10} onChange={(event) => { setPassword(event.target.value); setError(null) }} required type="password" value={password} />
-      <Input autoComplete="new-password" error={error ?? undefined} label="Confirm password" minLength={10} onChange={(event) => { setConfirmation(event.target.value); setError(null) }} required type="password" value={confirmation} />
-      <Button pending={isSubmitting} type="submit">Set new password</Button>
+      <Input autoComplete="new-password" hint={t('auth.minPassword')} label={t('auth.newPassword')} minLength={10} name="new-password" onChange={(event) => { setPassword(event.target.value); setError(null) }} required type="password" value={password} />
+      <Input autoComplete="new-password" error={error ?? undefined} label={t('auth.confirmPassword')} minLength={10} name="confirm-password" onChange={(event) => { setConfirmation(event.target.value); setError(null) }} required type="password" value={confirmation} />
+      <Button pending={isSubmitting} type="submit">{t('auth.setPasswordSubmit')}</Button>
     </form>
   )
 }

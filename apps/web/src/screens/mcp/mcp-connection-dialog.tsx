@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
 import { Input } from 'src/shared/ui/input'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 
 type ProjectOption = {
   id: string
@@ -34,11 +35,12 @@ export const McpConnectionDialog = ({
   projects,
   submit,
 }: McpConnectionDialogProps) => {
+  const { t } = useI18n()
   const [name, setName] = useState('')
   const [projectIds, setProjectIds] = useState<string[]>([])
   const validationError = !name.trim()
-    ? 'Enter a connection name.'
-    : projectIds.length === 0 ? 'Choose at least one project.' : undefined
+    ? t('mcp.validationName')
+    : projectIds.length === 0 ? t('mcp.validationProject') : undefined
 
   const submitForm = (event: FormEvent) => {
     event.preventDefault()
@@ -49,24 +51,24 @@ export const McpConnectionDialog = ({
   return (
     <Dialog
       close={close}
-      description="Choose exactly which projects an AI client may inspect. This connection cannot modify Jabso data."
-      eyebrow="Read-only access"
+      description={t('mcp.createDescription')}
+      eyebrow={t('mcp.readOnly')}
       icon={<ConnectionIcon />}
-      title="Create MCP connection"
+      title={t('mcp.create')}
     >
       <form className="mcp-connection-form" onSubmit={submitForm}>
         <Input
           autoComplete="off"
           data-dialog-initial-focus
           disabled={pending}
-          label="Connection name"
+          label={t('mcp.connectionName')}
           maxLength={80}
           onChange={(event) => setName(event.target.value)}
           placeholder="Local Codex"
           value={name}
         />
         <fieldset className="mcp-project-fieldset" disabled={pending}>
-          <legend>Allowed projects</legend>
+          <legend>{t('mcp.allowedProjects')}</legend>
           <div className="mcp-project-options">
             {projects.map((project) => (
               <label className="mcp-project-option" key={project.id}>
@@ -89,8 +91,8 @@ export const McpConnectionDialog = ({
         </fieldset>
         {error ? <p className="form-error" role="alert">{error}</p> : null}
         <div className="ui-dialog-actions">
-          <Button disabled={pending} onClick={close} type="button" variant="secondary">Cancel</Button>
-          <Button disabled={Boolean(validationError)} pending={pending} type="submit">Create connection</Button>
+          <Button disabled={pending} onClick={close} type="button" variant="secondary">{t('common.cancel')}</Button>
+          <Button disabled={Boolean(validationError)} pending={pending} type="submit">{t('mcp.create')}</Button>
         </div>
       </form>
     </Dialog>

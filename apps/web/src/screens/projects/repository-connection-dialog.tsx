@@ -15,6 +15,7 @@ import {
   githubRepositoriesQueryOptions,
 } from 'src/shared/query/dashboard-query'
 import type { DashboardProject, ProjectsResponse } from 'src/shared/query/dashboard-types'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 
 type RepositoryConnectionDialogProps = {
   close: () => void
@@ -28,6 +29,7 @@ const GitHubIcon = () => (
 )
 
 export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnectionDialogProps) => {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const installationsQuery = useQuery(githubInstallationsQueryOptions())
   const repositoriesQuery = useQuery({
@@ -69,30 +71,30 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
   return (
     <Dialog
       close={closeDialog}
-      description="Choose a repository that this Jabso workspace can access through its GitHub App installations."
-      eyebrow="Repository connection"
+      description={t('projects.connectDescription')}
+      eyebrow={t('projects.repositoryConnection')}
       icon={<GitHubIcon />}
-      title={`Connect ${project.name}`}
+      title={t('projects.connectGitHub') + ` · ${project.name}`}
     >
-      {installationsQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub App installations</span></div> : installationsQuery.isError ? (
-        <div className="inline-error" role="alert"><p>{installationsQuery.error.message}</p><Button onClick={() => installationsQuery.refetch()} variant="secondary">Try again</Button></div>
+      {installationsQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">{t('projects.loadingInstallations')}</span></div> : installationsQuery.isError ? (
+        <div className="inline-error" role="alert"><p>{installationsQuery.error.message}</p><Button onClick={() => installationsQuery.refetch()} variant="secondary">{t('common.tryAgain')}</Button></div>
       ) : !installationsQuery.data.configured ? (
-        <p className="form-error" role="alert">GitHub App credentials are not available on the Jabso server.</p>
-      ) : installationsQuery.data.items.length === 0 ? <GitHubAppEmptyState /> : repositoriesQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">Loading GitHub repositories</span></div> : repositoriesQuery.isError ? (
-        <div className="inline-error" role="alert"><p>{repositoriesQuery.error.message}</p><Button onClick={() => repositoriesQuery.refetch()} variant="secondary">Try again</Button></div>
+        <p className="form-error" role="alert">{t('projects.credentialsMissing')}</p>
+      ) : installationsQuery.data.items.length === 0 ? <GitHubAppEmptyState /> : repositoriesQuery.isPending ? <div className="repository-dialog-loading" role="status"><span className="skeleton-block" /><span className="sr-only">{t('projects.loadingRepositories')}</span></div> : repositoriesQuery.isError ? (
+        <div className="inline-error" role="alert"><p>{repositoriesQuery.error.message}</p><Button onClick={() => repositoriesQuery.refetch()} variant="secondary">{t('common.tryAgain')}</Button></div>
       ) : <form className="repository-connection-form" onSubmit={submit}>
-        <Select label="GitHub repository" name="repository" value={repositoryId} onChange={(event) => setRepositoryId(event.target.value)}>
-          <option value="">Choose a repository</option>
+        <Select label={t('projects.repository')} name="repository" value={repositoryId} onChange={(event) => setRepositoryId(event.target.value)}>
+          <option value="">{t('projects.chooseRepository')}</option>
           {repositoriesQuery.data.items.map((repository) => (
             <option disabled={repository.archived} key={repository.externalId} value={repository.externalId}>
-              {repository.owner}/{repository.name}{repository.archived ? ' (archived)' : ''}
+              {repository.owner}/{repository.name}{repository.archived ? ` (${t('projects.archived')})` : ''}
             </option>
           ))}
         </Select>
         <Input
           autoComplete="off"
-          hint="Optional. Use a relative path without a leading slash."
-          label="Repository root"
+          hint={t('projects.repositoryRootHint')}
+          label={t('projects.repositoryRoot')}
           maxLength={500}
           name="root-path"
           onChange={(event) => setRootPath(event.target.value)}
@@ -102,10 +104,10 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
         {mutationError ? <p className="form-error" role="alert">{mutationError.message}</p> : null}
         <div className="repository-dialog-actions">
           {project.repository ? <Button disabled={connectMutation.isPending} onClick={() => disconnectMutation.mutate(project.id)} pending={disconnectMutation.isPending} type="button" variant="ghost">
-            Disconnect
+            {t('projects.disconnect')}
           </Button> : <span />}
           <Button disabled={!repositoryId || disconnectMutation.isPending} pending={connectMutation.isPending} type="submit">
-            {project.repository ? 'Update connection' : 'Connect repository'}
+            {project.repository ? t('projects.updateConnection') : t('projects.connectRepository')}
           </Button>
         </div>
       </form>}

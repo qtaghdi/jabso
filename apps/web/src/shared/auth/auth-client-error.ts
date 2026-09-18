@@ -10,8 +10,9 @@ export const isEmailNotVerifiedError = (error: AuthClientError | null | undefine
 export const getAuthErrorMessage = (
   error: AuthClientError | null | undefined,
   fallback: string,
+  rateLimitFallback = fallback,
 ) => error?.status === 429
-  ? 'Too many attempts. Wait a few minutes and try again.'
+  ? rateLimitFallback
   : error?.status && error.status >= 500
     ? fallback
   : error?.message ?? fallback

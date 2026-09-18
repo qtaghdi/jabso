@@ -13,8 +13,10 @@ import {
 } from 'src/shared/auth/auth-client-error'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 
 export const VerifyEmailForm = () => {
+  const { t } = useI18n()
   const router = useRouter()
   const { data: session } = authClient.useSession()
   const [email, setEmail] = useState('')
@@ -37,7 +39,7 @@ export const VerifyEmailForm = () => {
     event.preventDefault()
     setError(null)
     if (!email.trim()) {
-      setError('Enter the email address you used to sign up')
+      setError(t('auth.verificationEmailRequired'))
       return
     }
 
@@ -49,7 +51,7 @@ export const VerifyEmailForm = () => {
     setIsSubmitting(false)
 
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not send another verification email'))
+      setError(getAuthErrorMessage(result.error, t('auth.verificationError'), t('auth.rateLimited')))
       return
     }
 
@@ -60,22 +62,24 @@ export const VerifyEmailForm = () => {
   return (
     <form className="auth-form" noValidate onSubmit={resend}>
       <div className="auth-callout" role="status">
-        <strong>Check your inbox</strong>
-        <p>Open the verification link to continue to workspace setup. The link expires in one hour.</p>
+        <strong>{t('auth.checkInbox')}</strong>
+        <p>{t('auth.verificationDescription')}</p>
       </div>
       <Input
         autoComplete="email"
         error={error ?? undefined}
-        label="Email address"
+        label={t('auth.email')}
+        name="email"
         onChange={(event) => { setEmail(event.target.value); setError(null); setIsSent(false) }}
         required
+        spellCheck={false}
         type="email"
         value={email}
       />
       <Button pending={isSubmitting} variant="secondary" type="submit">
-        {isSent ? 'Verification email sent' : 'Resend verification email'}
+        {isSent ? t('auth.verificationSent') : t('auth.verificationResend')}
       </Button>
-      <p className="auth-alternate">Already verified? <Link href="/sign-in">Return to sign in</Link></p>
+      <p className="auth-alternate"><Link href="/sign-in">{t('auth.returnSignIn')}</Link></p>
     </form>
   )
 }

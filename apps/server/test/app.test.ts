@@ -157,12 +157,17 @@ describe('Jabso server', () => {
     await database.close()
   })
 
-  it('permanently deletes a shared workspace and cascades its project data', async () => {
+  it('atomically deletes a shared workspace, its auth organization, and project data', async () => {
     const { database, executor } = await createTestDatabase()
     const app = await buildServer({ dashboardToken, database: executor })
     const workspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a04'
     const projectId = '018f47a2-5d1d-7e19-aab8-6f8cc59d9a04'
     const retainedWorkspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a05'
+    const unmatchedWorkspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a06'
+    await executor.query(
+      `insert into organization (id, name, slug, created_at)
+       values ('org_delete', 'Delete me', 'delete-me', now())`,
+    )
     await executor.query(
       `insert into workspaces (id, external_id, kind, name)
        values ($1, 'org:org_delete', 'organization', 'Delete me')`,
@@ -177,6 +182,11 @@ describe('Jabso server', () => {
       `insert into workspaces (id, external_id, kind, name)
        values ($1, 'org:org_retain', 'organization', 'Keep me')`,
       [retainedWorkspaceId],
+    )
+    await executor.query(
+      `insert into workspaces (id, external_id, kind, name)
+       values ($1, 'org:org_without_auth', 'organization', 'Keep atomically')`,
+      [unmatchedWorkspaceId],
     )
 
     const personal = await app.inject({
@@ -198,8 +208,22 @@ describe('Jabso server', () => {
       [projectId],
     )).rows[0]?.count).toBe(0)
     expect((await executor.query<{ count: number }>(
+      "select count(*)::int as count from organization where id = 'org_delete'",
+    )).rows[0]?.count).toBe(0)
+    expect((await executor.query<{ count: number }>(
       'select count(*)::int as count from workspaces where id = $1',
       [retainedWorkspaceId],
+    )).rows[0]?.count).toBe(1)
+
+    const unmatched = await app.inject({
+      method: 'DELETE',
+      url: '/api/workspaces/org%3Aorg_without_auth',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+    })
+    expect(unmatched.statusCode).toBe(404)
+    expect((await executor.query<{ count: number }>(
+      'select count(*)::int as count from workspaces where id = $1',
+      [unmatchedWorkspaceId],
     )).rows[0]?.count).toBe(1)
 
     const missing = await app.inject({

@@ -132,8 +132,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .workspace-menu-load-more { grid-column: 1 / -1; padding-left: 4px; color: var(--muted); font-size: 11px; font-weight: 620; }
 .workspace-menu-error { margin: 0; padding: 8px 14px; border-top: 1px solid var(--border); color: var(--accent); font-size: 11px; }
 .workspace-menu-footer { display: grid; gap: 2px; padding: 6px; border-top: 1px solid var(--border); }
-.workspace-menu-footer button { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 9px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; cursor: pointer; font-size: 11px; font-weight: 650; }
-.workspace-menu-footer button:hover, .workspace-menu-footer button:focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
+.workspace-menu-footer :is(button, a) { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 9px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; cursor: pointer; font-size: 11px; font-weight: 650; text-decoration: none; }
+.workspace-menu-footer :is(button, a):hover, .workspace-menu-footer :is(button, a):focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
 .workspace-menu-footer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .app-shell-collapsed .account-summary { justify-items: center; }
 .app-shell-collapsed .workspace-switcher-trigger { width: 38px; min-height: 38px; grid-template-columns: 28px; padding: 4px; }
@@ -343,6 +343,12 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .github-connection-notice-error { border-color: #efb6aa; background: var(--accent-soft); color: #9d2d19; }
 .github-installations-heading { display: grid; grid-template-columns: minmax(240px, 1fr) auto; align-items: center; gap: 32px; }
 .github-installations-heading p { max-width: 560px; margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.github-access-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 22px 0 0; padding: 0; list-style: none; }
+.github-access-steps li { display: grid; min-width: 0; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 10px; padding: 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.github-access-steps li > span { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #17191d; color: #fff; font-size: 10px; font-weight: 760; font-variant-numeric: tabular-nums; }
+.github-access-steps li > div { display: grid; min-width: 0; gap: 3px; }
+.github-access-steps strong { font-size: 12px; }
+.github-access-steps p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-wrap: pretty; }
 .github-installations-empty { margin: 22px 0 0; color: var(--muted); font-size: 13px; }
 .github-installation-list { display: grid; margin-top: 20px; }
 .github-installation-row { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(150px, 0.8fr) auto; align-items: center; gap: 24px; padding: 16px 0; border-top: 1px solid var(--border); }
@@ -446,6 +452,28 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .ui-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 .workspace-create-form { display: grid; gap: 20px; }
 .workspace-settings-form { display: grid; gap: 20px; }
+.settings-page-header { max-width: 760px; }
+.settings-layout { display: grid; max-width: 820px; gap: 22px; }
+.settings-section-card { display: grid; gap: 22px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+.settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.settings-section-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.025em; text-wrap: balance; }
+.settings-section-heading p { max-width: 600px; margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-wrap: pretty; }
+.settings-form-actions { display: flex; justify-content: flex-end; }
+.settings-danger-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-color: color-mix(in srgb, var(--accent) 24%, var(--border)); }
+.settings-danger-card h2 { margin: 0; color: #8f291d; font-size: 16px; }
+.settings-danger-card p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.settings-workspace-identity { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.settings-workspace-identity > span { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 9px; background: #17191d; color: #fff; font-size: 11px; font-weight: 760; }
+.settings-workspace-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.language-switcher { display: inline-flex; width: fit-content; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.language-switcher button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 650; }
+.language-switcher button:hover { color: var(--text); }
+.language-switcher button:focus-visible { outline: 3px solid rgb(23 25 29 / 12%); outline-offset: 1px; }
+.language-switcher button[aria-pressed='true'] { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgb(17 19 22 / 12%); }
+.language-switcher button:disabled { cursor: default; opacity: .62; }
+.settings-loading { display: grid; max-width: 820px; gap: 22px; }
+.settings-loading .skeleton-block:first-child { width: 260px; height: 64px; }
+.settings-loading .skeleton-block:not(:first-child) { height: 180px; border-radius: 12px; }
 .workspace-access-section { display: grid; gap: 16px; margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--border); }
 .workspace-settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .workspace-settings-section-heading > div { display: grid; gap: 4px; }
@@ -520,7 +548,9 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-signal-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .auth-signal-caption { margin: 0; color: #8d959f; font-size: 12px; }
 .auth-signal-caption strong { color: #d2d7dc; font-weight: 620; }
-.auth-card-wrap { display: grid; place-items: center; padding: 52px clamp(34px, 5vw, 84px); background: #fff; }
+.auth-card-wrap { position: relative; display: grid; place-items: center; padding: 52px clamp(34px, 5vw, 84px); background: #fff; }
+.auth-language-switcher { position: absolute; top: 24px; right: 28px; }
+.auth-language-switcher .language-switcher button { min-height: 30px; padding: 0 10px; }
 .auth-form-shell { width: min(100%, 440px); }
 .auth-form-header { margin-bottom: 34px; }
 .auth-form-header h1 { margin: 0; font-size: 34px; line-height: 1.06; letter-spacing: -0.045em; }
@@ -781,6 +811,14 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .account-summary { display: block; }
   .owner-summary { display: none; }
   .main-content { padding: 32px 18px 56px; }
+  .settings-section-card { padding: 20px; }
+  .settings-danger-card { display: grid; }
+  .settings-danger-card .ui-button { width: 100%; }
+  .github-access-steps { grid-template-columns: 1fr; }
+  .workspace-invite-form { grid-template-columns: 1fr; }
+  .workspace-member-row { grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .workspace-member-row .workspace-role-select { grid-column: 2 / -1; width: 100%; }
+  .workspace-member-remove { width: auto; }
   .page-header { margin-bottom: 30px; }
   .page-heading-row { display: grid; }
   .active-project-link { width: 100%; }
@@ -858,7 +896,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .ui-dialog-surface { padding: 20px; }
   .workspace-invite-form { grid-template-columns: 1fr; }
   .workspace-member-row { grid-template-columns: 34px minmax(0, 1fr) 96px; }
-  .workspace-role-select { width: 96px; }
+  .workspace-member-row .workspace-role-select { grid-column: 3; width: 96px; }
   .workspace-member-remove { grid-column: 2 / -1; width: fit-content; justify-self: start; }
   .workspace-kind-options { grid-template-columns: 1fr; }
   .project-source-options { grid-template-columns: 1fr; }
@@ -868,6 +906,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .auth-wordmark .wordmark-text { font-size: 20px; }
   .auth-signal-field, .auth-signal-caption { display: none; }
   .auth-card-wrap { min-height: calc(100vh - 61px); padding: 36px 20px; place-items: start center; }
+  .auth-language-switcher { top: 16px; right: 16px; }
+  .auth-form-shell { margin-top: 38px; }
   .auth-form-header { margin-bottom: 24px; }
   .auth-form-header h1 { font-size: 26px; }
   .auth-form-header > p:last-child { font-size: 12px; }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button, type ButtonProps } from 'src/shared/ui/button'
 
 type CopyCodeButtonProps = {
+  copiedLabel?: string
   iconOnly?: boolean
   label?: string
   value: string
@@ -23,7 +24,7 @@ const CheckIcon = () => (
   </svg>
 )
 
-export const CopyCodeButton = ({ iconOnly = false, label = 'Copy', value, variant = 'ghost' }: CopyCodeButtonProps) => {
+export const CopyCodeButton = ({ copiedLabel = 'Copied', iconOnly = false, label = 'Copy', value, variant = 'ghost' }: CopyCodeButtonProps) => {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -32,7 +33,7 @@ export const CopyCodeButton = ({ iconOnly = false, label = 'Copy', value, varian
     window.setTimeout(() => setCopied(false), 1_500)
   }
 
-  const buttonLabel = copied ? 'Copied' : label
+  const buttonLabel = copied ? copiedLabel : label
   const buttonContent = iconOnly ? (copied ? <CheckIcon /> : <CopyIcon />) : buttonLabel
 
   return (

@@ -14,6 +14,8 @@ import {
   revokeDashboardMcpConnection,
 } from 'src/shared/query/dashboard-query'
 import type { McpConnectionsResponse } from 'src/shared/query/dashboard-types'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
+import { formatDateTime } from 'src/shared/format'
 
 type ProjectOption = {
   id: string
@@ -33,18 +35,12 @@ type CreatedSecret = {
   token: string
 }
 
-const dateTimeFormatter = new Intl.DateTimeFormat('en', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
-
-const formatDate = (value: string) => dateTimeFormatter.format(new Date(value))
-
 export const McpConnectionsView = ({
   canManage,
   initialData,
   projects,
 }: McpConnectionsViewProps) => {
+  const { locale, t } = useI18n()
   const queryClient = useQueryClient()
   const query = useQuery({ ...mcpConnectionsQueryOptions(), initialData })
   const [createOpen, setCreateOpen] = useState(false)
@@ -86,36 +82,36 @@ export const McpConnectionsView = ({
     <>
       <header className="page-header compact-page-header">
         <h1>MCP</h1>
-        <p>Give AI clients narrow, read-only access to the errors already collected by Jabso.</p>
+        <p>{t('mcp.description')}</p>
       </header>
       <section className="mcp-endpoint-section">
         <div>
-          <h2>Server endpoint</h2>
-          <p>Use one endpoint for every connection. Authentication and project access come from its token.</p>
+          <h2>{t('mcp.endpoint')}</h2>
+          <p>{t('mcp.endpointDescription')}</p>
         </div>
         <div className="mcp-endpoint">
           <code>{query.data?.endpoint ?? initialData.endpoint}</code>
-          <CopyCodeButton iconOnly label="Copy MCP endpoint" value={query.data?.endpoint ?? initialData.endpoint} />
+          <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('mcp.copyEndpoint')} value={query.data?.endpoint ?? initialData.endpoint} />
         </div>
       </section>
       <section className="mcp-connections-section" aria-labelledby="mcp-connections-title">
         <div className="section-heading-row">
           <div>
-            <h2 id="mcp-connections-title">Connections</h2>
-            <span>{connections.length} {connections.length === 1 ? 'connection' : 'connections'}</span>
+            <h2 id="mcp-connections-title">{t('mcp.connections')}</h2>
+            <span>{t('mcp.connectionCount', { count: connections.length })}</span>
           </div>
           {canManage ? (
             <Button disabled={projects.length === 0} onClick={() => setCreateOpen(true)} type="button">
-              Create connection
+              {t('mcp.create')}
             </Button>
           ) : null}
         </div>
         {projects.length === 0 ? (
-          <p className="muted-copy">Create a project before connecting an MCP client.</p>
+          <p className="muted-copy">{t('mcp.noProject')}</p>
         ) : connections.length === 0 ? (
           <div className="mcp-empty-state">
-            <strong>No MCP connections yet</strong>
-            <p>Create one when you are ready to inspect Jabso issues from Codex, Claude, or another MCP client.</p>
+            <strong>{t('mcp.noConnections')}</strong>
+            <p>{t('mcp.noConnectionsDescription')}</p>
           </div>
         ) : (
           <div className="mcp-connection-list">
@@ -127,15 +123,15 @@ export const McpConnectionsView = ({
                     <code>{connection.tokenPrefix}••••••••</code>
                   </div>
                   <span className={connection.revokedAt ? 'mcp-status-revoked' : 'mcp-status-active'}>
-                    {connection.revokedAt ? 'Revoked' : 'Active'}
+                    {connection.revokedAt ? t('mcp.revoked') : t('common.active')}
                   </span>
                 </div>
                 <div className="mcp-project-chips">
                   {connection.projects.map((project) => <span key={project.id}>{project.name}</span>)}
                 </div>
                 <div className="mcp-connection-meta">
-                  <span>Created {formatDate(connection.createdAt)}</span>
-                  <span>{connection.lastUsedAt ? `Last used ${formatDate(connection.lastUsedAt)}` : 'Never used'}</span>
+                  <span>{t('mcp.created', { date: formatDateTime(connection.createdAt, locale) })}</span>
+                  <span>{connection.lastUsedAt ? t('mcp.lastUsed', { date: formatDateTime(connection.lastUsedAt, locale) }) : t('mcp.neverUsed')}</span>
                 </div>
                 {canManage && !connection.revokedAt ? (
                   <Button
@@ -146,7 +142,7 @@ export const McpConnectionsView = ({
                     type="button"
                     variant="ghost"
                   >
-                    Revoke
+                    {t('mcp.revoke')}
                   </Button>
                 ) : <span />}
               </article>
@@ -179,11 +175,11 @@ export const McpConnectionsView = ({
             if (!revokeMutation.isPending) setRevokeConnectionId(null)
           }}
           confirm={() => revokeMutation.mutate(revokeConnection.id)}
-          confirmLabel="Revoke connection"
-          description={`${revokeConnection.name} will stop working on its next request. Existing audit history is retained.`}
+          confirmLabel={t('mcp.revokeConnection')}
+          description={t('mcp.revokeConfirm', { name: revokeConnection.name })}
           error={revokeMutation.error?.message}
           pending={revokeMutation.isPending}
-          title={`Revoke ${revokeConnection.name}?`}
+          title={t('mcp.revokeTitle', { name: revokeConnection.name })}
         />
       ) : null}
     </>
