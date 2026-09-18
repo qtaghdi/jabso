@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jabso Product Design"
+  short_description: "Jabso UI and product-design decision guide"
+  default_prompt: "Use $jabso-product-design to design or review this Jabso interface change."
