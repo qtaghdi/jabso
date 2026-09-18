@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jabso Change Delivery"
+  short_description: "Scope commits, PRs, verification, and reviews"
+  default_prompt: "Use $jabso-change-delivery to scope and deliver this Jabso change."
