@@ -14,6 +14,7 @@ import {
 } from 'src/shared/auth/auth-client-error'
 import { getAuthRoute } from 'src/shared/auth/auth-redirect'
 import { GitHubIcon } from 'src/shared/brand/github-icon'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
@@ -22,6 +23,7 @@ type JabsoSignInProps = {
 }
 
 export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const [email, setEmail] = useState('')
@@ -38,7 +40,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL })
     if (result.error) {
-      setFormError(getAuthErrorMessage(result.error, 'Could not continue with GitHub'))
+      setFormError(getAuthErrorMessage(result.error, t('auth.githubError')))
       setIsSubmitting(false)
     }
   }
@@ -47,7 +49,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
     event.preventDefault()
     setFormError(null)
     if (!email.trim() || !password) {
-      setFormError('Enter both your email address and password')
+      setFormError(t('auth.enterEmailAndPassword'))
       return
     }
     setIsSubmitting(true)
@@ -59,7 +61,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
         router.push('/verify-email')
         return
       }
-      setFormError(getAuthErrorMessage(result.error, 'Email or password is incorrect'))
+      setFormError(getAuthErrorMessage(result.error, t('auth.emailOrPasswordIncorrect')))
       setIsSubmitting(false)
       return
     }
@@ -67,24 +69,24 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
     router.refresh()
   }
 
-  if (isSessionPending) return <AuthFormFallback label="Loading sign in" />
-  if (session) return <AuthTransition label="Signing you in…" />
+  if (isSessionPending) return <AuthFormFallback label={t('auth.loadingSignIn')} />
+  if (session) return <AuthTransition label={t('auth.signingIn')} />
 
   return (
     <form className="auth-form" noValidate onSubmit={signInWithEmail}>
       {formError ? (
         <div className="auth-callout auth-callout-error" role="alert">
-          <strong>Could not sign in</strong>
+          <strong>{t('auth.signInError')}</strong>
           <p>{formError}</p>
         </div>
       ) : null}
-      <Button className="auth-github-button" disabled={isSubmitting} onClick={signInWithGitHub} type="button"><GitHubIcon /> Continue with GitHub</Button>
-      <div className="auth-divider"><span>or</span></div>
-      <Input autoComplete="email" label="Email address" onChange={(event) => { setEmail(event.target.value); setFormError(null) }} required type="email" value={email} />
-      <Input autoComplete="current-password" label="Password" minLength={10} onChange={(event) => { setPassword(event.target.value); setFormError(null) }} required type="password" value={password} />
-      <Link className="auth-forgot-link" href="/forgot-password">Forgot password?</Link>
-      <Button pending={isSubmitting} type="submit">Sign in</Button>
-      <p className="auth-alternate">New to Jabso? <Link href={getAuthRoute('/sign-up', callbackURL)}>Create an account</Link></p>
+      <Button className="auth-github-button" disabled={isSubmitting} onClick={signInWithGitHub} type="button"><GitHubIcon /> {t('auth.continueGitHub')}</Button>
+      <div className="auth-divider"><span>{t('auth.or')}</span></div>
+      <Input autoComplete="email" label={t('auth.email')} name="email" onChange={(event) => { setEmail(event.target.value); setFormError(null) }} required spellCheck={false} type="email" value={email} />
+      <Input autoComplete="current-password" label={t('auth.password')} name="password" minLength={10} onChange={(event) => { setPassword(event.target.value); setFormError(null) }} required type="password" value={password} />
+      <Link className="auth-forgot-link" href="/forgot-password">{t('auth.forgotPassword')}</Link>
+      <Button pending={isSubmitting} type="submit">{t('auth.signIn')}</Button>
+      <p className="auth-alternate">{t('auth.newToJabso')} <Link href={getAuthRoute('/sign-up', callbackURL)}>{t('auth.createAccount')}</Link></p>
     </form>
   )
 }

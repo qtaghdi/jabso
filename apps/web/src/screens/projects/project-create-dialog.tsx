@@ -15,6 +15,7 @@ import {
   githubRepositoriesQueryOptions,
 } from 'src/shared/query/dashboard-query'
 import type { ProjectsResponse } from 'src/shared/query/dashboard-types'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 
 type ProjectSource = 'github' | 'local'
 
@@ -31,6 +32,7 @@ const ProjectIcon = () => (
 )
 
 export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogProps) => {
+  const { t } = useI18n()
   const [source, setSource] = useState<ProjectSource>('local')
   const [name, setName] = useState('')
   const [repositoryId, setRepositoryId] = useState('')
@@ -79,22 +81,22 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
   return (
     <Dialog
       close={closeDialog}
-      description="Start with a standalone project or connect a repository granted to this workspace."
-      eyebrow="New project"
+      description={t('projects.createDescription')}
+      eyebrow={t('projects.new')}
       icon={<ProjectIcon />}
-      title="Create an issue inbox"
+      title={t('projects.createTitle')}
     >
       <form className="project-dialog-form" onSubmit={submit}>
         <fieldset className="project-source-fieldset">
-          <legend>Project source</legend>
+          <legend>{t('projects.source')}</legend>
           <div className="project-source-options">
             <label className={source === 'local' ? 'project-source-option project-source-option-active' : 'project-source-option'}>
               <input checked={source === 'local'} data-dialog-initial-focus name="project-source" onChange={() => setSource('local')} type="radio" value="local" />
-              <span><strong>Local project</strong><small>Create a DSN without linking a repository.</small></span>
+              <span><strong>{t('projects.local')}</strong><small>{t('projects.localDescription')}</small></span>
             </label>
             <label className={source === 'github' ? 'project-source-option project-source-option-active' : 'project-source-option'}>
               <input checked={source === 'github'} name="project-source" onChange={() => setSource('github')} type="radio" value="github" />
-              <span><strong>GitHub project</strong><small>Connect an installed personal or organization repository.</small></span>
+              <span><strong>{t('projects.github')}</strong><small>{t('projects.githubDescription')}</small></span>
             </label>
           </div>
         </fieldset>
@@ -102,28 +104,28 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
         {source === 'github' ? installationsQuery.isPending ? (
           <div className="project-dialog-loading" role="status">
             <span className="skeleton-block" />
-            <span className="sr-only">Loading GitHub App installations</span>
+            <span className="sr-only">{t('projects.loadingInstallations')}</span>
           </div>
         ) : installationsQuery.isError ? (
           <div className="inline-error" role="alert">
             <p>{installationsQuery.error.message}</p>
-            <Button onClick={() => installationsQuery.refetch()} type="button" variant="secondary">Try again</Button>
+            <Button onClick={() => installationsQuery.refetch()} type="button" variant="secondary">{t('common.tryAgain')}</Button>
           </div>
         ) : !installationsQuery.data.configured ? (
-          <p className="form-error" role="alert">GitHub App credentials are not available on the Jabso server.</p>
+          <p className="form-error" role="alert">{t('projects.credentialsMissing')}</p>
         ) : installationsQuery.data.items.length === 0 ? <GitHubAppEmptyState /> : repositoriesQuery.isPending ? (
           <div className="project-dialog-loading" role="status">
             <span className="skeleton-block" />
-            <span className="sr-only">Loading GitHub repositories</span>
+            <span className="sr-only">{t('projects.loadingRepositories')}</span>
           </div>
         ) : repositoriesQuery.isError ? (
           <div className="inline-error" role="alert">
             <p>{repositoriesQuery.error.message}</p>
-            <Button onClick={() => repositoriesQuery.refetch()} type="button" variant="secondary">Try again</Button>
+            <Button onClick={() => repositoriesQuery.refetch()} type="button" variant="secondary">{t('common.tryAgain')}</Button>
           </div>
         ) : (
           <Select
-            label="GitHub repository"
+            label={t('projects.repository')}
             name="repository"
             onChange={(event) => {
               const nextRepositoryId = event.target.value
@@ -133,10 +135,10 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
             }}
             value={repositoryId}
           >
-            <option value="">Choose a repository</option>
+            <option value="">{t('projects.chooseRepository')}</option>
             {repositoriesQuery.data.items.map((repository) => (
               <option disabled={repository.archived} key={repository.externalId} value={repository.externalId}>
-                {repository.owner}/{repository.name}{repository.archived ? ' (archived)' : ''}
+                {repository.owner}/{repository.name}{repository.archived ? ` (${t('projects.archived')})` : ''}
               </option>
             ))}
           </Select>
@@ -144,18 +146,18 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
 
         <Input
           autoComplete="off"
-          label="Project name"
+          label={t('projects.name')}
           maxLength={80}
           name="name"
           onChange={(event) => setName(event.target.value)}
-          placeholder="e.g. Checkout web"
+          placeholder={t('projects.namePlaceholder')}
           required
           value={name}
         />
         {source === 'github' ? <Input
           autoComplete="off"
-          hint="Optional. Use a relative path when the app lives inside a monorepo."
-          label="Repository root"
+          hint={t('projects.repositoryRootHint')}
+          label={t('projects.repositoryRoot')}
           maxLength={500}
           name="root-path"
           onChange={(event) => setRootPath(event.target.value)}
@@ -164,13 +166,13 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
         /> : null}
         {createMutation.error ? <p className="form-error" role="alert">{createMutation.error.message}</p> : null}
         <div className="ui-dialog-actions">
-          <Button disabled={createMutation.isPending} onClick={closeDialog} type="button" variant="secondary">Cancel</Button>
+          <Button disabled={createMutation.isPending} onClick={closeDialog} type="button" variant="secondary">{t('common.cancel')}</Button>
           <Button
             disabled={!name.trim() || (source === 'github' && !repositoryId)}
             pending={createMutation.isPending}
             type="submit"
           >
-            Create project
+            {t('projects.create')}
           </Button>
         </div>
       </form>

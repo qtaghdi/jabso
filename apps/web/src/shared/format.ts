@@ -1,13 +1,13 @@
-const dateTimeFormatter = new Intl.DateTimeFormat('en', {
+import type { Locale } from 'src/shared/i18n/messages'
+
+const localeName = (locale: Locale) => locale === 'ko' ? 'ko-KR' : 'en'
+
+export const formatDateTime = (value: string, locale: Locale = 'en') => new Intl.DateTimeFormat(localeName(locale), {
   dateStyle: 'medium',
   timeStyle: 'short',
-})
+}).format(new Date(value))
 
-const numberFormatter = new Intl.NumberFormat('en')
-
-export const formatDateTime = (value: string) => dateTimeFormatter.format(new Date(value))
-
-export const formatCount = (value: number) => numberFormatter.format(value)
+export const formatCount = (value: number, locale: Locale = 'en') => new Intl.NumberFormat(localeName(locale)).format(value)
 
 export const formatLocation = (frame: { filename?: string; line?: number; column?: number }) => {
   const line = frame.line === undefined ? '' : `:${frame.line}`

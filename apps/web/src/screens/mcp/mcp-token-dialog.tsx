@@ -3,6 +3,7 @@
 import { CopyCodeButton } from 'src/shared/ui/copy-code-button'
 import { Button } from 'src/shared/ui/button'
 import { Dialog } from 'src/shared/ui/dialog'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 
 type McpTokenDialogProps = {
   close: () => void
@@ -19,6 +20,7 @@ const KeyIcon = () => (
 )
 
 export const McpTokenDialog = ({ close, endpoint, name, token }: McpTokenDialogProps) => {
+  const { t } = useI18n()
   const configuration = JSON.stringify({
     mcpServers: {
       jabso: {
@@ -31,28 +33,28 @@ export const McpTokenDialog = ({ close, endpoint, name, token }: McpTokenDialogP
   return (
     <Dialog
       close={close}
-      description="Copy this token now. Jabso stores only its hash, so it cannot be shown again."
-      eyebrow="Connection created"
+      description={t('mcp.secretDescription')}
+      eyebrow={t('mcp.connectionCreated')}
       icon={<KeyIcon />}
       title={name}
     >
-      <div className="mcp-secret-warning">Treat this token like a password. It grants read-only access to the selected projects.</div>
+      <div className="mcp-secret-warning">{t('mcp.secretWarning')}</div>
       <section className="mcp-token-section">
         <div className="mcp-code-heading">
-          <span>Bearer token</span>
+          <span>{t('mcp.bearerToken')}</span>
           <CopyCodeButton iconOnly label="Copy bearer token" value={token} />
         </div>
         <code className="mcp-token-value">{token}</code>
       </section>
       <section className="mcp-token-section">
         <div className="mcp-code-heading">
-          <span>Client configuration</span>
+          <span>{t('mcp.clientConfiguration')}</span>
           <CopyCodeButton iconOnly label="Copy MCP client configuration" value={configuration} />
         </div>
         <pre className="mcp-config-code">{configuration}</pre>
       </section>
       <div className="ui-dialog-actions">
-        <Button data-dialog-initial-focus onClick={close} type="button">I saved it</Button>
+        <Button data-dialog-initial-focus onClick={close} type="button">{t('mcp.saveConfirmed')}</Button>
       </div>
     </Dialog>
   )

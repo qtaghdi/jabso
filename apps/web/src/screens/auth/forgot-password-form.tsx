@@ -4,10 +4,12 @@ import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
 export const ForgotPasswordForm = () => {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -17,7 +19,7 @@ export const ForgotPasswordForm = () => {
     event.preventDefault()
     setError(null)
     if (!email.trim()) {
-      setError('Enter your email address')
+      setError(t('auth.enterEmail'))
       return
     }
 
@@ -29,7 +31,7 @@ export const ForgotPasswordForm = () => {
     setIsSubmitting(false)
 
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, 'Could not request a password reset'))
+      setError(getAuthErrorMessage(result.error, t('auth.resetRequestError')))
       return
     }
 
@@ -40,19 +42,19 @@ export const ForgotPasswordForm = () => {
     return (
       <div className="auth-form">
         <div className="auth-callout" role="status">
-          <strong>Check your inbox</strong>
-          <p>If an account exists for that address, we sent a password reset link.</p>
+          <strong>{t('auth.checkInbox')}</strong>
+          <p>{t('auth.resetEmailSent')}</p>
         </div>
-        <Link className="ui-button ui-button-secondary" href="/sign-in">Return to sign in</Link>
+        <Link className="ui-button ui-button-secondary" href="/sign-in">{t('auth.returnSignIn')}</Link>
       </div>
     )
   }
 
   return (
     <form className="auth-form" noValidate onSubmit={requestReset}>
-      <Input autoComplete="email" error={error ?? undefined} label="Email address" onChange={(event) => { setEmail(event.target.value); setError(null) }} required type="email" value={email} />
-      <Button pending={isSubmitting} type="submit">Send reset link</Button>
-      <p className="auth-alternate"><Link href="/sign-in">Return to sign in</Link></p>
+      <Input autoComplete="email" error={error ?? undefined} label={t('auth.email')} name="email" onChange={(event) => { setEmail(event.target.value); setError(null) }} required spellCheck={false} type="email" value={email} />
+      <Button pending={isSubmitting} type="submit">{t('auth.sendReset')}</Button>
+      <p className="auth-alternate"><Link href="/sign-in">{t('auth.returnSignIn')}</Link></p>
     </form>
   )
 }

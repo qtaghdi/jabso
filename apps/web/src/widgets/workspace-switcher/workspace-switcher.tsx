@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import {
   useCallback,
   useEffect,
@@ -11,10 +12,9 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { AlertDialog } from 'src/shared/ui/alert-dialog'
 import { authClient } from 'src/shared/auth/auth-client'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { WorkspaceCreateDialog } from 'src/widgets/workspace-switcher/workspace-create-dialog'
-import { WorkspaceSettingsDialog } from 'src/widgets/workspace-switcher/workspace-settings-dialog'
 
 type WorkspaceSwitcherProps = {
   personalName: string
@@ -49,6 +49,7 @@ const workspaceInitials = (name: string) => name
   .join('') || 'J'
 
 export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const { data: organization, isPending: isOrganizationPending } = authClient.useActiveOrganization()
@@ -63,16 +64,12 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   const menuRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [switchingTo, setSwitchingTo] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [menuStyle, setMenuStyle] = useState<WorkspaceMenuStyle | null>(null)
   const memberships = organizations ?? []
-  const activeName = organization?.name ?? 'Personal'
-  const activeDescription = organization ? 'Shared workspace' : personalName
+  const activeName = organization?.name ?? t('common.personal')
+  const activeDescription = organization ? t('workspace.sharedDescription') : t('workspace.personalDescription')
 
   const positionMenu = useCallback(() => {
     const trigger = triggerRef.current
@@ -169,30 +166,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
       router.replace('/')
       router.refresh()
     } catch {
-      setError('Could not switch workspaces. Try again.')
+      setError(t('workspace.switchError'))
       setIsOpen(true)
     } finally {
       setSwitchingTo(null)
-    }
-  }
-
-  const deleteActiveWorkspace = async () => {
-    if (!organization || isDeleting) return
-    setDeleteError(null)
-    setIsDeleting(true)
-    try {
-      const response = await fetch('/api/dashboard/workspace', { method: 'DELETE' })
-      if (!response.ok) {
-        const result = await response.json().catch(() => null) as { error?: string } | null
-        throw new Error(result?.error ?? 'Could not delete the workspace')
-      }
-      const result = await authClient.organization.setActive({ organizationId: null })
-      if (result.error) throw new Error(result.error.message)
-      router.replace('/')
-      router.refresh()
-    } catch (caught) {
-      setDeleteError(caught instanceof Error ? caught.message : 'Could not delete the workspace')
-      setIsDeleting(false)
     }
   }
 
@@ -200,7 +177,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
     id: membership.id,
     initials: workspaceInitials(membership.name),
     name: membership.name,
-    role: membership.id === orgId && (orgRole === 'owner' || orgRole === 'admin') ? 'Admin' : 'Member',
+    role: membership.id === orgId && (orgRole === 'owner' || orgRole === 'admin') ? t('common.admin') : t('common.member'),
   }))
 
   return (
@@ -223,7 +200,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
       </div>
       {isOpen ? createPortal(
         <div
-          aria-label="Switch workspace"
+          aria-label={t('workspace.switch')}
           className="workspace-menu"
           onKeyDown={handleMenuKeyDown}
           popover="manual"
@@ -231,7 +208,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
           role="menu"
           style={{ ...menuStyle, visibility: menuStyle ? 'visible' : 'hidden' }}
         >
-          <header className="workspace-menu-header"><strong>Workspaces</strong><span>{membershipRows.length + 1}</span></header>
+          <header className="workspace-menu-header"><strong>{t('workspace.title')}</strong><span>{membershipRows.length + 1}</span></header>
           <div className="workspace-menu-list">
             <button
               aria-checked={!orgId}
@@ -241,7 +218,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
               type="button"
             >
               <span className="workspace-avatar workspace-avatar-personal" aria-hidden="true">{workspaceInitials(personalName)}</span>
-              <span><strong>Personal</strong><small>{personalName}</small></span>
+              <span><strong>{t('common.personal')}</strong><small>{personalName}</small></span>
               {!orgId ? <CheckIcon /> : null}
             </button>
             {membershipRows.map((workspace) => (
@@ -261,19 +238,10 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
           </div>
           {error ? <p className="workspace-menu-error" role="alert">{error}</p> : null}
           <footer className="workspace-menu-footer">
-            {organization && (orgRole === 'owner' || orgRole === 'admin') ? (
-              <button
-                onClick={() => {
-                  setIsOpen(false)
-                  setIsSettingsOpen(true)
-                }}
-                role="menuitem"
-                type="button"
-              >
-                <SettingsIcon />
-                <span>Workspace settings</span>
-              </button>
-            ) : null}
+            <Link href="/settings" onClick={() => setIsOpen(false)} role="menuitem">
+              <SettingsIcon />
+              <span>{t('workspace.manage')}</span>
+            </Link>
             <button
               onClick={() => {
                 setIsOpen(false)
@@ -283,39 +251,13 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
               type="button"
             >
               <PlusIcon />
-              <span>Create workspace</span>
+              <span>{t('workspace.create')}</span>
             </button>
           </footer>
         </div>,
         document.body,
       ) : null}
       {isCreateOpen ? <WorkspaceCreateDialog close={() => setIsCreateOpen(false)} /> : null}
-      {isSettingsOpen && organization ? (
-        <WorkspaceSettingsDialog
-          close={() => setIsSettingsOpen(false)}
-          currentRole={orgRole === 'owner' ? 'owner' : 'admin'}
-          currentUserId={session?.user.id ?? ''}
-          name={organization.name}
-          organizationId={organization.id}
-          openDelete={() => {
-            setDeleteError(null)
-            setIsDeleteOpen(true)
-          }}
-        />
-      ) : null}
-      {isDeleteOpen && organization ? (
-        <AlertDialog
-          cancel={() => {
-            if (!isDeleting) setIsDeleteOpen(false)
-          }}
-          confirm={deleteActiveWorkspace}
-          confirmLabel="Delete workspace"
-          description={`This permanently deletes ${organization.name}, its projects, issues, events, releases, and member access. This cannot be undone.`}
-          error={deleteError ?? undefined}
-          pending={isDeleting}
-          title={`Delete ${organization.name}?`}
-        />
-      ) : null}
     </>
   )
 }

@@ -6,15 +6,10 @@ import { OnboardingLoading } from 'src/screens/onboarding/onboarding-loading'
 import type { WorkspaceKind } from 'src/shared/api/workspaces'
 import { authClient } from 'src/shared/auth/auth-client'
 import { JabsoWordmark } from 'src/shared/brand/jabso-wordmark'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 
 type OnboardingFlowProps = { hasActiveOrganization: boolean }
-
-const workspaceOptions: Array<{ description: string; kind: WorkspaceKind; label: string }> = [
-  { kind: 'personal', label: 'Personal', description: 'A private error inbox just for you.' },
-  { kind: 'team', label: 'Team', description: 'Share projects with a small product team.' },
-  { kind: 'organization', label: 'Organization', description: 'Manage multiple members under one workspace.' },
-]
 
 const workspaceSlug = (name: string) => {
   const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'workspace'
@@ -22,6 +17,7 @@ const workspaceSlug = (name: string) => {
 }
 
 export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) => {
+  const { t } = useI18n()
   const router = useRouter()
   const { data: activeOrganization, isPending: isOrganizationPending } = authClient.useActiveOrganization()
   const [kind, setKind] = useState<WorkspaceKind>(hasActiveOrganization ? 'team' : 'personal')
@@ -29,6 +25,11 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
   const [name, setName] = useState(activeOrganization?.name ?? '')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const workspaceOptions: Array<{ description: string; kind: WorkspaceKind; label: string }> = [
+    { kind: 'personal', label: t('common.personal'), description: t('onboarding.personalDescription') },
+    { kind: 'team', label: t('workspace.typeTeam'), description: t('onboarding.teamDescription') },
+    { kind: 'organization', label: t('workspace.typeOrganization'), description: t('onboarding.organizationDescription') },
+  ]
 
   const provision = async (selectedKind: WorkspaceKind, workspaceName = '') => {
     const response = await fetch('/api/onboarding', {
@@ -38,7 +39,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
     })
     if (!response.ok) {
       const result = await response.json().catch(() => null) as { error?: string } | null
-      throw new Error(result?.error ?? 'Could not create the workspace')
+      throw new Error(result?.error ?? t('workspace.createError'))
     }
   }
 
@@ -56,7 +57,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
       await provision('personal')
       window.location.replace('/')
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not create your workspace')
+      setError(caught instanceof Error ? caught.message : t('workspace.createError'))
       setIsSubmitting(false)
     }
   }
@@ -64,7 +65,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
   const createSharedWorkspace = async () => {
     const workspaceName = name.trim()
     if (!workspaceName) {
-      setError(`Enter a ${kind === 'team' ? 'team' : 'organization'} name`)
+      setError(t(kind === 'team' ? 'onboarding.enterTeam' : 'onboarding.enterOrganization'))
       return
     }
     setError(null)
@@ -73,7 +74,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
       let organizationId = activeOrganization?.id
       if (!organizationId) {
         const created = await authClient.organization.create({ name: workspaceName, slug: workspaceSlug(workspaceName) })
-        if (created.error || !created.data) throw new Error(created.error?.message ?? 'Could not create the workspace')
+        if (created.error || !created.data) throw new Error(created.error?.message ?? t('workspace.createError'))
         organizationId = created.data.id
         const activated = await authClient.organization.setActive({ organizationId })
         if (activated.error) throw new Error(activated.error.message)
@@ -81,7 +82,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
       await provision(kind, workspaceName)
       window.location.replace('/')
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not create the workspace')
+      setError(caught instanceof Error ? caught.message : t('workspace.createError'))
       setIsSubmitting(false)
     }
   }
@@ -96,7 +97,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
     return (
       <main className="onboarding-page">
         <header className="onboarding-brand"><JabsoWordmark /></header>
-        <div className="onboarding-card"><OnboardingLoading description={isSubmitting ? 'Creating the workspace and connecting it to your account.' : undefined} /></div>
+        <div className="onboarding-card"><OnboardingLoading description={isSubmitting ? t('onboarding.creating') : undefined} /></div>
       </main>
     )
   }
@@ -105,12 +106,12 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
     <main className="onboarding-page">
       <header className="onboarding-brand"><JabsoWordmark /></header>
       <section className="onboarding-card" aria-labelledby="onboarding-title">
-        <p className="onboarding-step">Step {step} of 2</p>
+        <p className="onboarding-step">{t('onboarding.step', { step })}</p>
         {step === 1 ? (
           <>
-            <h1 id="onboarding-title">Choose a workspace</h1>
-            <p className="onboarding-copy">Decide who can see projects and errors. You can switch workspaces later.</p>
-            <div className="workspace-options" role="radiogroup" aria-label="Workspace type">
+            <h1 id="onboarding-title">{t('onboarding.chooseTitle')}</h1>
+            <p className="onboarding-copy">{t('onboarding.chooseDescription')}</p>
+            <div className="workspace-options" role="radiogroup" aria-label={t('workspace.type')}>
               {workspaceOptions.map((option) => (
                 <button aria-checked={kind === option.kind} className={`workspace-option ${kind === option.kind ? 'workspace-option-selected' : ''}`} key={option.kind} onClick={() => setKind(option.kind)} role="radio" type="button">
                   <span><strong>{option.label}</strong><small>{option.description}</small></span><span className="workspace-radio" aria-hidden="true" />
@@ -118,19 +119,19 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
               ))}
             </div>
             {error ? <p className="onboarding-error" role="alert">{error}</p> : null}
-            <footer className="onboarding-actions"><button className="onboarding-sign-out" onClick={signOut} type="button">Sign out</button><Button onClick={continueFromChoice}>Continue</Button></footer>
+            <footer className="onboarding-actions"><button className="onboarding-sign-out" onClick={signOut} type="button">{t('onboarding.signOut')}</button><Button onClick={continueFromChoice}>{t('onboarding.continue')}</Button></footer>
           </>
         ) : (
           <>
-            <h1 id="onboarding-title">Name your {kind === 'team' ? 'team' : 'organization'}</h1>
-            <p className="onboarding-copy">This name appears in the workspace switcher.</p>
+            <h1 id="onboarding-title">{t(kind === 'team' ? 'onboarding.nameTeam' : 'onboarding.nameOrganization')}</h1>
+            <p className="onboarding-copy">{t('onboarding.nameDescription')}</p>
             <label className={`onboarding-field ${error ? 'onboarding-field-error' : ''}`}>
-              <span>{kind === 'team' ? 'Team name' : 'Organization name'}</span>
-              <input autoFocus aria-describedby={error ? 'workspace-name-error' : undefined} aria-invalid={Boolean(error)} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder={kind === 'team' ? 'Acme engineering' : 'Acme, Inc.'} value={name} />
+              <span>{t(kind === 'team' ? 'onboarding.teamName' : 'onboarding.organizationName')}</span>
+              <input aria-describedby={error ? 'workspace-name-error' : undefined} aria-invalid={Boolean(error)} autoComplete="organization" maxLength={80} name="workspace-name" onChange={(event) => setName(event.target.value)} placeholder={kind === 'team' ? 'Acme engineering' : 'Acme, Inc.'} value={name} />
             </label>
             {error ? <p className="onboarding-error" id="workspace-name-error" role="alert">{error}</p> : null}
-            <p className="onboarding-hint">You can invite members after setup.</p>
-            <footer className="onboarding-actions"><Button onClick={() => { setError(null); setStep(1) }} variant="ghost">Back</Button><Button onClick={createSharedWorkspace}>{`Create ${kind}`}</Button></footer>
+            <p className="onboarding-hint">{t('onboarding.inviteLater')}</p>
+            <footer className="onboarding-actions"><Button onClick={() => { setError(null); setStep(1) }} variant="ghost">{t('onboarding.back')}</Button><Button onClick={createSharedWorkspace}>{t('onboarding.create', { type: kind === 'team' ? t('workspace.typeTeam') : t('workspace.typeOrganization') })}</Button></footer>
           </>
         )}
       </section>
