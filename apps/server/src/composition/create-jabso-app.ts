@@ -294,7 +294,7 @@ export const buildServer = async (options: BuildServerOptions = {}) => {
     if (!externalWorkspaceIdPattern.test(externalId) || !externalId.startsWith('org:')) {
       return reply.code(400).send({ error: 'invalid shared workspace identity' })
     }
-    const deletedId = await workspaceStore.deleteByExternalId(externalId)
+    const deletedId = await workspaceStore.deleteOrganizationWorkspace(externalId)
     return deletedId
       ? reply.send({ deleted: true, id: deletedId })
       : reply.code(404).send({ error: 'workspace not found' })

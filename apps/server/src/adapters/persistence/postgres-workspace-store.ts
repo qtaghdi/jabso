@@ -58,11 +58,25 @@ export const createPostgresWorkspaceStore = (database: SqlExecutor) => ({
     const workspace = result.rows[0]
     return workspace ? toWorkspace(workspace) : null
   },
-  deleteByExternalId: async (externalId: string) => {
-    const result = await database.query<{ id: string }>(
-      'delete from workspaces where external_id = $1 returning id',
+  deleteOrganizationWorkspace: async (externalId: string) => database.transaction(async (transaction) => {
+    const organizationId = externalId.slice('org:'.length)
+    const workspace = await transaction.query<{ id: string }>(
+      'select id from workspaces where external_id = $1 for update',
       [externalId],
     )
-    return result.rows[0]?.id ?? null
-  },
+    const organization = await transaction.query<{ id: string }>(
+      'select id from organization where id = $1 for update',
+      [organizationId],
+    )
+    const workspaceId = workspace.rows[0]?.id
+    if (!workspaceId || !organization.rows[0]) return null
+
+    await transaction.query(
+      'update session set active_organization_id = null where active_organization_id = $1',
+      [organizationId],
+    )
+    await transaction.query('delete from organization where id = $1', [organizationId])
+    await transaction.query('delete from workspaces where id = $1', [workspaceId])
+    return workspaceId
+  }),
 })

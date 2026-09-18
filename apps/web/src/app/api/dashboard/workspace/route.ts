@@ -33,11 +33,6 @@ export const DELETE = async () => {
     return NextResponse.json({ error: 'organization administrator role required' }, { status: 403 })
   }
 
-  const requestHeaders = await headers()
   await deleteWorkspace(`org:${workspace.orgId}`)
-  await getAuth().api.deleteOrganization({
-    body: { organizationId: workspace.orgId },
-    headers: requestHeaders,
-  })
   return NextResponse.json({ deleted: true })
 }
