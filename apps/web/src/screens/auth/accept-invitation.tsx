@@ -30,7 +30,7 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
       const result = await authClient.organization.getInvitation({ query: { id: invitationId } })
       if (!active) return
       if (result.error) {
-        setError(getAuthErrorMessage(result.error, t('auth.invitationExpired')))
+        setError(getAuthErrorMessage(result.error, t('auth.invitationExpired'), t('auth.rateLimited')))
         return
       }
       setOrganizationName(result.data.organizationName)
@@ -45,7 +45,7 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
     setIsLoading(true)
     const result = await authClient.organization.acceptInvitation({ invitationId })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.invitationUnavailable')))
+      setError(getAuthErrorMessage(result.error, t('auth.invitationUnavailable'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }
@@ -53,7 +53,7 @@ export const AcceptInvitation = ({ invitationId }: AcceptInvitationProps) => {
       organizationId: result.data.member.organizationId,
     })
     if (activeResult.error) {
-      setError(getAuthErrorMessage(activeResult.error, t('auth.acceptedOpenError')))
+      setError(getAuthErrorMessage(activeResult.error, t('auth.acceptedOpenError'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }

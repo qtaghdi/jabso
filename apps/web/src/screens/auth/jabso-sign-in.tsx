@@ -40,7 +40,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL })
     if (result.error) {
-      setFormError(getAuthErrorMessage(result.error, t('auth.githubError')))
+      setFormError(getAuthErrorMessage(result.error, t('auth.githubError'), t('auth.rateLimited')))
       setIsSubmitting(false)
     }
   }
@@ -61,7 +61,7 @@ export const JabsoSignIn = ({ callbackURL = '/' }: JabsoSignInProps) => {
         router.push('/verify-email')
         return
       }
-      setFormError(getAuthErrorMessage(result.error, t('auth.emailOrPasswordIncorrect')))
+      setFormError(getAuthErrorMessage(result.error, t('auth.emailOrPasswordIncorrect'), t('auth.rateLimited')))
       setIsSubmitting(false)
       return
     }

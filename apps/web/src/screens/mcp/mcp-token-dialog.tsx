@@ -42,14 +42,14 @@ export const McpTokenDialog = ({ close, endpoint, name, token }: McpTokenDialogP
       <section className="mcp-token-section">
         <div className="mcp-code-heading">
           <span>{t('mcp.bearerToken')}</span>
-          <CopyCodeButton iconOnly label="Copy bearer token" value={token} />
+          <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('mcp.copyBearerToken')} value={token} />
         </div>
         <code className="mcp-token-value">{token}</code>
       </section>
       <section className="mcp-token-section">
         <div className="mcp-code-heading">
           <span>{t('mcp.clientConfiguration')}</span>
-          <CopyCodeButton iconOnly label="Copy MCP client configuration" value={configuration} />
+          <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('mcp.copyConfiguration')} value={configuration} />
         </div>
         <pre className="mcp-config-code">{configuration}</pre>
       </section>

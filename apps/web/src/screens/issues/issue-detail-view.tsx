@@ -17,6 +17,14 @@ const BackIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m12.5 4.5-5 5 5 5M8 9.5h8" /></svg>
 )
 
+const symbolicationKey = {
+  completed: 'issues.sourceMapped',
+  failed: 'issues.symbolicationFailed',
+  missing: 'issues.symbolicationMissing',
+  not_applicable: 'issues.symbolicationNotApplicable',
+  pending: 'issues.symbolicationPending',
+} as const
+
 const StatusButton = ({ issueId, status, label, active }: {
   issueId: string
   status: 'ignored' | 'resolved' | 'unresolved'
@@ -48,13 +56,13 @@ const StatusButton = ({ issueId, status, label, active }: {
 const StackTraceTable = ({ frames }: { frames: StackFrame[] }) => {
   const { t } = useI18n()
   return <div className="stack-table-wrap"><table className="stack-table">
-    <thead><tr><th scope="col">#</th><th scope="col">{t('issues.frame')}</th><th scope="col">Location</th><th scope="col"><span className="sr-only">{t('issues.copyLocation', { location: 'Location' })}</span></th></tr></thead>
+    <thead><tr><th scope="col">#</th><th scope="col">{t('issues.frame')}</th><th scope="col">{t('issues.location')}</th><th scope="col"><span className="sr-only">{t('issues.copyLocation', { location: t('issues.location') })}</span></th></tr></thead>
     <tbody>{frames.map((frame, index) => (
       <tr key={`${frame.filename}-${frame.function}-${frame.line}-${index}`} className={frame.inApp ? 'in-app-frame' : undefined}>
         <td>{index + 1}</td>
-        <td><code>{frame.function ?? '(anonymous)'}</code><span>{frame.inApp ? t('issues.inApp') : t('issues.library')}</span></td>
+        <td><code>{frame.function ?? t('issues.anonymous')}</code><span>{frame.inApp ? t('issues.inApp') : t('issues.library')}</span></td>
         <td><code>{formatLocation(frame)}</code></td>
-        <td><CopyButton label={t('issues.copyLocation', { location: formatLocation(frame) })} value={formatLocation(frame)} /></td>
+        <td><CopyButton copiedLabel={t('common.copied')} label={t('issues.copyLocation', { location: formatLocation(frame) })} value={formatLocation(frame)} /></td>
       </tr>
     ))}</tbody>
   </table></div>
@@ -121,7 +129,7 @@ export const IssueDetailView = ({ initialData, issueId }: IssueDetailViewProps) 
         <div className="section-heading-row">
           <h2>{t('issues.stackTrace')}</h2>
           {event ? <span className={`symbolication-status symbolication-${event.symbolication.status}`}>
-            {event.symbolication.status === 'completed' ? t('issues.sourceMapped') : event.symbolication.status.replace('_', ' ')}
+            {t(symbolicationKey[event.symbolication.status])}
           </span> : null}
         </div>
         {event?.symbolication.errorCode ? <p className="symbolication-note">Symbolication: {event.symbolication.errorCode.replaceAll('_', ' ')}</p> : null}

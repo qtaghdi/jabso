@@ -51,7 +51,7 @@ export const VerifyEmailForm = () => {
     setIsSubmitting(false)
 
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.verificationError')))
+      setError(getAuthErrorMessage(result.error, t('auth.verificationError'), t('auth.rateLimited')))
       return
     }
 

@@ -91,7 +91,7 @@ export const McpConnectionsView = ({
         </div>
         <div className="mcp-endpoint">
           <code>{query.data?.endpoint ?? initialData.endpoint}</code>
-          <CopyCodeButton iconOnly label={t('mcp.copyEndpoint')} value={query.data?.endpoint ?? initialData.endpoint} />
+          <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('mcp.copyEndpoint')} value={query.data?.endpoint ?? initialData.endpoint} />
         </div>
       </section>
       <section className="mcp-connections-section" aria-labelledby="mcp-connections-title">

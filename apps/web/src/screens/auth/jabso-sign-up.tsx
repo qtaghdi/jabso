@@ -32,7 +32,7 @@ export const JabsoSignUp = ({ callbackURL = '/onboarding' }: JabsoSignUpProps) =
     setIsSubmitting(true)
     const result = await authClient.signIn.social({ provider: 'github', callbackURL })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.githubError')))
+      setError(getAuthErrorMessage(result.error, t('auth.githubError'), t('auth.rateLimited')))
       setIsSubmitting(false)
     }
   }
@@ -55,7 +55,7 @@ export const JabsoSignUp = ({ callbackURL = '/onboarding' }: JabsoSignUpProps) =
     setIsSubmitting(true)
     const result = await authClient.signUp.email({ email: email.trim(), name: name.trim(), password, callbackURL })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.signUpError')))
+      setError(getAuthErrorMessage(result.error, t('auth.signUpError'), t('auth.rateLimited')))
       setIsSubmitting(false)
       return
     }

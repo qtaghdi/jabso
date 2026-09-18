@@ -66,7 +66,7 @@ export const WorkspaceMembersPanel = ({
       authClient.organization.listInvitations({ query: { organizationId } }),
     ])
     if (membersResult.error || invitationsResult.error) {
-      setError(getAuthErrorMessage(membersResult.error ?? invitationsResult.error, t('workspace.couldNotLoadAccess')))
+      setError(getAuthErrorMessage(membersResult.error ?? invitationsResult.error, t('workspace.couldNotLoadAccess'), t('auth.rateLimited')))
       setIsLoading(false)
       return
     }
@@ -94,7 +94,7 @@ export const WorkspaceMembersPanel = ({
       role: inviteRole,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('workspace.couldNotSendInvitation')))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotSendInvitation'), t('auth.rateLimited')))
       setPendingAction(null)
       return
     }
@@ -113,7 +113,7 @@ export const WorkspaceMembersPanel = ({
       role,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('workspace.couldNotUpdateRole')))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotUpdateRole'), t('auth.rateLimited')))
     } else {
       setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role } : item))
     }
@@ -129,7 +129,7 @@ export const WorkspaceMembersPanel = ({
       organizationId,
     })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('workspace.couldNotRemoveMember')))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotRemoveMember'), t('auth.rateLimited')))
       setPendingAction(null)
       return
     }
@@ -144,7 +144,7 @@ export const WorkspaceMembersPanel = ({
     setPendingAction(`cancel:${invitation.id}`)
     const result = await authClient.organization.cancelInvitation({ invitationId: invitation.id })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('workspace.couldNotCancelInvitation')))
+      setError(getAuthErrorMessage(result.error, t('workspace.couldNotCancelInvitation'), t('auth.rateLimited')))
     } else {
       setInvitations((current) => current.filter((item) => item.id !== invitation.id))
     }

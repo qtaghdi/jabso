@@ -49,7 +49,7 @@ export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) 
     setIsSubmitting(true)
     const result = await authClient.resetPassword({ newPassword: password, token })
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.resetError')))
+      setError(getAuthErrorMessage(result.error, t('auth.resetError'), t('auth.rateLimited')))
       setIsSubmitting(false)
       return
     }

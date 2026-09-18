@@ -896,7 +896,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   .ui-dialog-surface { padding: 20px; }
   .workspace-invite-form { grid-template-columns: 1fr; }
   .workspace-member-row { grid-template-columns: 34px minmax(0, 1fr) 96px; }
-  .workspace-role-select { width: 96px; }
+  .workspace-member-row .workspace-role-select { grid-column: 3; width: 96px; }
   .workspace-member-remove { grid-column: 2 / -1; width: fit-content; justify-self: start; }
   .workspace-kind-options { grid-template-columns: 1fr; }
   .project-source-options { grid-template-columns: 1fr; }

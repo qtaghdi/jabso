@@ -3,11 +3,12 @@
 import { useState } from 'react'
 
 type CopyButtonProps = {
+  copiedLabel?: string
   label: string
   value: string
 }
 
-export const CopyButton = ({ label, value }: CopyButtonProps) => {
+export const CopyButton = ({ copiedLabel = 'Copied', label, value }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -17,9 +18,9 @@ export const CopyButton = ({ label, value }: CopyButtonProps) => {
   }
 
   return (
-    <button className="copy-button" type="button" onClick={copy} aria-label={label} title={copied ? 'Copied' : label}>
+    <button className="copy-button" type="button" onClick={copy} aria-label={label} title={copied ? copiedLabel : label}>
       <svg aria-hidden="true" viewBox="0 0 20 20"><rect x="6" y="3" width="10" height="12" rx="1.5" /><path d="M13 17H5a2 2 0 0 1-2-2V7" /></svg>
-      <span className="sr-only" aria-live="polite">{copied ? 'Copied' : ''}</span>
+      <span className="sr-only" aria-live="polite">{copied ? copiedLabel : ''}</span>
     </button>
   )
 }

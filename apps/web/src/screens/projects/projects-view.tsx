@@ -146,7 +146,7 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
                   </div>
                   <div className="project-dsn">
                     <span><span>DSN</span><code>{project.dsn}</code></span>
-                    <CopyCodeButton iconOnly label={t('projects.copyDsn', { name: project.name })} value={project.dsn} />
+                    <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('projects.copyDsn', { name: project.name })} value={project.dsn} />
                   </div>
                   <div className="project-row-actions">
                     <Button

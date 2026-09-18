@@ -122,7 +122,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
             setName(event.target.value)
             if (error) setError(null)
           }}
-          placeholder={kind === 'team' ? 'Acme engineering' : 'Acme, Inc.'}
+          placeholder={t(kind === 'team' ? 'workspace.teamPlaceholder' : 'workspace.organizationPlaceholder')}
           value={name}
         />
         <footer className="ui-dialog-actions">

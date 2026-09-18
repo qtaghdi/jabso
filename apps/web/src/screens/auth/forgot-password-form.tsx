@@ -31,7 +31,7 @@ export const ForgotPasswordForm = () => {
     setIsSubmitting(false)
 
     if (result.error) {
-      setError(getAuthErrorMessage(result.error, t('auth.resetRequestError')))
+      setError(getAuthErrorMessage(result.error, t('auth.resetRequestError'), t('auth.rateLimited')))
       return
     }
 
