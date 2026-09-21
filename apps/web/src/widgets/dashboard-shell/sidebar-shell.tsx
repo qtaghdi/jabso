@@ -11,8 +11,10 @@ import { SessionExpiryWatcher } from 'src/widgets/dashboard-shell/session-expiry
 import { setSidebarCollapsed } from 'src/widgets/dashboard-shell/sidebar-actions'
 
 type SidebarShellProps = {
+  activeWorkspaceName: string
   children: ReactNode
   initialCollapsed: boolean
+  personalWorkspaceName: string | null
 }
 
 const IssueIcon = () => (
@@ -51,7 +53,12 @@ const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
   </svg>
 )
 
-export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) => {
+export const SidebarShell = ({
+  activeWorkspaceName,
+  children,
+  initialCollapsed,
+  personalWorkspaceName,
+}: SidebarShellProps) => {
   const { t } = useI18n()
   const pathname = usePathname()
   const activeNav = pathname.startsWith('/projects')
@@ -126,7 +133,10 @@ export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) 
           </Link>
         </nav>
         <div className="sidebar-footer">
-          <OwnerSummary />
+          <OwnerSummary
+            activeWorkspaceName={activeWorkspaceName}
+            personalWorkspaceName={personalWorkspaceName}
+          />
           <button
             aria-expanded={!collapsed}
             aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}

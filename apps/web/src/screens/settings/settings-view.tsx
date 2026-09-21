@@ -34,28 +34,15 @@ export const SettingsView = ({ workspace }: SettingsViewProps) => {
           </header>
           <LanguageSwitcher />
         </section>
-        {!workspace.organizationId ? (
-          <section className="settings-section-card" aria-labelledby="personal-workspace-title">
-            <header className="settings-section-heading">
-              <div>
-                <h2 id="personal-workspace-title">{t('settings.personalTitle')}</h2>
-                <p>{t('settings.personalDescription')}</p>
-              </div>
-            </header>
-            <div className="settings-workspace-identity">
-              <span aria-hidden="true">{workspace.name.slice(0, 2).toUpperCase()}</span>
-              <strong>{workspace.name}</strong>
-            </div>
-          </section>
-        ) : workspace.canManage ? (
+        {workspace.canManage ? (
           <WorkspaceSettingsPanel
-            currentRole={role}
+            currentRole={workspace.organizationId ? role : null}
             currentUserId={workspace.userId}
             name={workspace.name}
             organizationId={workspace.organizationId}
           />
         ) : (
-          <section className="settings-section-card" aria-labelledby="workspace-details-title">
+          <section className="settings-section-card" id="workspace-settings" aria-labelledby="workspace-details-title">
             <header className="settings-section-heading">
               <div>
                 <h2 id="workspace-details-title">{t('workspace.settingsTitle')}</h2>
