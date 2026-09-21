@@ -9,14 +9,14 @@ import { JabsoWordmark } from 'src/shared/brand/jabso-wordmark'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { Button } from 'src/shared/ui/button'
 
-type OnboardingFlowProps = { hasActiveOrganization: boolean }
+type OnboardingFlowProps = { hasActiveOrganization: boolean; redirectTo?: string }
 
 const workspaceSlug = (name: string) => {
   const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'workspace'
   return `${base}-${crypto.randomUUID().slice(0, 8)}`
 }
 
-export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) => {
+export const OnboardingFlow = ({ hasActiveOrganization, redirectTo = '/' }: OnboardingFlowProps) => {
   const { t } = useI18n()
   const router = useRouter()
   const { data: activeOrganization, isPending: isOrganizationPending } = authClient.useActiveOrganization()
@@ -55,7 +55,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
       const result = await authClient.organization.setActive({ organizationId: null })
       if (result.error) throw new Error(result.error.message)
       await provision('personal')
-      window.location.replace('/')
+      window.location.replace(redirectTo)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('workspace.createError'))
       setIsSubmitting(false)
@@ -80,7 +80,7 @@ export const OnboardingFlow = ({ hasActiveOrganization }: OnboardingFlowProps) =
         if (activated.error) throw new Error(activated.error.message)
       }
       await provision(kind, workspaceName)
-      window.location.replace('/')
+      window.location.replace(redirectTo)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('workspace.createError'))
       setIsSubmitting(false)

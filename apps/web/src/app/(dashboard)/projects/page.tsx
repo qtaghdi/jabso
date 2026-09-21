@@ -13,6 +13,7 @@ const githubResultValues = new Set([
   'not-authorized',
   'not-configured',
   'requested',
+  'requested-manual',
   'unavailable',
 ])
 

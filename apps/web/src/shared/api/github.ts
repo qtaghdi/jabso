@@ -64,5 +64,12 @@ export const startGitHubInstallation = () =>
     method: 'POST',
   })
 
+export const claimGitHubInstallation = (claim: string) =>
+  githubRequest<{ connected: true }>('/api/github/installations/claim', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ claim }),
+  })
+
 export const listGitHubRepositories = () =>
   githubRequest<GitHubRepositoriesResponse>('/api/github/repositories')

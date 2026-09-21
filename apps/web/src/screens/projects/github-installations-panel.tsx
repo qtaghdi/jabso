@@ -21,7 +21,8 @@ const connectionMessages: Record<string, { error?: boolean; key: MessageKey }> =
   'invalid-callback': { error: true, key: 'github.invalidCallback' },
   'not-authorized': { error: true, key: 'github.notAuthorized' },
   'not-configured': { error: true, key: 'github.notConfigured' },
-  requested: { key: 'github.requested' },
+  requested: { key: 'github.requestedTracked' },
+  'requested-manual': { key: 'github.requestedManual' },
   unavailable: { error: true, key: 'github.unavailable' },
 }
 
@@ -35,6 +36,7 @@ export const GitHubInstallationsPanel = ({
   const installMutation = useGitHubInstallation()
   const installations = installationsQuery.data?.items ?? []
   const connectionMessage = connectionResult ? connectionMessages[connectionResult] : undefined
+  const waitingForApproval = connectionResult === 'requested' || connectionResult === 'requested-manual'
 
   return (
     <section className="github-installations-section" aria-labelledby="github-installations-title">
@@ -53,7 +55,7 @@ export const GitHubInstallationsPanel = ({
           type="button"
           variant={installations.length > 0 ? 'secondary' : 'primary'}
         >
-          {installations.length > 0 ? t('github.installAnother') : t('github.install')}
+          {waitingForApproval ? t('github.checkApproval') : installations.length > 0 ? t('github.installAnother') : t('github.install')}
         </Button> : null}
       </div>
       <ol className="github-access-steps">

@@ -561,6 +561,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .auth-form-header > p:last-child { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
 .auth-form { display: grid; gap: 18px; }
 .auth-form > .ui-button { width: 100%; min-height: 50px; border-radius: 10px; }
+.auth-form > a.ui-button { width: 100%; min-height: 50px; border-radius: 10px; }
 .auth-github-button svg { width: 17px; height: 17px; fill: currentColor; }
 .auth-divider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; color: #7d8691; font-size: 12px; }
 .auth-divider::before, .auth-divider::after { height: 1px; background: var(--border); content: ''; }
