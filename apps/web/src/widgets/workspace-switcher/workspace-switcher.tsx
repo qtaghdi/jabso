@@ -12,11 +12,14 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import type { WorkspaceKind } from 'src/shared/api/workspaces'
 import { authClient } from 'src/shared/auth/auth-client'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { WorkspaceCreateDialog } from 'src/widgets/workspace-switcher/workspace-create-dialog'
 
 type WorkspaceSwitcherProps = {
+  activeWorkspaceKind: WorkspaceKind
+  activeWorkspaceName: string
   personalName: string
 }
 
@@ -48,7 +51,7 @@ const workspaceInitials = (name: string) => name
   .map((part) => part.slice(0, 1).toUpperCase())
   .join('') || 'J'
 
-export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
+export const WorkspaceSwitcher = ({ activeWorkspaceKind, activeWorkspaceName, personalName }: WorkspaceSwitcherProps) => {
   const { t } = useI18n()
   const router = useRouter()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
@@ -68,8 +71,9 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
   const [error, setError] = useState<string | null>(null)
   const [menuStyle, setMenuStyle] = useState<WorkspaceMenuStyle | null>(null)
   const memberships = organizations ?? []
-  const activeName = organization?.name ?? t('common.personal')
-  const activeDescription = organization ? t('workspace.sharedDescription') : t('workspace.personalDescription')
+  const personalWorkspaceName = activeWorkspaceKind === 'personal' ? activeWorkspaceName : personalName
+  const activeName = activeWorkspaceName
+  const activeDescription = orgId ? t('workspace.sharedDescription') : t('workspace.personalDescription')
 
   const positionMenu = useCallback(() => {
     const trigger = triggerRef.current
@@ -217,8 +221,8 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
               role="menuitemradio"
               type="button"
             >
-              <span className="workspace-avatar workspace-avatar-personal" aria-hidden="true">{workspaceInitials(personalName)}</span>
-              <span><strong>{t('common.personal')}</strong><small>{personalName}</small></span>
+              <span className="workspace-avatar workspace-avatar-personal" aria-hidden="true">{workspaceInitials(personalWorkspaceName)}</span>
+              <span><strong>{t('common.personal')}</strong><small>{personalWorkspaceName}</small></span>
               {!orgId ? <CheckIcon /> : null}
             </button>
             {membershipRows.map((workspace) => (
@@ -238,7 +242,7 @@ export const WorkspaceSwitcher = ({ personalName }: WorkspaceSwitcherProps) => {
           </div>
           {error ? <p className="workspace-menu-error" role="alert">{error}</p> : null}
           <footer className="workspace-menu-footer">
-            <Link href="/settings" onClick={() => setIsOpen(false)} role="menuitem">
+            <Link href="/settings#workspace-settings" onClick={() => setIsOpen(false)} role="menuitem">
               <SettingsIcon />
               <span>{t('workspace.manage')}</span>
             </Link>

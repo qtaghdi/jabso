@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { useState, useTransition } from 'react'
+import type { WorkspaceKind } from 'src/shared/api/workspaces'
 import { JabsoWordmark } from 'src/shared/brand/jabso-wordmark'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { OwnerSummary } from 'src/widgets/dashboard-shell/owner-summary'
@@ -11,6 +12,10 @@ import { SessionExpiryWatcher } from 'src/widgets/dashboard-shell/session-expiry
 import { setSidebarCollapsed } from 'src/widgets/dashboard-shell/sidebar-actions'
 
 type SidebarShellProps = {
+  activeWorkspace: {
+    kind: WorkspaceKind
+    name: string
+  }
   children: ReactNode
   initialCollapsed: boolean
 }
@@ -51,7 +56,7 @@ const SidebarToggleIcon = ({ collapsed }: { collapsed: boolean }) => (
   </svg>
 )
 
-export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) => {
+export const SidebarShell = ({ activeWorkspace, children, initialCollapsed }: SidebarShellProps) => {
   const { t } = useI18n()
   const pathname = usePathname()
   const activeNav = pathname.startsWith('/projects')
@@ -126,7 +131,7 @@ export const SidebarShell = ({ children, initialCollapsed }: SidebarShellProps) 
           </Link>
         </nav>
         <div className="sidebar-footer">
-          <OwnerSummary />
+          <OwnerSummary activeWorkspace={activeWorkspace} />
           <button
             aria-expanded={!collapsed}
             aria-label={collapsed ? t('nav.expand') : t('nav.collapse')}
