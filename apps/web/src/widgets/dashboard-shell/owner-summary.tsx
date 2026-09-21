@@ -1,20 +1,17 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import type { WorkspaceKind } from 'src/shared/api/workspaces'
 import { authClient } from 'src/shared/auth/auth-client'
 import { WorkspaceSwitcher } from 'src/widgets/workspace-switcher/workspace-switcher'
 
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'J'
 
 type OwnerSummaryProps = {
-  activeWorkspace: {
-    kind: WorkspaceKind
-    name: string
-  }
+  activeWorkspaceName: string
+  personalWorkspaceName: string | null
 }
 
-export const OwnerSummary = ({ activeWorkspace }: OwnerSummaryProps) => {
+export const OwnerSummary = ({ activeWorkspaceName, personalWorkspaceName }: OwnerSummaryProps) => {
   const router = useRouter()
   const { data: session } = authClient.useSession()
   const ownerName = session?.user.name ?? 'Jabso user'
@@ -29,9 +26,9 @@ export const OwnerSummary = ({ activeWorkspace }: OwnerSummaryProps) => {
   return (
     <div className="account-summary">
       <WorkspaceSwitcher
-        activeWorkspaceKind={activeWorkspace.kind}
-        activeWorkspaceName={activeWorkspace.name}
+        activeWorkspaceName={activeWorkspaceName}
         personalName={ownerName}
+        personalWorkspaceName={personalWorkspaceName}
       />
       <button className="owner-summary" onClick={signOut} title="Sign out" type="button">
         <span className="owner-avatar owner-avatar-fallback" aria-hidden="true">{initials(ownerName)}</span>
