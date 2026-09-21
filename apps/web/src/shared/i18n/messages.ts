@@ -288,6 +288,7 @@ export const englishMessages = {
   'projects.title': 'Projects',
   'settings.description': 'Manage your workspace and dashboard preferences.',
   'settings.personalDescription': 'Your personal workspace is private to your account.',
+  'settings.personalManageDescription': 'Rename your private workspace and review who can access it.',
   'settings.personalTitle': 'Personal workspace',
   'settings.title': 'Settings',
   'settings.loading': 'Loading settings',
@@ -317,6 +318,8 @@ export const englishMessages = {
   'workspace.membersDescription': 'Invite people and control their access to this workspace.',
   'workspace.name': 'Workspace name',
   'workspace.pendingInvitations': 'Pending invitations',
+  'workspace.personalAccessDescription': 'Only your account can access a personal workspace. Create a shared workspace from the switcher when you need to invite members.',
+  'workspace.personalAccessTitle': 'Access',
   'workspace.personalDescription': 'Private workspace',
   'workspace.remove': 'Remove',
   'workspace.removeConfirm': '{name} will immediately lose access to this workspace and its projects.',
@@ -337,6 +340,7 @@ export const englishMessages = {
   'workspace.typeTeamDescription': 'For a small group sharing projects and errors.',
   'workspace.organizationPlaceholder': 'Acme, Inc.',
   'workspace.teamPlaceholder': 'Acme engineering',
+  'workspace.updated': 'Workspace name saved.',
   'workspace.you': 'you',
 } as const
 
@@ -633,6 +637,7 @@ export const koreanMessages: Record<MessageKey, string> = {
   'projects.title': '프로젝트',
   'settings.description': '워크스페이스와 대시보드 환경설정을 관리하세요.',
   'settings.personalDescription': '개인 워크스페이스는 내 계정에서만 볼 수 있습니다.',
+  'settings.personalManageDescription': '개인 워크스페이스 이름을 변경하고 접근 범위를 확인하세요.',
   'settings.personalTitle': '개인 워크스페이스',
   'settings.title': '설정',
   'settings.loading': '설정을 불러오는 중',
@@ -662,6 +667,8 @@ export const koreanMessages: Record<MessageKey, string> = {
   'workspace.membersDescription': '멤버를 초대하고 워크스페이스 접근 권한을 관리하세요.',
   'workspace.name': '워크스페이스 이름',
   'workspace.pendingInvitations': '대기 중인 초대',
+  'workspace.personalAccessDescription': '개인 워크스페이스는 내 계정만 접근할 수 있습니다. 멤버를 초대하려면 전환 메뉴에서 공유 워크스페이스를 만드세요.',
+  'workspace.personalAccessTitle': '접근 권한',
   'workspace.personalDescription': '개인 워크스페이스',
   'workspace.remove': '제거',
   'workspace.removeConfirm': '{name}의 워크스페이스와 프로젝트 접근 권한이 즉시 제거됩니다.',
@@ -682,6 +689,7 @@ export const koreanMessages: Record<MessageKey, string> = {
   'workspace.typeTeamDescription': '프로젝트와 오류를 공유하는 소규모 그룹에 적합합니다.',
   'workspace.organizationPlaceholder': '예: Acme 주식회사',
   'workspace.teamPlaceholder': '예: Acme 엔지니어링',
+  'workspace.updated': '워크스페이스 이름을 저장했습니다.',
   'workspace.you': '나',
 }
 

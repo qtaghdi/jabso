@@ -10,10 +10,10 @@ import { Input } from 'src/shared/ui/input'
 import { WorkspaceMembersPanel } from 'src/widgets/workspace-switcher/workspace-members-panel'
 
 type WorkspaceSettingsPanelProps = {
-  currentRole: 'admin' | 'owner'
+  currentRole: 'admin' | 'owner' | null
   currentUserId: string
   name: string
-  organizationId: string
+  organizationId: string | null
 }
 
 export const WorkspaceSettingsPanel = ({
@@ -26,6 +26,7 @@ export const WorkspaceSettingsPanel = ({
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -39,6 +40,7 @@ export const WorkspaceSettingsPanel = ({
       return
     }
     setError(null)
+    setSuccess(null)
     setIsSubmitting(true)
     try {
       const response = await fetch('/api/dashboard/workspace', {
@@ -50,6 +52,7 @@ export const WorkspaceSettingsPanel = ({
         const result = await response.json().catch(() => null) as { error?: string } | null
         throw new Error(result?.error ?? t('workspace.couldNotUpdate'))
       }
+      setSuccess(t('workspace.updated'))
       router.refresh()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('workspace.couldNotUpdate'))
@@ -59,7 +62,7 @@ export const WorkspaceSettingsPanel = ({
   }
 
   const deleteWorkspace = async () => {
-    if (isDeleting) return
+    if (!organizationId || isDeleting) return
     setDeleteError(null)
     setIsDeleting(true)
     try {
@@ -80,16 +83,16 @@ export const WorkspaceSettingsPanel = ({
 
   return (
     <>
-      <section className="settings-section-card" aria-labelledby="workspace-details-title">
+      <section className="settings-section-card" id="workspace-settings" aria-labelledby="workspace-details-title">
         <header className="settings-section-heading">
           <div>
-            <h2 id="workspace-details-title">{t('workspace.settingsTitle')}</h2>
-            <p>{t('workspace.settingsDescription')}</p>
+            <h2 id="workspace-details-title">{t(organizationId ? 'workspace.settingsTitle' : 'settings.personalTitle')}</h2>
+            <p>{t(organizationId ? 'workspace.settingsDescription' : 'settings.personalManageDescription')}</p>
           </div>
         </header>
         <form className="workspace-settings-form" onSubmit={save}>
           <Input
-            autoComplete="organization"
+            autoComplete={organizationId ? 'organization' : 'off'}
             error={error ?? undefined}
             label={t('workspace.name')}
             maxLength={80}
@@ -97,29 +100,40 @@ export const WorkspaceSettingsPanel = ({
             onChange={(event) => {
               setName(event.target.value)
               if (error) setError(null)
+              if (success) setSuccess(null)
             }}
             value={name}
           />
           <footer className="settings-form-actions">
+            <p aria-live="polite" className="settings-form-status">{success}</p>
             <Button pending={isSubmitting} type="submit">{t('common.save')}</Button>
           </footer>
         </form>
-        <WorkspaceMembersPanel
-          currentRole={currentRole}
-          currentUserId={currentUserId}
-          organizationId={organizationId}
-        />
+        {organizationId && currentRole ? (
+          <WorkspaceMembersPanel
+            currentRole={currentRole}
+            currentUserId={currentUserId}
+            organizationId={organizationId}
+          />
+        ) : (
+          <div className="workspace-personal-access">
+            <strong>{t('workspace.personalAccessTitle')}</strong>
+            <p>{t('workspace.personalAccessDescription')}</p>
+          </div>
+        )}
       </section>
-      <section className="settings-section-card settings-danger-card" aria-labelledby="workspace-danger-title">
-        <div>
-          <h2 id="workspace-danger-title">{t('workspace.delete')}</h2>
-          <p>{t('workspace.deleteDescription')}</p>
-        </div>
-        <Button onClick={() => setIsDeleteOpen(true)} type="button" variant="danger">
-          {t('workspace.delete')}
-        </Button>
-      </section>
-      {isDeleteOpen ? (
+      {organizationId ? (
+        <section className="settings-section-card settings-danger-card" aria-labelledby="workspace-danger-title">
+          <div>
+            <h2 id="workspace-danger-title">{t('workspace.delete')}</h2>
+            <p>{t('workspace.deleteDescription')}</p>
+          </div>
+          <Button onClick={() => setIsDeleteOpen(true)} type="button" variant="danger">
+            {t('workspace.delete')}
+          </Button>
+        </section>
+      ) : null}
+      {organizationId && isDeleteOpen ? (
         <AlertDialog
           cancel={() => { if (!isDeleting) setIsDeleteOpen(false) }}
           confirm={deleteWorkspace}

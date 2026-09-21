@@ -124,10 +124,12 @@ describe('Jabso server', () => {
     const { database, executor } = await createTestDatabase()
     const app = await buildServer({ dashboardToken, database: executor })
     const workspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a03'
+    const personalWorkspaceId = '028f47a2-5d1d-7e19-aab8-6f8cc59d9a13'
     await executor.query(
       `insert into workspaces (id, external_id, kind, name)
-       values ($1, 'org:org_manage', 'team', 'Old name')`,
-      [workspaceId],
+       values ($1, 'org:org_manage', 'team', 'Old name'),
+              ($2, 'user:user_manage', 'personal', 'Old personal name')`,
+      [workspaceId, personalWorkspaceId],
     )
 
     const unauthorized = await app.inject({
@@ -145,6 +147,19 @@ describe('Jabso server', () => {
     })
     expect(renamed.statusCode).toBe(200)
     expect(renamed.json()).toMatchObject({ externalId: 'org:org_manage', name: 'New name' })
+
+    const renamedPersonal = await app.inject({
+      method: 'PATCH',
+      url: '/api/workspaces/user%3Auser_manage',
+      headers: { authorization: `Bearer ${dashboardToken}` },
+      payload: { name: 'My private inbox' },
+    })
+    expect(renamedPersonal.statusCode).toBe(200)
+    expect(renamedPersonal.json()).toMatchObject({
+      externalId: 'user:user_manage',
+      kind: 'personal',
+      name: 'My private inbox',
+    })
 
     const missing = await app.inject({
       method: 'PATCH',
