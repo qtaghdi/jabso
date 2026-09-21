@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type {
   GitHubAppClient,
   GitHubInstallation,
+  GitHubInstallationRequest,
   GitHubRepository,
 } from '../../ports/github-app.js'
 
@@ -29,6 +30,23 @@ const installationTokenSchema = z.object({
 const oauthTokenSchema = z.object({
   access_token: z.string().min(20).max(1_000),
 })
+
+const githubUserSchema = z.object({
+  id: z.number().int().positive().safe(),
+})
+
+const installationRequestSchema = z.object({
+  account: z.object({
+    id: z.number().int().positive().safe(),
+  }),
+  created_at: z.iso.datetime(),
+  id: z.number().int().positive().safe(),
+  requester: z.object({
+    id: z.number().int().positive().safe(),
+  }),
+})
+
+const installationRequestsSchema = z.array(installationRequestSchema).max(100)
 
 const repositorySchema = z.object({
   archived: z.boolean(),
@@ -126,6 +144,23 @@ export const createGitHubAppClient = (input: {
     },
   })
 
+  const exchangeCode = async (code: string) => {
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/x-www-form-urlencoded',
+        'user-agent': 'jabso-server',
+      },
+      body: new URLSearchParams({
+        client_id: input.clientId,
+        client_secret: input.clientSecret,
+        code,
+      }),
+    })
+    return responseJson(tokenResponse, oauthTokenSchema, 'GitHub returned an invalid OAuth response.')
+  }
+
   const installationToken = async (installationId: string) => {
     const cached = tokenCache.get(installationId)
     if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token
@@ -142,20 +177,7 @@ export const createGitHubAppClient = (input: {
 
   return {
     authorizeInstallation: async (code, installationId) => {
-      const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'content-type': 'application/x-www-form-urlencoded',
-          'user-agent': 'jabso-server',
-        },
-        body: new URLSearchParams({
-          client_id: input.clientId,
-          client_secret: input.clientSecret,
-          code,
-        }),
-      })
-      const oauth = await responseJson(tokenResponse, oauthTokenSchema, 'GitHub returned an invalid OAuth response.')
+      const oauth = await exchangeCode(code)
       const verification = await fetch(
         `${githubApiUrl}/user/installations/${encodeURIComponent(installationId)}/repositories?per_page=1`,
         { headers: githubHeaders(oauth.access_token) },
@@ -169,6 +191,30 @@ export const createGitHubAppClient = (input: {
         'GitHub returned an invalid installation.',
       )
       return installationFromResponse(installation)
+    },
+    authorizeInstallationRequest: async (code): Promise<GitHubInstallationRequest | null> => {
+      const oauth = await exchangeCode(code)
+      const userResponse = await fetch(`${githubApiUrl}/user`, {
+        headers: githubHeaders(oauth.access_token),
+      })
+      const user = await responseJson(userResponse, githubUserSchema, 'GitHub returned an invalid user response.')
+      const requestsResponse = await appRequest('/app/installation-requests?per_page=100')
+      const requests = await responseJson(
+        requestsResponse,
+        installationRequestsSchema,
+        'GitHub returned invalid installation requests.',
+      )
+      const cutoff = Date.now() - 15 * 60_000
+      const matching = requests.filter((request) => request.requester.id === user.id
+        && new Date(request.created_at).getTime() >= cutoff)
+      if (matching.length !== 1) return null
+      const request = matching[0]
+      if (!request) return null
+      return {
+        accountId: String(request.account.id),
+        requestId: String(request.id),
+        requesterId: String(request.requester.id),
+      }
     },
     listRepositories: async (installationId): Promise<GitHubRepository[]> => {
       const token = await installationToken(installationId)

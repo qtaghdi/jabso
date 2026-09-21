@@ -11,7 +11,11 @@ const callbackQuerySchema = z.object({
   code: z.string().min(1).max(1_000).optional(),
   installation_id: z.string().regex(/^\d{1,30}$/).optional(),
   setup_action: z.enum(['install', 'request', 'update']).optional(),
-  state: z.string().regex(/^[A-Za-z0-9_-]{20,200}$/),
+  state: z.string().regex(/^[A-Za-z0-9_-]{20,200}$/).optional(),
+})
+
+const claimSchema = z.object({
+  claim: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
 })
 
 const webhookInstallationSchema = z.object({
@@ -28,6 +32,7 @@ const webhookInstallationSchema = z.object({
 const webhookSchema = z.object({
   action: z.string().min(1).max(100),
   installation: webhookInstallationSchema,
+  requester: z.object({ id: z.number().int().positive().safe() }).nullable().optional(),
 })
 
 type RegisterGitHubAppRoutesOptions = {
@@ -38,6 +43,7 @@ type RegisterGitHubAppRoutesOptions = {
 }
 
 const stateHash = (state: string) => createHash('sha256').update(state).digest('hex')
+const claimHash = stateHash
 
 const installationFromWebhook = (
   value: z.infer<typeof webhookInstallationSchema>,
@@ -53,6 +59,12 @@ const installationFromWebhook = (
 const safeRedirect = (webOrigin: string, status: string) => {
   const url = new URL('/projects', webOrigin)
   url.searchParams.set('github', status)
+  return url.toString()
+}
+
+const claimRedirect = (webOrigin: string, claim: string) => {
+  const url = new URL('/github/connect', webOrigin)
+  url.hash = `claim=${encodeURIComponent(claim)}`
   return url.toString()
 }
 
@@ -98,14 +110,61 @@ export const registerGitHubAppRoutes = async (
     return reply.code(201).send({ url: installUrl.toString() })
   })
 
+  app.post<{ Body: unknown }>('/api/github/installations/claim', async (request, reply) => {
+    const workspaceId = options.workspaceId(request.headers)
+    if (!workspaceId) return reply.code(403).send({ error: 'invalid dashboard credentials' })
+    const parsed = claimSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: 'invalid GitHub installation claim' })
+    const connected = await options.store.claimInstallation(claimHash(parsed.data.claim), workspaceId)
+    if (!connected) return reply.code(409).send({ error: 'GitHub installation claim is expired or already connected' })
+    return reply.send({ connected: true })
+  })
+
   app.get<{ Querystring: Record<string, string | undefined> }>('/api/github/callback', async (request, reply) => {
     if (!options.runtime) return reply.redirect(safeRedirect(options.webOrigin, 'not-configured'))
     const parsed = callbackQuerySchema.safeParse(request.query)
     if (!parsed.success) return reply.redirect(safeRedirect(options.webOrigin, 'invalid-callback'))
+
+    if (!parsed.data.state) {
+      if (parsed.data.setup_action === 'request') {
+        return reply.redirect(new URL('/github/connect?status=requested', options.webOrigin).toString())
+      }
+      if (!parsed.data.code || !parsed.data.installation_id) {
+        return reply.redirect(new URL('/github/connect?status=invalid', options.webOrigin).toString())
+      }
+      try {
+        const installation = await options.runtime.client.authorizeInstallation(
+          parsed.data.code,
+          parsed.data.installation_id,
+        )
+        const claim = randomBytes(32).toString('base64url')
+        await options.store.createClaim({
+          claimHash: claimHash(claim),
+          expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+          installation,
+        })
+        return reply.redirect(claimRedirect(options.webOrigin, claim))
+      } catch {
+        return reply.redirect(new URL('/github/connect?status=unavailable', options.webOrigin).toString())
+      }
+    }
+
     const state = await options.store.consumeState(stateHash(parsed.data.state))
     if (!state) return reply.redirect(safeRedirect(options.webOrigin, 'expired'))
     if (parsed.data.setup_action === 'request') {
-      return reply.redirect(safeRedirect(options.webOrigin, 'requested'))
+      if (!parsed.data.code) return reply.redirect(safeRedirect(options.webOrigin, 'requested-manual'))
+      try {
+        const pending = await options.runtime.client.authorizeInstallationRequest(parsed.data.code)
+        if (!pending) return reply.redirect(safeRedirect(options.webOrigin, 'requested-manual'))
+        const tracked = await options.store.createInstallationRequest({
+          ...pending,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60_000).toISOString(),
+          workspaceId: state.workspaceId,
+        })
+        return reply.redirect(safeRedirect(options.webOrigin, tracked ? 'requested' : 'already-connected'))
+      } catch {
+        return reply.redirect(safeRedirect(options.webOrigin, 'requested-manual'))
+      }
     }
     if (!parsed.data.code || !parsed.data.installation_id) {
       return reply.redirect(safeRedirect(options.webOrigin, 'invalid-callback'))
@@ -165,6 +224,12 @@ export const registerGitHubAppRoutes = async (
       const installation = installationFromWebhook(payload.data.installation)
       if (event === 'installation' && payload.data.action === 'deleted') {
         await options.store.deleteInstallation(installation.installationId)
+      } else if (event === 'installation' && payload.data.action === 'created' && payload.data.requester) {
+        const connected = await options.store.connectRequestedInstallation(
+          String(payload.data.requester.id),
+          installation,
+        )
+        if (!connected) await options.store.updateInstallation(installation)
       } else if (event === 'installation'
         || event === 'installation_repositories'
         || event === 'installation_target') {

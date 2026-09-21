@@ -25,6 +25,11 @@ const runtime = (): GitHubAppRuntime => ({
       ...installation,
       installationId,
     })),
+    authorizeInstallationRequest: vi.fn(async () => ({
+      accountId: installation.accountId,
+      requesterId: '555001',
+      requestId: '777001',
+    })),
     listRepositories: vi.fn(async (installationId) => [{
       archived: false,
       defaultBranch: 'main',
@@ -143,6 +148,126 @@ describe('GitHub App integration', () => {
       url: `/api/github/callback?code=replayed&installation_id=${installation.installationId}&state=${state}`,
     })
     expect(replay.headers.location).toBe('https://jabso.test/projects?github=expired')
+    await app.close()
+    await database.close()
+  })
+
+  it('connects an approved organization request from the signed webhook', async () => {
+    const { app, database, executor, headers } = await fixture()
+    const state = await beginInstallation(app, headers(workspaceOne))
+    const requested = await app.inject({
+      method: 'GET',
+      url: `/api/github/callback?code=request-code&setup_action=request&state=${state}`,
+    })
+    expect(requested.headers.location).toBe('https://jabso.test/projects?github=requested')
+    const pending = await executor.query<{
+      account_id: string
+      requester_id: string
+      workspace_id: string
+    }>('select account_id, requester_id, workspace_id from github_installation_requests')
+    expect(pending.rows).toEqual([{
+      account_id: installation.accountId,
+      requester_id: '555001',
+      workspace_id: workspaceOne,
+    }])
+
+    const otherWorkspaceState = await beginInstallation(app, headers(workspaceTwo))
+    const crossWorkspaceRequest = await app.inject({
+      method: 'GET',
+      url: `/api/github/callback?code=other-request&setup_action=request&state=${otherWorkspaceState}`,
+    })
+    expect(crossWorkspaceRequest.headers.location).toBe('https://jabso.test/projects?github=already-connected')
+
+    const payload = JSON.stringify({
+      action: 'created',
+      installation: {
+        account: { id: 987654, login: 'jabso-labs', type: 'Organization' },
+        id: 123456,
+        repository_selection: 'selected',
+        suspended_at: null,
+      },
+      requester: { id: 555001 },
+    })
+    const signature = `sha256=${createHmac('sha256', webhookSecret).update(payload).digest('hex')}`
+    const webhook = await app.inject({
+      method: 'POST',
+      url: '/webhooks/github',
+      headers: {
+        'content-type': 'application/json',
+        'x-github-event': 'installation',
+        'x-hub-signature-256': signature,
+      },
+      payload,
+    })
+    expect(webhook.statusCode).toBe(202)
+    const connected = await app.inject({
+      method: 'GET',
+      url: '/api/github/installations',
+      headers: headers(workspaceOne),
+    })
+    expect(connected.json()).toMatchObject({ items: [{ installationId: installation.installationId }] })
+    const otherWorkspace = await app.inject({
+      method: 'GET',
+      url: '/api/github/installations',
+      headers: headers(workspaceTwo),
+    })
+    expect(otherWorkspace.json()).toMatchObject({ items: [] })
+    expect((await executor.query('select account_id from github_installation_requests')).rows).toEqual([])
+    await app.close()
+    await database.close()
+  })
+
+  it('falls back to manual approval confirmation when a request cannot be identified uniquely', async () => {
+    const { app, database, githubAppRuntime, headers } = await fixture()
+    vi.mocked(githubAppRuntime.client.authorizeInstallationRequest).mockResolvedValueOnce(null)
+    const state = await beginInstallation(app, headers(workspaceOne))
+    const requested = await app.inject({
+      method: 'GET',
+      url: `/api/github/callback?code=ambiguous-request&setup_action=request&state=${state}`,
+    })
+    expect(requested.headers.location).toBe('https://jabso.test/projects?github=requested-manual')
+    await app.close()
+    await database.close()
+  })
+
+  it('issues a short-lived claim for a direct public installation', async () => {
+    const { app, database, executor, headers } = await fixture()
+    const callback = await app.inject({
+      method: 'GET',
+      url: `/api/github/callback?code=direct-code&installation_id=${installation.installationId}&setup_action=install`,
+    })
+    expect(callback.statusCode).toBe(302)
+    const location = callback.headers.location
+    if (!location) throw new Error('Expected a GitHub claim redirect')
+    const redirect = new URL(location)
+    expect(redirect.origin).toBe('https://jabso.test')
+    expect(redirect.pathname).toBe('/github/connect')
+    const claim = new URLSearchParams(redirect.hash.slice(1)).get('claim')
+    expect(claim).toMatch(/^[A-Za-z0-9_-]{43}$/)
+    if (!claim) throw new Error('Expected a GitHub installation claim')
+    const stored = await executor.query<{ claim_hash: string }>('select claim_hash from github_installation_claims')
+    expect(stored.rows[0]?.claim_hash).not.toBe(claim)
+
+    const unauthorized = await app.inject({
+      method: 'POST',
+      url: '/api/github/installations/claim',
+      payload: { claim },
+    })
+    expect(unauthorized.statusCode).toBe(403)
+    const connected = await app.inject({
+      method: 'POST',
+      url: '/api/github/installations/claim',
+      headers: headers(workspaceOne),
+      payload: { claim },
+    })
+    expect(connected.statusCode).toBe(200)
+    const replay = await app.inject({
+      method: 'POST',
+      url: '/api/github/installations/claim',
+      headers: headers(workspaceTwo),
+      payload: { claim },
+    })
+    expect(replay.statusCode).toBe(409)
     await app.close()
     await database.close()
   })

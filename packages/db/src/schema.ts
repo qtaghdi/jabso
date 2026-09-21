@@ -187,6 +187,44 @@ export const githubInstallationStates = pgTable(
   (table) => [index('github_installation_states_expires_idx').on(table.expiresAt)],
 )
 
+export const githubInstallationRequests = pgTable(
+  // GitHub numeric IDs only; pending mappings expire after seven days and contain no OAuth token.
+  'github_installation_requests',
+  {
+    accountId: text('account_id').primaryKey(),
+    requestId: text('request_id').notNull(),
+    requesterId: text('requester_id').notNull(),
+    workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('github_installation_requests_request_id_uidx').on(table.requestId),
+    index('github_installation_requests_expires_idx').on(table.expiresAt),
+  ],
+)
+
+export const githubInstallationClaims = pgTable(
+  // Stores only a claim hash and installation metadata; claims expire after fifteen minutes.
+  'github_installation_claims',
+  {
+    claimHash: text('claim_hash').primaryKey(),
+    installationId: text('installation_id').notNull(),
+    accountId: text('account_id').notNull(),
+    accountLogin: text('account_login').notNull(),
+    accountType: text('account_type').notNull(),
+    repositorySelection: text('repository_selection').notNull(),
+    suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('github_installation_claims_installation_id_uidx').on(table.installationId),
+    index('github_installation_claims_expires_idx').on(table.expiresAt),
+  ],
+)
+
 export const projects = pgTable('projects', {
   id: uuid('id').defaultRandom().primaryKey(),
   workspaceId: uuid('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }),
