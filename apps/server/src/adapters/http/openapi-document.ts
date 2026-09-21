@@ -254,6 +254,35 @@ export const openApiDocument: OpenAPIV3.Document = {
         },
       },
     },
+    '/api/github/installations/claim': {
+      post: {
+        tags: ['GitHub'],
+        summary: 'Claim a verified direct GitHub App installation',
+        description: 'Consumes a short-lived single-use claim and binds its verified installation to the active workspace.',
+        operationId: 'claimGitHubInstallation',
+        security: dashboardSecurity,
+        parameters: [workspaceHeaderParameter],
+        requestBody: {
+          required: true,
+          content: jsonContent({
+            type: 'object',
+            required: ['claim'],
+            properties: { claim: { type: 'string', minLength: 43, maxLength: 43 } },
+            additionalProperties: false,
+          }),
+        },
+        responses: {
+          '200': response('The installation was connected.', {
+            type: 'object',
+            required: ['connected'],
+            properties: { connected: { type: 'boolean', enum: [true] } },
+          }),
+          '400': response('The claim is invalid.', { $ref: '#/components/schemas/Error' }),
+          '403': response('The dashboard credentials are invalid.', { $ref: '#/components/schemas/Error' }),
+          '409': response('The claim expired, was consumed, or belongs to another workspace.', { $ref: '#/components/schemas/Error' }),
+        },
+      },
+    },
     '/api/github/repositories': {
       get: {
         tags: ['GitHub'],
@@ -274,13 +303,13 @@ export const openApiDocument: OpenAPIV3.Document = {
       get: {
         tags: ['GitHub'],
         summary: 'Complete a GitHub App installation',
-        description: 'Consumes a single-use installation state, verifies the authorizing GitHub user, and redirects to the Jabso projects page.',
+        description: 'Completes a workspace-scoped install, records a pending organization approval, or issues a short-lived claim for an install started directly on GitHub.',
         operationId: 'completeGitHubInstallation',
         parameters: [
           { name: 'code', in: 'query', schema: { type: 'string' } },
           { name: 'installation_id', in: 'query', schema: { type: 'string' } },
           { name: 'setup_action', in: 'query', schema: { type: 'string', enum: ['install', 'request', 'update'] } },
-          { name: 'state', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'state', in: 'query', schema: { type: 'string' } },
         ],
         responses: {
           '302': response('Redirects to the projects page with a connection result.'),
