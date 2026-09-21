@@ -35,6 +35,13 @@ export type GitHubRepositoriesResponse = {
   items: GitHubRepository[]
 }
 
+export class GitHubRequestError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message)
+    this.name = 'GitHubRequestError'
+  }
+}
+
 const githubRequest = async <Result>(
   path: string,
   init?: RequestInit,
@@ -51,7 +58,10 @@ const githubRequest = async <Result>(
   })
   if (!response.ok) {
     const result = await response.json().catch(() => null) as { error?: string } | null
-    throw new Error(result?.error ?? `GitHub App request failed with status ${response.status}`)
+    throw new GitHubRequestError(
+      response.status,
+      result?.error ?? `GitHub App request failed with status ${response.status}`,
+    )
   }
   return response.json() as Promise<Result>
 }

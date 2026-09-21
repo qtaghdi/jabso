@@ -32,7 +32,6 @@ export const GitHubConnectFlow = ({
   useEffect(() => {
     const claim = new URLSearchParams(window.location.hash.slice(1)).get('claim')
     if (!isGitHubInstallationClaim(claim)) return
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     setIsCapturing(true)
     void fetch('/api/github/connect', {
       method: 'POST',
@@ -40,6 +39,7 @@ export const GitHubConnectFlow = ({
       body: JSON.stringify({ claim }),
     }).then(async (response) => {
       if (!response.ok) throw new Error(t('github.connectClaimInvalid'))
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
       router.refresh()
     }).catch((caught) => {
       setError(caught instanceof Error ? caught.message : t('github.connectClaimInvalid'))

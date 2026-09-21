@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { claimGitHubInstallation } from 'src/shared/api/github'
+import { claimGitHubInstallation, GitHubRequestError } from 'src/shared/api/github'
 import { requireWorkspace } from 'src/shared/auth/workspace-auth'
 import {
   githubInstallationClaimCookie,
@@ -22,9 +22,12 @@ export const POST = async () => {
     cookieStore.delete(githubInstallationClaimCookie)
     return NextResponse.json({ connected: true })
   } catch (error) {
-    cookieStore.delete(githubInstallationClaimCookie)
+    const status = error instanceof GitHubRequestError ? error.status : 502
+    if (status === 409) cookieStore.delete(githubInstallationClaimCookie)
     return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Could not connect the GitHub installation.',
-    }, { status: 409 })
+      error: error instanceof GitHubRequestError
+        ? error.message
+        : 'GitHub is temporarily unavailable. Try again.',
+    }, { status })
   }
 }
