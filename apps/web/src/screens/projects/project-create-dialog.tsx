@@ -81,6 +81,7 @@ export const ProjectCreateDialog = ({ close, onCreated }: ProjectCreateDialogPro
   return (
     <Dialog
       close={closeDialog}
+      closeLabel={t('common.close')}
       description={t('projects.createDescription')}
       eyebrow={t('projects.new')}
       icon={<ProjectIcon />}

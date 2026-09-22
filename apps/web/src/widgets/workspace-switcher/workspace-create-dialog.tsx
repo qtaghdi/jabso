@@ -84,6 +84,7 @@ export const WorkspaceCreateDialog = ({ close }: WorkspaceCreateDialogProps) => 
   return (
     <Dialog
       close={close}
+      closeLabel={t('common.close')}
       description={t('workspace.createDescription')}
       icon={<WorkspaceIcon />}
       size="sm"

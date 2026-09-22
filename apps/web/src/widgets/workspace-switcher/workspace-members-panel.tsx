@@ -257,6 +257,8 @@ export const WorkspaceMembersPanel = ({
       {removeTarget ? createPortal(
         <AlertDialog
           cancel={() => { if (!pendingAction) setRemoveTarget(null) }}
+          cancelLabel={t('common.cancel')}
+          closeLabel={t('common.close')}
           confirm={removeMember}
           confirmLabel={t('workspace.removeMember')}
           description={t('workspace.removeConfirm', { name: removeTarget.user.name || removeTarget.user.email })}

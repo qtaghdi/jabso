@@ -5,7 +5,7 @@ import { useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
-import { Button } from 'src/shared/ui/button'
+import { Button, buttonClassName } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
 export const ForgotPasswordForm = () => {
@@ -45,7 +45,7 @@ export const ForgotPasswordForm = () => {
           <strong>{t('auth.checkInbox')}</strong>
           <p>{t('auth.resetEmailSent')}</p>
         </div>
-        <Link className="ui-button ui-button-secondary" href="/sign-in">{t('auth.returnSignIn')}</Link>
+        <Link className={buttonClassName('secondary')} href="/sign-in">{t('auth.returnSignIn')}</Link>
       </div>
     )
   }

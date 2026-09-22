@@ -20,10 +20,11 @@ export const LanguageSwitcher = () => {
   }
 
   return (
-    <div aria-label={t('i18n.language')} className="language-switcher" role="group">
+    <div aria-label={t('i18n.language')} className="inline-flex w-fit rounded-xl border border-line bg-subtle p-1" role="group">
       {(['en', 'ko'] as const).map((option) => (
         <button
           aria-pressed={locale === option}
+          className="min-h-9 cursor-pointer rounded-lg border-0 bg-transparent px-3.5 text-xs font-semibold text-muted hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-1 focus-visible:outline-focus/30 aria-pressed:bg-white aria-pressed:text-ink aria-pressed:shadow-sm disabled:cursor-default disabled:opacity-60"
           disabled={isPending}
           key={option}
           onClick={() => selectLocale(option)}
