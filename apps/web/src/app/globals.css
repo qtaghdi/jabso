@@ -33,8 +33,6 @@
   --accent-soft: #fff4f1;
   --focus: var(--color-focus);
   --warning: var(--color-warning);
-  --sidebar-width: 236px;
-  --sidebar-collapsed-width: 76px;
 }
 
 * { box-sizing: border-box; }
@@ -69,102 +67,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
   border: 0;
 }
 
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); transition: grid-template-columns 180ms ease; }
-.app-shell-collapsed { grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr); }
-
-.sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  padding: 30px 14px 22px;
-  border-right: 1px solid var(--border);
-  background: #fbfcfd;
-  transition: padding 180ms ease;
-}
-
-.sidebar-brand { display: flex; min-height: 32px; align-items: center; justify-content: flex-start; margin: 0 4px 42px; }
-.wordmark { display: inline-flex; min-width: 0; align-items: center; color: var(--text); text-decoration: none; }
-.jabso-wordmark { display: inline-flex; min-width: 0; align-items: center; gap: 10px; }
-.jabso-mark { width: 28px; height: 28px; flex: 0 0 auto; }
 .jabso-mark rect { fill: #17191d; }
 .jabso-mark path { fill: #fff; }
-.wordmark-text { overflow: hidden; font-size: 25px; font-weight: 760; letter-spacing: -0.045em; text-overflow: clip; white-space: nowrap; }
-.sidebar-toggle { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 10px; padding: 0 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #68727d; cursor: pointer; font-size: 12px; font-weight: 580; text-align: left; }
-.sidebar-toggle:hover { border-color: var(--border); background: var(--background); color: var(--text); }
-.sidebar-toggle:disabled { opacity: 0.55; cursor: default; }
-.sidebar-toggle svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
-.app-shell-collapsed .sidebar { padding-inline: 10px; }
-.app-shell-collapsed .sidebar-brand { justify-content: center; margin-inline: 0; }
-.app-shell-collapsed .jabso-mark { width: 26px; height: 26px; }
-.app-shell-collapsed .wordmark-text, .app-shell-collapsed .nav-label, .app-shell-collapsed .owner-details, .app-shell-collapsed .sidebar-toggle-label { display: none; }
-.app-shell-collapsed .nav-item { justify-content: center; padding-inline: 0; }
-.app-shell-collapsed .sidebar-footer { padding-inline: 0; }
-.app-shell-collapsed .owner-summary { justify-content: center; }
-.app-shell-collapsed .sidebar-toggle { justify-content: center; padding-inline: 0; }
-.sidebar nav { display: grid; gap: 6px; }
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 0 13px;
-  border-radius: 6px;
-  color: #303640;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 570;
-}
-
-.nav-item svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.nav-item-active { color: var(--text); background: var(--surface-strong); box-shadow: inset 3px 0 var(--text); }
-.sidebar-footer { display: grid; margin-top: auto; gap: 12px; padding: 18px 12px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
-.owner-summary { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
-.owner-details { display: grid; min-width: 0; }
-.owner-summary strong, .owner-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.owner-summary strong { color: var(--text); font-size: 12px; }
-.owner-summary small { color: var(--muted); }
-.owner-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-.owner-avatar-fallback { display: grid; place-items: center; background: #17191d; color: #fff; font-size: 11px; font-weight: 720; }
-.account-summary { display: grid; gap: 10px; min-width: 0; }
-.workspace-switcher { min-width: 0; }
-.workspace-switcher-trigger { display: grid; width: 100%; min-height: 48px; grid-template-columns: 30px minmax(0, 1fr) 16px; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text); text-align: left; cursor: pointer; transition: border-color 140ms ease, background 140ms ease; }
-.workspace-switcher-trigger:hover { border-color: #a7afb8; background: var(--surface); }
-.workspace-switcher-trigger:focus-visible { border-color: #17191d; outline: 3px solid rgb(23 25 29 / 10%); outline-offset: 0; }
-.workspace-switcher-trigger:disabled { opacity: .56; cursor: default; }
-.workspace-switcher-trigger > svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform 140ms ease; }
-.workspace-switcher-trigger[aria-expanded='true'] > svg { transform: rotate(180deg); }
-.workspace-avatar { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #17191d; color: #fff; font-size: 10px; font-weight: 760; letter-spacing: -.02em; }
-.workspace-avatar-personal { background: #edf0f3; color: #303640; }
-.workspace-trigger-copy { display: grid; min-width: 0; gap: 1px; }
-.workspace-trigger-copy strong, .workspace-trigger-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-trigger-copy strong { font-size: 12px; font-weight: 680; }
-.workspace-trigger-copy small { color: var(--muted); font-size: 10px; }
-.workspace-menu { position: fixed; inset: auto; z-index: 1100; display: flex; flex-direction: column; margin: 0; padding: 0; overflow: hidden; border: 1px solid #d3d8de; border-radius: 12px; background: #fff; color: var(--text); box-shadow: 0 20px 55px rgb(17 19 22 / 18%); }
-.workspace-menu-header { display: flex; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid var(--border); }
-.workspace-menu-header strong { font-size: 12px; }
-.workspace-menu-header span { color: var(--muted); font-size: 10px; }
-.workspace-menu-list { min-height: 0; max-height: 280px; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
-.workspace-menu-list > button { display: grid; width: 100%; min-height: 48px; grid-template-columns: 30px minmax(0, 1fr) 16px; align-items: center; gap: 10px; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; text-align: left; cursor: pointer; }
-.workspace-menu-list > button:hover, .workspace-menu-list > button:focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
-.workspace-menu-list > button:disabled { opacity: .52; cursor: default; }
-.workspace-menu-list > button > span:nth-child(2) { display: grid; min-width: 0; gap: 1px; }
-.workspace-menu-list > button strong, .workspace-menu-list > button small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-menu-list > button strong { font-size: 12px; font-weight: 650; }
-.workspace-menu-list > button small { color: var(--muted); font-size: 10px; }
-.workspace-menu-list > button > svg { width: 16px; height: 16px; fill: none; stroke: #17191d; stroke-width: 1.8; }
-.workspace-menu-load-more { grid-column: 1 / -1; padding-left: 4px; color: var(--muted); font-size: 11px; font-weight: 620; }
-.workspace-menu-error { margin: 0; padding: 8px 14px; border-top: 1px solid var(--border); color: var(--accent); font-size: 11px; }
-.workspace-menu-footer { display: grid; gap: 2px; padding: 6px; border-top: 1px solid var(--border); }
-.workspace-menu-footer :is(button, a) { display: flex; width: 100%; min-height: 40px; align-items: center; gap: 9px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #3f4650; cursor: pointer; font-size: 11px; font-weight: 650; text-decoration: none; }
-.workspace-menu-footer :is(button, a):hover, .workspace-menu-footer :is(button, a):focus-visible { outline: 0; background: var(--surface-strong); color: var(--text); }
-.workspace-menu-footer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
-.app-shell-collapsed .account-summary { justify-items: center; }
-.app-shell-collapsed .workspace-switcher-trigger { width: 38px; min-height: 38px; grid-template-columns: 28px; padding: 4px; }
-.app-shell-collapsed .workspace-switcher-trigger .workspace-avatar { width: 28px; height: 28px; }
-.app-shell-collapsed .workspace-trigger-copy, .app-shell-collapsed .workspace-switcher-trigger > svg { display: none; }
 
 .onboarding-page { min-height: 100vh; padding: 42px clamp(24px, 6vw, 88px) 64px; background: #fff; }
 .onboarding-brand { display: flex; align-items: center; }
@@ -191,9 +95,6 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .onboarding-error { margin: 14px 0 0; color: var(--accent); font-size: 13px; }
 .onboarding-hint { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
 
-.skip-link { position: fixed; z-index: 100; top: 12px; left: 12px; padding: 10px 14px; border-radius: 7px; background: var(--text); color: #fff; font-size: 13px; font-weight: 680; text-decoration: none; transform: translateY(calc(-100% - 20px)); }
-.skip-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; transform: translateY(0); }
-.main-content { width: min(100%, 1600px); margin-inline: auto; padding: 48px clamp(32px, 5vw, 76px) 80px; }
 .page-header { margin-bottom: 42px; }
 .page-header h1, .issue-detail-header h1, .route-state h1 { margin: 0; font-size: clamp(32px, 4vw, 44px); line-height: 1.1; letter-spacing: -0.045em; }
 .issue-detail-header h1 { overflow-wrap: anywhere; text-wrap: balance; }
@@ -556,9 +457,6 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .current-status > span { width: 8px; height: 8px; border-radius: 50%; background: #7a8490; }
 .current-status.status-unresolved > span { background: var(--accent); }
 .current-status.status-ignored > span { background: transparent; border: 1px dashed #7a8490; }
-.status-action { min-height: 40px; padding: 0 14px; border: 1px solid #cbd2da; border-radius: 5px; background: white; color: var(--text); font-size: 13px; font-weight: 650; cursor: pointer; }
-.status-action:hover:not(:disabled) { border-color: var(--text); background: var(--surface); }
-.status-action:disabled { color: #9aa1aa; cursor: default; }
 .status-action-active { background: var(--surface); }
 
 .issue-facts { display: flex; flex-wrap: wrap; margin: 28px 0 0; }
@@ -597,9 +495,6 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .original-stack-details { margin-top: 20px; border-top: 1px solid var(--border); }
 .original-stack-details summary { width: fit-content; padding: 18px 0 12px; color: #075fb7; font-size: 13px; font-weight: 650; cursor: pointer; }
 .original-stack-details[open] summary { margin-bottom: 4px; }
-
-.tags-section dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 34px; margin: 0; }
-.tags-section dl div { display: grid; grid-template-columns: minmax(80px, 0.6fr) 1fr; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 
 .history-table-wrap { overflow-x: auto; }
 .history-table { width: 100%; min-width: 760px; border-collapse: collapse; }
@@ -706,20 +601,8 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .issues-inline-loading .skeleton-table { margin-top: 42px; }
 .query-refreshing { opacity: 0.62; transition: opacity 140ms ease; }
 
-/* Tailwind-managed product foundation. Specialized code, skeleton, and popover
-   rules above remain CSS because their descendant geometry is clearer there. */
-.app-shell { @apply bg-canvas; }
-.sidebar { @apply z-20 border-line bg-white/95 px-3.5 pt-6 pb-4 shadow-[1px_0_0_rgb(17_20_25_/_0.02)]; }
-.sidebar-brand { @apply mx-2 mb-8; }
-.nav-item { @apply min-h-11.5 rounded-lg border border-transparent px-3 text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150; }
-.nav-item:hover { @apply translate-x-0.5 border-line bg-subtle text-ink; }
-.nav-item-active { @apply border-line bg-subtle-strong text-ink shadow-[inset_3px_0_#111419]; }
-.sidebar-footer { @apply gap-2.5 border-line px-2 pt-4; }
-.workspace-switcher-trigger { @apply min-h-12.5 rounded-xl border-line bg-white transition-[background-color,border-color,box-shadow] duration-150; }
-.workspace-switcher-trigger:focus-visible { @apply border-focus outline-none ring-3 ring-focus/15; }
-.workspace-menu { @apply rounded-2xl border-line shadow-raised; }
-
-.main-content { width: min(100%, 1440px); @apply mx-auto px-[clamp(30px,4vw,58px)] pt-11 pb-20; }
+/* Shared product surfaces. Dense data geometry stays in CSS; shell layout and
+   interactive component styling live beside their JSX as Tailwind utilities. */
 .page-header { @apply mb-8; }
 .compact-page-header { @apply mb-6; }
 .page-header h1, .issue-detail-header h1, .route-state h1 { @apply text-[clamp(32px,3vw,42px)] leading-[1.08] tracking-[-0.04em] text-balance; }
@@ -792,20 +675,6 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 }
 
 @media (max-width: 900px) {
-  :root { --sidebar-width: 72px; }
-  .app-shell, .app-shell-collapsed { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
-  .sidebar { align-items: center; padding-inline: 8px; }
-  .sidebar-brand { justify-content: center; margin-inline: 0; }
-  .sidebar-toggle { display: none; }
-  .sidebar .wordmark-text, .nav-label { display: none; }
-  .nav-item { justify-content: center; width: 48px; padding: 0; }
-  .sidebar-footer { display: grid; width: 100%; padding: 12px 0 0; }
-  .account-summary { justify-items: center; }
-  .workspace-switcher-trigger { width: 38px; min-height: 38px; grid-template-columns: 28px; padding: 4px; }
-  .workspace-switcher-trigger .workspace-avatar { width: 28px; height: 28px; }
-  .workspace-trigger-copy, .workspace-switcher-trigger > svg, .owner-details { display: none; }
-  .owner-summary { justify-content: center; }
-  .main-content { padding-inline: 28px; }
   .issue-table { min-width: 850px; }
   .issue-table-wrap { overflow-x: auto; }
   .occurrence-grid { grid-template-columns: repeat(2, 1fr); gap: 22px 0; }
@@ -828,21 +697,6 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 
 @media (max-width: 620px) {
   .session-toast { top: 14px; right: 14px; width: calc(100vw - 28px); }
-  .app-shell { display: block; }
-  .sidebar, .app-shell-collapsed .sidebar { position: sticky; top: 0; z-index: 40; width: 100%; height: auto; flex-direction: row; align-items: center; justify-content: space-between; padding: 11px 18px; border-right: 0; border-bottom: 1px solid var(--border); background: rgb(255 255 255 / 92%); box-shadow: 0 1px 12px rgb(17 20 25 / 5%); backdrop-filter: blur(14px); }
-  .sidebar-brand { width: auto; margin: 0; }
-  .sidebar .wordmark-text { display: inline; font-size: 22px; }
-  .sidebar .jabso-mark { width: 26px; height: 26px; }
-  .sidebar nav { position: fixed; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); left: 12px; z-index: 50; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 5px; border: 1px solid var(--border); border-radius: 18px; background: rgb(255 255 255 / 96%); box-shadow: 0 16px 42px rgb(17 20 25 / 16%); backdrop-filter: blur(18px); }
-  .nav-item, .app-shell-collapsed .nav-item { width: auto; min-height: 54px; flex-direction: column; justify-content: center; gap: 3px; padding: 5px 4px; border-radius: 13px; font-size: 10px; }
-  .nav-item:hover { transform: none; }
-  .nav-item-active { border-color: transparent; background: var(--surface-strong); box-shadow: none; }
-  .sidebar .nav-label, .app-shell-collapsed .nav-label { display: block; max-width: 100%; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-  .nav-item svg { width: 19px; height: 19px; }
-  .sidebar-footer { width: auto; margin: 0; padding: 0; border: 0; }
-  .account-summary { display: block; }
-  .owner-summary { display: none; }
-  .main-content { padding: 30px 18px calc(104px + env(safe-area-inset-bottom)); }
   .settings-section-card { padding: 20px; }
   .settings-layout > .settings-section-card:first-child { grid-template-columns: 1fr; align-items: start; }
   .settings-danger-card { display: grid; }

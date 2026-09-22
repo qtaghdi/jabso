@@ -18,6 +18,7 @@ import { WorkspaceCreateDialog } from 'src/widgets/workspace-switcher/workspace-
 
 type WorkspaceSwitcherProps = {
   activeWorkspaceName: string
+  collapsed: boolean
   personalName: string
   personalWorkspaceName: string | null
 }
@@ -52,6 +53,7 @@ const workspaceInitials = (name: string) => name
 
 export const WorkspaceSwitcher = ({
   activeWorkspaceName,
+  collapsed,
   personalName,
   personalWorkspaceName,
 }: WorkspaceSwitcherProps) => {
@@ -189,34 +191,34 @@ export const WorkspaceSwitcher = ({
 
   return (
     <>
-      <div className="workspace-switcher" ref={rootRef}>
+      <div className="min-w-0" ref={rootRef}>
         <button
           aria-expanded={isOpen}
           aria-haspopup="menu"
-          className="workspace-switcher-trigger"
+          className={`grid min-h-[50px] w-full cursor-pointer grid-cols-[30px_minmax(0,1fr)_16px] items-center gap-[9px] rounded-xl border border-line bg-white px-[9px] py-[7px] text-left text-ink transition-[background-color,border-color,box-shadow] duration-150 hover:border-line-strong hover:bg-subtle focus-visible:border-focus focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus/15 disabled:cursor-default disabled:opacity-55 max-[900px]:min-h-[38px] max-[900px]:w-[38px] max-[900px]:grid-cols-[28px] max-[900px]:p-1 max-[900px]:[&>svg]:hidden ${collapsed ? 'min-h-[38px] w-[38px] grid-cols-[28px] p-1 [&>svg]:hidden' : ''} [&>svg]:size-4 [&>svg]:fill-none [&>svg]:stroke-current [&>svg]:stroke-[1.5] [&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180`}
           disabled={!isLoaded}
           onClick={() => isOpen ? closeMenu() : openMenu()}
           ref={triggerRef}
           title={activeName}
           type="button"
         >
-          <span className="workspace-avatar" aria-hidden="true">{workspaceInitials(activeName)}</span>
-          <span className="workspace-trigger-copy"><strong>{activeName}</strong><small>{activeDescription}</small></span>
+          <span className={`grid size-[30px] shrink-0 place-items-center rounded-lg bg-[#17191d] text-[10px] font-bold tracking-[-0.02em] text-white max-[900px]:size-7 ${collapsed ? 'size-7' : ''}`} aria-hidden="true">{workspaceInitials(activeName)}</span>
+          <span className={`min-w-0 gap-px ${collapsed ? 'hidden' : 'grid'} max-[900px]:hidden`}><strong className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold">{activeName}</strong><small className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-muted">{activeDescription}</small></span>
           <ChevronIcon />
         </button>
       </div>
       {isOpen ? createPortal(
         <div
           aria-label={t('workspace.switch')}
-          className="workspace-menu"
+          className="fixed z-[1100] m-0 flex flex-col overflow-hidden rounded-2xl border border-line bg-white p-0 text-ink shadow-raised"
           onKeyDown={handleMenuKeyDown}
           popover="manual"
           ref={menuRef}
           role="menu"
           style={{ ...menuStyle, visibility: menuStyle ? 'visible' : 'hidden' }}
         >
-          <header className="workspace-menu-header"><strong>{t('workspace.title')}</strong><span>{membershipRows.length + 1}</span></header>
-          <div className="workspace-menu-list">
+          <header className="flex min-h-11 items-center justify-between border-b border-line px-3.5"><strong className="text-xs">{t('workspace.title')}</strong><span className="text-[10px] text-muted">{membershipRows.length + 1}</span></header>
+          <div className="min-h-0 max-h-[280px] overflow-y-auto overscroll-contain p-1.5 [&>button]:grid [&>button]:min-h-12 [&>button]:w-full [&>button]:cursor-pointer [&>button]:grid-cols-[30px_minmax(0,1fr)_16px] [&>button]:items-center [&>button]:gap-2.5 [&>button]:rounded-lg [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:py-[7px] [&>button]:text-left [&>button]:text-[#3f4650] [&>button:hover]:bg-subtle-strong [&>button:hover]:text-ink [&>button:focus-visible]:bg-subtle-strong [&>button:focus-visible]:text-ink [&>button:focus-visible]:outline-none [&>button:disabled]:cursor-default [&>button:disabled]:opacity-50 [&>button>svg]:size-4 [&>button>svg]:fill-none [&>button>svg]:stroke-[#17191d] [&>button>svg]:stroke-[1.8] [&>button>span:nth-child(2)]:grid [&>button>span:nth-child(2)]:min-w-0 [&>button>span:nth-child(2)]:gap-px [&_button_small]:overflow-hidden [&_button_small]:text-ellipsis [&_button_small]:whitespace-nowrap [&_button_small]:text-[10px] [&_button_small]:text-muted [&_button_strong]:overflow-hidden [&_button_strong]:text-ellipsis [&_button_strong]:whitespace-nowrap [&_button_strong]:text-xs [&_button_strong]:font-semibold">
             <button
               aria-checked={!orgId}
               disabled={Boolean(switchingTo)}
@@ -224,7 +226,7 @@ export const WorkspaceSwitcher = ({
               role="menuitemradio"
               type="button"
             >
-              <span className="workspace-avatar workspace-avatar-personal" aria-hidden="true">{workspaceInitials(personalDisplayName)}</span>
+              <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-[#edf0f3] text-[10px] font-bold tracking-[-0.02em] text-[#303640]" aria-hidden="true">{workspaceInitials(personalDisplayName)}</span>
               <span><strong>{t('common.personal')}</strong><small>{personalDisplayName}</small></span>
               {!orgId ? <CheckIcon /> : null}
             </button>
@@ -237,14 +239,14 @@ export const WorkspaceSwitcher = ({
                 role="menuitemradio"
                 type="button"
               >
-                <span className="workspace-avatar" aria-hidden="true">{workspace.initials}</span>
+                <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-[#17191d] text-[10px] font-bold tracking-[-0.02em] text-white" aria-hidden="true">{workspace.initials}</span>
                 <span><strong>{workspace.name}</strong><small>{workspace.role}</small></span>
                 {orgId === workspace.id ? <CheckIcon /> : null}
               </button>
             ))}
           </div>
-          {error ? <p className="workspace-menu-error" role="alert">{error}</p> : null}
-          <footer className="workspace-menu-footer">
+          {error ? <p className="m-0 border-t border-line px-3.5 py-2 text-[11px] text-danger" role="alert">{error}</p> : null}
+          <footer className="grid gap-0.5 border-t border-line p-1.5 [&_:is(button,a)]:flex [&_:is(button,a)]:min-h-10 [&_:is(button,a)]:w-full [&_:is(button,a)]:cursor-pointer [&_:is(button,a)]:items-center [&_:is(button,a)]:gap-[9px] [&_:is(button,a)]:rounded-lg [&_:is(button,a)]:border-0 [&_:is(button,a)]:bg-transparent [&_:is(button,a)]:px-2.5 [&_:is(button,a)]:text-[11px] [&_:is(button,a)]:font-semibold [&_:is(button,a)]:text-[#3f4650] [&_:is(button,a)]:no-underline [&_:is(button,a):hover]:bg-subtle-strong [&_:is(button,a):hover]:text-ink [&_:is(button,a):focus-visible]:bg-subtle-strong [&_:is(button,a):focus-visible]:text-ink [&_:is(button,a):focus-visible]:outline-none [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6]">
             <Link href="/settings#workspace-settings" onClick={() => setIsOpen(false)} role="menuitem">
               <SettingsIcon />
               <span>{t('workspace.manage')}</span>
