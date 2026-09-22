@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getAuthRoute } from 'src/shared/auth/auth-redirect'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
@@ -24,7 +23,6 @@ export const GitHubConnectFlow = ({
   workspaceName,
 }: GitHubConnectFlowProps) => {
   const { t } = useI18n()
-  const router = useRouter()
   const [isCapturing, setIsCapturing] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,20 +37,25 @@ export const GitHubConnectFlow = ({
       body: JSON.stringify({ claim }),
     }).then(async (response) => {
       if (!response.ok) throw new Error(t('github.connectClaimInvalid'))
-      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
-      router.refresh()
+      window.location.replace(`${window.location.pathname}${window.location.search}`)
     }).catch((caught) => {
       setError(caught instanceof Error ? caught.message : t('github.connectClaimInvalid'))
     }).finally(() => setIsCapturing(false))
-  }, [router, t])
+  }, [t])
 
   const connect = async () => {
     setError(null)
     setIsConnecting(true)
     try {
       const response = await fetch('/api/dashboard/github/installations/claim', { method: 'POST' })
-      const result = await response.json().catch(() => null) as { error?: string } | null
-      if (!response.ok) throw new Error(result?.error ?? t('github.connectClaimInvalid'))
+      if (!response.ok) {
+        const message = response.status === 409
+          ? t('github.connectClaimInvalid')
+          : response.status === 403
+            ? t('github.connectAdminDescription', { name: workspaceName ?? t('workspace.title') })
+            : t('github.connectUnavailable')
+        throw new Error(message)
+      }
       window.location.replace('/projects?github=connected')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t('github.connectClaimInvalid'))
@@ -99,7 +102,7 @@ export const GitHubConnectFlow = ({
   }
 
   return <div className="auth-form">
-    <div className="auth-callout"><strong>{t('github.connectConfirmTitle')}</strong><p>{t('github.connectConfirmDescription', { name: workspaceName })}</p></div>
+    <div className="auth-callout"><strong>{t('github.connectConfirmTitle', { name: workspaceName })}</strong><p>{t('github.connectConfirmDescription', { name: workspaceName })}</p></div>
     {error ? <p className="form-error" role="alert">{error}</p> : null}
     <Button onClick={connect} pending={isConnecting} type="button">{t('github.connectConfirm')}</Button>
     <Link className="auth-forgot-link" href="/projects">{t('common.cancel')}</Link>
