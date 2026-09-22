@@ -5,9 +5,11 @@ import { Dialog } from 'src/shared/ui/dialog'
 
 type AlertDialogProps = {
   cancel: () => void
+  cancelLabel: string
+  closeLabel: string
   confirm: () => void
   description: string
-  confirmLabel?: string
+  confirmLabel: string
   error?: string
   pending?: boolean
   title: string
@@ -22,17 +24,19 @@ const WarningIcon = () => (
 
 export const AlertDialog = ({
   cancel,
+  cancelLabel,
+  closeLabel,
   confirm,
-  confirmLabel = 'Delete project',
+  confirmLabel,
   description,
   error,
   pending = false,
   title,
 }: AlertDialogProps) => (
-  <Dialog close={cancel} description={description} icon={<WarningIcon />} size="sm" title={title}>
-    {error ? <p className="form-error" role="alert">{error}</p> : null}
-    <div className="ui-dialog-actions">
-      <Button data-dialog-initial-focus disabled={pending} onClick={cancel} type="button" variant="secondary">Cancel</Button>
+  <Dialog close={cancel} closeLabel={closeLabel} description={description} icon={<WarningIcon />} size="sm" title={title}>
+    {error ? <p className="m-0 text-xs text-danger" role="alert">{error}</p> : null}
+    <div className="mt-1 flex justify-end gap-2.5">
+      <Button data-dialog-initial-focus disabled={pending} onClick={cancel} type="button" variant="secondary">{cancelLabel}</Button>
       <Button onClick={confirm} pending={pending} type="button" variant="danger">{confirmLabel}</Button>
     </div>
   </Dialog>

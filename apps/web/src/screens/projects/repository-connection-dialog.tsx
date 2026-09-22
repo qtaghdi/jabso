@@ -71,6 +71,7 @@ export const RepositoryConnectionDialog = ({ close, project }: RepositoryConnect
   return (
     <Dialog
       close={closeDialog}
+      closeLabel={t('common.close')}
       description={t('projects.connectDescription')}
       eyebrow={t('projects.repositoryConnection')}
       icon={<GitHubIcon />}

@@ -51,6 +51,7 @@ export const McpConnectionDialog = ({
   return (
     <Dialog
       close={close}
+      closeLabel={t('common.close')}
       description={t('mcp.createDescription')}
       eyebrow={t('mcp.readOnly')}
       icon={<ConnectionIcon />}

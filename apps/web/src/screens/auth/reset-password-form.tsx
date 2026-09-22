@@ -6,7 +6,7 @@ import { useState, type FormEvent } from 'react'
 import { authClient } from 'src/shared/auth/auth-client'
 import { getAuthErrorMessage } from 'src/shared/auth/auth-client-error'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
-import { Button } from 'src/shared/ui/button'
+import { Button, buttonClassName } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 
 type ResetPasswordFormProps = {
@@ -29,7 +29,7 @@ export const ResetPasswordForm = ({ isInvalid, token }: ResetPasswordFormProps) 
           <strong>{t('auth.resetInvalidTitle')}</strong>
           <p>{t('auth.resetInvalidDescription')}</p>
         </div>
-        <Link className="ui-button ui-button-primary" href="/forgot-password">{t('auth.requestAnotherLink')}</Link>
+        <Link className={buttonClassName('primary')} href="/forgot-password">{t('auth.requestAnotherLink')}</Link>
       </div>
     )
   }

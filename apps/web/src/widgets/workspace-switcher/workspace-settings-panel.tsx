@@ -136,6 +136,8 @@ export const WorkspaceSettingsPanel = ({
       {organizationId && isDeleteOpen ? (
         <AlertDialog
           cancel={() => { if (!isDeleting) setIsDeleteOpen(false) }}
+          cancelLabel={t('common.cancel')}
+          closeLabel={t('common.close')}
           confirm={deleteWorkspace}
           confirmLabel={t('workspace.delete')}
           description={t('workspace.deleteConfirm', { name: initialName })}

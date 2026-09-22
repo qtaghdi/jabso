@@ -38,7 +38,7 @@ export const CopyCodeButton = ({ copiedLabel = 'Copied', iconOnly = false, label
 
   return (
     <Button
-      className={iconOnly ? 'copy-icon-button' : undefined}
+      className={iconOnly ? 'size-9 min-h-9 shrink-0 border-line-strong bg-white p-0 [&_svg]:size-4.5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]' : undefined}
       variant={variant}
       type="button"
       aria-label={buttonLabel}

@@ -33,6 +33,7 @@ export const McpTokenDialog = ({ close, endpoint, name, token }: McpTokenDialogP
   return (
     <Dialog
       close={close}
+      closeLabel={t('common.close')}
       description={t('mcp.secretDescription')}
       eyebrow={t('mcp.connectionCreated')}
       icon={<KeyIcon />}

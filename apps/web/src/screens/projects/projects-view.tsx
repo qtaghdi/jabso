@@ -39,6 +39,13 @@ const emptyIssuesResponse = (activeProject: DashboardProject | null): IssuesResp
   previousCursor: null,
 })
 
+const ProjectEmptyIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M3.5 7.5h17v12h-17zM3.5 7.5l3-3h5l2 3" />
+    <path d="M12 11v5M9.5 13.5h5" />
+  </svg>
+)
+
 export const ProjectsView = ({ canManage, githubResult, initialData, initialGitHubData }: ProjectsViewProps) => {
   const { t } = useI18n()
   const router = useRouter()
@@ -93,9 +100,9 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
           <h2 id="create-project-title">{t('projects.new')}</h2>
           <p>{t('projects.newDescription')}</p>
         </div>
-        <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
+        {canManage ? <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
           {t('projects.create')}
-        </Button>
+        </Button> : null}
       </section>
       <GitHubInstallationsPanel canManage={canManage} connectionResult={githubResult} initialData={initialGitHubData} />
       <section className="project-list-section" aria-labelledby="project-list-title">
@@ -128,7 +135,12 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
             <Button onClick={() => projectsQuery.refetch()} variant="secondary">{t('common.tryAgain')}</Button>
           </div>
         ) : items.length === 0 ? (
-          <p className="muted-copy">{t('projects.empty')}</p>
+          <div className="project-empty-list">
+            <span><ProjectEmptyIcon /></span>
+            <strong>{t('projects.empty')}</strong>
+            <p>{t('projects.emptyDescription')}</p>
+            {canManage ? <Button onClick={() => setCreateDialogOpen(true)} type="button">{t('projects.create')}</Button> : null}
+          </div>
         ) : (
           <div className="project-list">
             {items.map((project) => {
@@ -182,7 +194,10 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
         cancel={() => {
           if (!deleteMutation.isPending) setDeleteProject(null)
         }}
+        cancelLabel={t('common.cancel')}
+        closeLabel={t('common.close')}
         confirm={() => deleteMutation.mutate(deleteProject.id)}
+        confirmLabel={t('common.delete')}
         description={t('projects.deleteDescription', { name: deleteProject.name })}
         error={deleteMutation.error?.message}
         pending={deleteMutation.isPending}

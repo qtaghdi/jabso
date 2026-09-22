@@ -203,9 +203,9 @@ export const Select = ({
   }
 
   return (
-    <div ref={rootRef} className={['ui-select', `ui-select-${controlSize}`, error && 'ui-select-error', className].filter(Boolean).join(' ')}>
-      <span className={hideLabel ? 'sr-only' : 'ui-field-label'} id={`${fieldId}-label`}>{label}</span>
-      <span className="ui-select-control">
+    <div ref={rootRef} className={['ui-select grid min-w-0 gap-2', className].filter(Boolean).join(' ')}>
+      <span className={hideLabel ? 'sr-only' : 'text-xs font-semibold text-[#3f4650]'} id={`${fieldId}-label`}>{label}</span>
+      <span className="ui-select-control relative block min-w-0">
         <button
           aria-controls={listboxId}
           aria-describedby={descriptionId}
@@ -213,20 +213,24 @@ export const Select = ({
           aria-haspopup="listbox"
           aria-invalid={error ? true : undefined}
           aria-labelledby={`${fieldId}-label ${fieldId}-value`}
-          className="ui-select-trigger"
+          className={[
+            'flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border bg-white px-3.5 text-left text-[13px] text-ink transition-[border-color,box-shadow] duration-150 focus-visible:border-focus focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus/15 disabled:cursor-default disabled:bg-subtle disabled:text-muted',
+            controlSize === 'sm' ? 'min-h-9' : 'min-h-11',
+            error ? 'border-danger' : 'border-line-strong',
+          ].join(' ')}
           disabled={disabled}
           onClick={() => isOpen ? setIsOpen(false) : openAndFocus('selected')}
           onKeyDown={handleTriggerKeyDown}
           ref={triggerRef}
           type="button"
         >
-          <span id={`${fieldId}-value`}>{selectedOption?.label ?? 'Select an option'}</span>
-          <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
+          <span className="min-w-0 truncate" id={`${fieldId}-value`}>{selectedOption?.label ?? label}</span>
+          <svg aria-hidden="true" className={['size-4 shrink-0 fill-none stroke-current stroke-[1.5] transition-transform duration-150', isOpen && 'rotate-180'].filter(Boolean).join(' ')} viewBox="0 0 16 16"><path d="m4 6 4 4 4-4" /></svg>
         </button>
         {isOpen ? createPortal(
           <div
             aria-labelledby={`${fieldId}-label`}
-            className="ui-select-options"
+            className="fixed z-[1000] m-0 overflow-y-auto overscroll-contain rounded-xl border border-line bg-white p-1.5 shadow-raised [inset:auto]"
             id={listboxId}
             popover="manual"
             ref={menuRef}
@@ -237,7 +241,7 @@ export const Select = ({
               <div
                 aria-disabled={option.disabled || undefined}
                 aria-selected={option.value === selectedValue}
-                className="ui-select-option"
+                className="flex min-h-10 cursor-pointer items-center justify-between gap-4 rounded-lg px-2.5 py-2 text-[13px] text-[#3f4650] outline-none hover:bg-subtle-strong hover:text-ink focus-visible:bg-subtle-strong focus-visible:text-ink aria-disabled:cursor-not-allowed aria-disabled:text-[#a1a8b0] aria-selected:font-semibold aria-selected:text-ink"
                 key={option.key}
                 onClick={() => selectOption(option)}
                 onKeyDown={(event) => handleOptionKeyDown(event, option, index)}
@@ -246,8 +250,8 @@ export const Select = ({
                 tabIndex={option.disabled ? undefined : -1}
                 title={option.text}
               >
-                <span>{option.label}</span>
-                {option.value === selectedValue ? <svg aria-hidden="true" viewBox="0 0 16 16"><path d="m3.5 8.5 2.8 2.8 6.2-6.2" /></svg> : null}
+                <span className="min-w-0 truncate">{option.label}</span>
+                {option.value === selectedValue ? <svg aria-hidden="true" className="size-4 shrink-0 fill-none stroke-ink stroke-2" viewBox="0 0 16 16"><path d="m3.5 8.5 2.8 2.8 6.2-6.2" /></svg> : null}
               </div>
             ))}
           </div>,
@@ -255,7 +259,7 @@ export const Select = ({
         ) : null}
         {name ? <input name={name} type="hidden" value={selectedValue} /> : null}
       </span>
-      {hint || error ? <small className="ui-field-message" id={descriptionId}>{error ?? hint}</small> : null}
+      {hint || error ? <small className={error ? 'text-[11px] leading-snug text-danger' : 'text-[11px] leading-snug text-muted'} id={descriptionId}>{error ?? hint}</small> : null}
     </div>
   )
 }

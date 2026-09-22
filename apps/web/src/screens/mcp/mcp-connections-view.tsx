@@ -1,9 +1,10 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useState } from 'react'
 import { AlertDialog } from 'src/shared/ui/alert-dialog'
-import { Button } from 'src/shared/ui/button'
+import { Button, buttonClassName } from 'src/shared/ui/button'
 import { CopyCodeButton } from 'src/shared/ui/copy-code-button'
 import { McpConnectionDialog } from 'src/screens/mcp/mcp-connection-dialog'
 import { McpTokenDialog } from 'src/screens/mcp/mcp-token-dialog'
@@ -34,6 +35,14 @@ type CreatedSecret = {
   name: string
   token: string
 }
+
+const McpEmptyIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M8 7.5h8M8 16.5h8M7.5 8v8M16.5 8v8" />
+    <circle cx="7.5" cy="7.5" r="2.5" />
+    <circle cx="16.5" cy="16.5" r="2.5" />
+  </svg>
+)
 
 export const McpConnectionsView = ({
   canManage,
@@ -100,18 +109,25 @@ export const McpConnectionsView = ({
             <h2 id="mcp-connections-title">{t('mcp.connections')}</h2>
             <span>{t('mcp.connectionCount', { count: connections.length })}</span>
           </div>
-          {canManage ? (
-            <Button disabled={projects.length === 0} onClick={() => setCreateOpen(true)} type="button">
+          {canManage && connections.length > 0 ? (
+            <Button onClick={() => setCreateOpen(true)} type="button">
               {t('mcp.create')}
             </Button>
           ) : null}
         </div>
         {projects.length === 0 ? (
-          <p className="muted-copy">{t('mcp.noProject')}</p>
+          <div className="mcp-empty-state">
+            <span className="mcp-empty-icon"><McpEmptyIcon /></span>
+            <strong>{t('mcp.noProjectTitle')}</strong>
+            <p>{t('mcp.noProject')}</p>
+            <Link className={buttonClassName('primary')} href="/projects">{t('mcp.openProjects')}</Link>
+          </div>
         ) : connections.length === 0 ? (
           <div className="mcp-empty-state">
+            <span className="mcp-empty-icon"><McpEmptyIcon /></span>
             <strong>{t('mcp.noConnections')}</strong>
             <p>{t('mcp.noConnectionsDescription')}</p>
+            {canManage ? <Button onClick={() => setCreateOpen(true)} type="button">{t('mcp.create')}</Button> : null}
           </div>
         ) : (
           <div className="mcp-connection-list">
@@ -174,6 +190,8 @@ export const McpConnectionsView = ({
           cancel={() => {
             if (!revokeMutation.isPending) setRevokeConnectionId(null)
           }}
+          cancelLabel={t('common.cancel')}
+          closeLabel={t('common.close')}
           confirm={() => revokeMutation.mutate(revokeConnection.id)}
           confirmLabel={t('mcp.revokeConnection')}
           description={t('mcp.revokeConfirm', { name: revokeConnection.name })}
