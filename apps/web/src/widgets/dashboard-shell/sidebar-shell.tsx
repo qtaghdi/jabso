@@ -83,6 +83,7 @@ export const SidebarShell = ({
 
   return (
     <div className={`app-shell ${collapsed ? 'app-shell-collapsed' : ''}`}>
+      <a className="skip-link" href="#main-content">{t('common.skipToContent')}</a>
       <SessionExpiryWatcher />
       <aside className="sidebar">
         <div className="sidebar-brand">
@@ -151,7 +152,7 @@ export const SidebarShell = ({
           </button>
         </div>
       </aside>
-      <main className="main-content">{children}</main>
+      <main className="main-content" id="main-content">{children}</main>
     </div>
   )
 }
