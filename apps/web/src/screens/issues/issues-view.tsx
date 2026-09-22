@@ -147,11 +147,11 @@ export const IssuesView = ({ initialData }: IssuesViewProps) => {
               return (
                 <tr key={issue.id}>
                   <td data-label={t('issues.status')}><span className={`status-mark status-${issue.status}`} aria-hidden="true" />{t(`issues.${issue.status}` as 'issues.ignored' | 'issues.resolved' | 'issues.unresolved')}</td>
-                  <td data-label="Level"><span className="severity-label">{issue.level}</span></td>
-                  <td data-label="Error" className="issue-title-cell"><span>{issue.exceptionType ?? 'Error'}</span><Link href={`/issues/${issue.id}`} onFocus={prefetchIssue} onMouseEnter={prefetchIssue}>{issue.title}</Link></td>
+                  <td data-label={t('issues.level')}><span className="severity-label">{issue.level}</span></td>
+                  <td data-label={t('issues.typeOrTitle')} className="issue-title-cell"><span>{issue.exceptionType ?? t('issues.error')}</span><Link href={`/issues/${issue.id}`} onFocus={prefetchIssue} onMouseEnter={prefetchIssue}>{issue.title}</Link></td>
                   <td data-label={t('issues.events')}>{formatCount(issue.eventCount, locale)}</td>
-                  <td data-label="Environment">{issue.environment ?? '—'}</td>
-                  <td data-label="Release"><code>{issue.release ?? '—'}</code></td>
+                  <td data-label={t('issues.environment')}>{issue.environment ?? '—'}</td>
+                  <td data-label={t('issues.release')}><code>{issue.release ?? '—'}</code></td>
                   <td data-label={t('issues.regression')}>{issue.regressedAt ? <span className="regression-label"><span />{t('issues.yes')}</span> : '—'}</td>
                   <td data-label={t('issues.lastSeen')}>{formatDateTime(issue.lastSeenAt, locale)}</td>
                   <td className="issue-row-action"><Link href={`/issues/${issue.id}`} aria-label={t('issues.open', { name: issue.title })} onFocus={prefetchIssue} onMouseEnter={prefetchIssue}><ViewIcon /></Link></td>

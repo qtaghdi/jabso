@@ -120,7 +120,7 @@ export const IssueDetailView = ({ initialData, issueId }: IssueDetailViewProps) 
         {event ? <dl className="occurrence-grid">
           <div><dt>{t('issues.environment')}</dt><dd>{event.environment ?? '—'}</dd></div>
           <div><dt>{t('issues.release')}</dt><dd><code>{event.release ?? '—'}</code></dd></div>
-          <div><dt>Dist</dt><dd><code>{event.dist || '—'}</code></dd></div>
+          <div><dt>{t('issues.dist')}</dt><dd><code>{event.dist || '—'}</code></dd></div>
           <div><dt>{t('issues.eventId')}</dt><dd><code>{event.eventId}</code></dd></div>
           <div><dt>{t('issues.occurred')}</dt><dd>{formatDateTime(event.occurredAt ?? event.receivedAt, locale)}</dd></div>
         </dl> : <p className="muted-copy">{t('issues.noOccurrence')}</p>}
@@ -132,7 +132,7 @@ export const IssueDetailView = ({ initialData, issueId }: IssueDetailViewProps) 
             {t(symbolicationKey[event.symbolication.status])}
           </span> : null}
         </div>
-        {event?.symbolication.errorCode ? <p className="symbolication-note">Symbolication: {event.symbolication.errorCode.replaceAll('_', ' ')}</p> : null}
+        {event?.symbolication.errorCode ? <p className="symbolication-note">{t('issues.symbolication')}: {event.symbolication.errorCode.replaceAll('_', ' ')}</p> : null}
         {frames.length === 0 ? <p className="muted-copy">{t('issues.noStackTrace')}</p> : (
           <StackTraceTable frames={frames} />
         )}
@@ -147,7 +147,7 @@ export const IssueDetailView = ({ initialData, issueId }: IssueDetailViewProps) 
         <h2>{t('issues.releaseHistory')}</h2>
         {issue.releaseHistory.length === 0 ? <p className="muted-copy">{t('issues.noReleaseContext')}</p> : (
           <div className="history-table-wrap"><table className="history-table release-history-table">
-            <thead><tr><th scope="col">Release</th><th scope="col">Dist</th><th scope="col">Events</th><th scope="col">First seen</th><th scope="col">Last seen</th><th scope="col">Lifecycle</th></tr></thead>
+            <thead><tr><th scope="col">{t('issues.release')}</th><th scope="col">{t('issues.dist')}</th><th scope="col">{t('issues.events')}</th><th scope="col">{t('issues.firstSeen')}</th><th scope="col">{t('issues.lastSeen')}</th><th scope="col">{t('issues.lifecycle')}</th></tr></thead>
             <tbody>{issue.releaseHistory.map((release) => (
               <tr key={`${release.release}-${release.dist}`}>
                 <td><code>{release.release}</code></td>
@@ -164,7 +164,7 @@ export const IssueDetailView = ({ initialData, issueId }: IssueDetailViewProps) 
       <section className="detail-section">
         <h2>{t('issues.occurrenceHistory')}</h2>
         <div className="history-table-wrap"><table className="history-table">
-          <thead><tr><th scope="col">Event ID</th><th scope="col">Level</th><th scope="col">Environment</th><th scope="col">Release</th><th scope="col">Occurred</th></tr></thead>
+          <thead><tr><th scope="col">{t('issues.eventId')}</th><th scope="col">{t('issues.level')}</th><th scope="col">{t('issues.environment')}</th><th scope="col">{t('issues.release')}</th><th scope="col">{t('issues.occurred')}</th></tr></thead>
           <tbody>{issue.occurrences.map((occurrence) => (
             <tr key={occurrence.eventId}><td><code>{occurrence.eventId}</code></td><td>{occurrence.level}</td><td>{occurrence.environment ?? '—'}</td><td><code>{occurrence.release ?? '—'}</code></td><td>{formatDateTime(occurrence.occurredAt ?? occurrence.receivedAt, locale)}</td></tr>
           ))}</tbody>
