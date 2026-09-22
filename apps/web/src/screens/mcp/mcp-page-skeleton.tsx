@@ -1,4 +1,10 @@
-export const McpPageSkeleton = () => (
+'use client'
+
+import { useI18n } from 'src/shared/i18n/i18n-provider'
+
+export const McpPageSkeleton = () => {
+  const { t } = useI18n()
+  return (
   <div className="dashboard-page-loading mcp-page-loading" role="status">
     <div className="page-header-loading">
       <span className="skeleton-block skeleton-title" />
@@ -19,6 +25,7 @@ export const McpPageSkeleton = () => (
         </div>
       ))}
     </div>
-    <span className="sr-only">Loading MCP connections</span>
+    <span className="sr-only">{t('mcp.loading')}</span>
   </div>
-)
+  )
+}

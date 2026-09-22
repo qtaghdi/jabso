@@ -449,10 +449,11 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 28px; text-decoration: none; }
 .back-link:hover { text-decoration: underline; }
 .issue-detail-header { padding-bottom: 26px; border-bottom: 1px solid var(--border); }
-.issue-detail-header h1 { max-width: 940px; }
-.issue-title-row { display: flex; justify-content: space-between; gap: 28px; align-items: flex-start; }
+.issue-detail-header h1 { max-width: 1100px; overflow-wrap: anywhere; }
+.issue-title-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.issue-title-row > div:first-child { min-width: 0; }
 .issue-title-row > div:first-child p { margin: 7px 0 0; color: var(--muted); }
-.status-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.status-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-start; }
 .current-status { display: inline-flex; min-height: 40px; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; font-weight: 650; }
 .current-status > span { width: 8px; height: 8px; border-radius: 50%; background: #7a8490; }
 .current-status.status-unresolved > span { background: var(--accent); }
@@ -490,7 +491,7 @@ code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospac
 .stack-table td:nth-child(2) code { display: block; color: var(--text); font-weight: 650; }
 .stack-table td:nth-child(2) span { display: inline-block; margin-top: 5px; color: var(--muted); font-size: 11px; }
 .stack-table td:nth-child(3) code { color: #3f4650; font-size: 13px; }
-.stack-table .in-app-frame { background: var(--accent-soft); }
+.stack-table .in-app-frame { background: color-mix(in srgb, var(--accent-soft) 42%, white); box-shadow: inset 3px 0 var(--accent); }
 .stack-table .in-app-frame td:nth-child(2) span { color: var(--accent); }
 .original-stack-details { margin-top: 20px; border-top: 1px solid var(--border); }
 .original-stack-details summary { width: fit-content; padding: 18px 0 12px; color: #075fb7; font-size: 13px; font-weight: 650; cursor: pointer; }

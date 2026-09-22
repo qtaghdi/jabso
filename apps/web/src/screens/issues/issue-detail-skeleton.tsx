@@ -1,4 +1,10 @@
-export const IssueDetailSkeleton = () => (
+'use client'
+
+import { useI18n } from 'src/shared/i18n/i18n-provider'
+
+export const IssueDetailSkeleton = () => {
+  const { t } = useI18n()
+  return (
   <div className="dashboard-page-loading issue-detail-page-loading" role="status">
     <span className="skeleton-block skeleton-back" />
     <span className="skeleton-block skeleton-detail-title" />
@@ -11,6 +17,7 @@ export const IssueDetailSkeleton = () => (
         <span className="skeleton-block skeleton-section-body" />
       </div>
     ))}
-    <span className="sr-only">Loading issue</span>
+    <span className="sr-only">{t('issues.loadingOne')}</span>
   </div>
-)
+  )
+}

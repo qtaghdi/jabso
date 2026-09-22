@@ -1,4 +1,10 @@
-export const ProjectsPageSkeleton = () => (
+'use client'
+
+import { useI18n } from 'src/shared/i18n/i18n-provider'
+
+export const ProjectsPageSkeleton = () => {
+  const { t } = useI18n()
+  return (
   <div className="dashboard-page-loading projects-page-loading" role="status">
     <div className="page-header-loading">
       <span className="skeleton-block skeleton-title" />
@@ -24,6 +30,7 @@ export const ProjectsPageSkeleton = () => (
         </div>
       ))}
     </div>
-    <span className="sr-only">Loading projects</span>
+    <span className="sr-only">{t('projects.loading')}</span>
   </div>
-)
+  )
+}
