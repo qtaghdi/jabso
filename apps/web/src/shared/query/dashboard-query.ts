@@ -26,7 +26,8 @@ const dashboardFetch = async <Result>(path: string, init?: RequestInit): Promise
 export const dashboardQueryKeys = {
   all: ['dashboard'] as const,
   issue: (issueId: string) => ['dashboard', 'issue', issueId] as const,
-  issues: (search: string) => ['dashboard', 'issues', search] as const,
+  issueLists: ['dashboard', 'issues'] as const,
+  issues: (search: string) => [...dashboardQueryKeys.issueLists, search] as const,
   mcpConnections: ['dashboard', 'mcp-connections'] as const,
   projects: ['dashboard', 'projects'] as const,
   repositories: ['dashboard', 'github-repositories'] as const,
