@@ -65,7 +65,9 @@ export const SidebarShell = ({
     ? 'projects'
     : pathname.startsWith('/mcp')
       ? 'mcp'
-      : pathname.startsWith('/settings') ? 'settings' : 'issues'
+      : pathname.startsWith('/settings')
+        ? 'settings'
+        : pathname.startsWith('/profile') ? null : 'issues'
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [isPending, startTransition] = useTransition()
 
