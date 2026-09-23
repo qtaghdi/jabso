@@ -7,6 +7,7 @@ import type { MessageKey } from 'src/shared/i18n/messages'
 import { githubInstallationsQueryOptions } from 'src/shared/query/dashboard-query'
 import type { GitHubInstallationsResponse } from 'src/shared/query/dashboard-types'
 import { useGitHubInstallation } from 'src/screens/projects/use-github-installation'
+import { dashboardSurfaceClass } from 'src/shared/ui/dashboard-styles'
 
 type GitHubInstallationsPanelProps = {
   canManage: boolean
@@ -39,12 +40,12 @@ export const GitHubInstallationsPanel = ({
   const waitingForApproval = connectionResult === 'requested' || connectionResult === 'requested-manual'
 
   return (
-    <section className="github-installations-section" aria-labelledby="github-installations-title">
+    <section className={`${dashboardSurfaceClass} mt-4 px-6 py-5 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:tracking-[-0.015em] max-[620px]:p-[18px]`} aria-labelledby="github-installations-title">
       {connectionMessage ? <p
         className={connectionMessage.error ? 'github-connection-notice github-connection-notice-error' : 'github-connection-notice'}
         role={connectionMessage.error ? 'alert' : 'status'}
       >{t(connectionMessage.key)}</p> : null}
-      <div className="github-installations-heading">
+      <div className="github-installations-heading max-[620px]:grid-cols-1">
         <div>
           <h2 id="github-installations-title">{t('github.app')}</h2>
           <p>{t('github.explanation')}</p>
@@ -58,12 +59,12 @@ export const GitHubInstallationsPanel = ({
           {waitingForApproval ? t('github.checkApproval') : installations.length > 0 ? t('github.installAnother') : t('github.install')}
         </Button> : null}
       </div>
-      <ol className="github-access-steps">
-        <li>
+      <ol className="github-access-steps max-[620px]:grid-cols-1">
+        <li className="grid min-w-0 grid-cols-[28px_minmax(0,1fr)] items-start gap-2.5 rounded-xl border border-line bg-subtle p-3.5">
           <span>1</span>
           <div><strong>{t('github.accountConnected')}</strong><p>{t('github.accountConnectedDescription')}</p></div>
         </li>
-        <li>
+        <li className="grid min-w-0 grid-cols-[28px_minmax(0,1fr)] items-start gap-2.5 rounded-xl border border-line bg-subtle p-3.5">
           <span>2</span>
           <div><strong>{t('github.appConnected')}</strong><p>{t('github.appConnectedDescription')}</p></div>
         </li>

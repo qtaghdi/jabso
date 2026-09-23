@@ -8,6 +8,7 @@ import { AlertDialog } from 'src/shared/ui/alert-dialog'
 import { Button } from 'src/shared/ui/button'
 import { Input } from 'src/shared/ui/input'
 import { WorkspaceMembersPanel } from 'src/widgets/workspace-switcher/workspace-members-panel'
+import { dashboardSurfaceClass } from 'src/shared/ui/dashboard-styles'
 
 type WorkspaceSettingsPanelProps = {
   currentRole: 'admin' | 'owner' | null
@@ -83,7 +84,7 @@ export const WorkspaceSettingsPanel = ({
 
   return (
     <>
-      <section className="settings-section-card" id="workspace-settings" aria-labelledby="workspace-details-title">
+      <section className={`${dashboardSurfaceClass} grid gap-5 p-6 max-[620px]:p-5`} id="workspace-settings" aria-labelledby="workspace-details-title">
         <header className="settings-section-heading">
           <div>
             <h2 id="workspace-details-title">{t(organizationId ? 'workspace.settingsTitle' : 'settings.personalTitle')}</h2>
@@ -123,7 +124,7 @@ export const WorkspaceSettingsPanel = ({
         )}
       </section>
       {organizationId ? (
-        <section className="settings-section-card settings-danger-card" aria-labelledby="workspace-danger-title">
+        <section className={`${dashboardSurfaceClass} flex items-center justify-between gap-6 border-[color-mix(in_srgb,var(--accent)_24%,var(--border))] p-6 [&_h2]:m-0 [&_h2]:text-base [&_h2]:text-[#8f291d] [&_p]:mt-1.5 [&_p]:mb-0 [&_p]:text-xs [&_p]:text-muted max-[620px]:grid max-[620px]:p-5 max-[620px]:[&_button]:w-full`} aria-labelledby="workspace-danger-title">
           <div>
             <h2 id="workspace-danger-title">{t('workspace.delete')}</h2>
             <p>{t('workspace.deleteDescription')}</p>

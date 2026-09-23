@@ -23,6 +23,7 @@ import type {
   IssuesResponse,
   ProjectsResponse,
 } from 'src/shared/query/dashboard-types'
+import { dashboardPageHeaderClass, dashboardSectionHeadingClass, dashboardSurfaceClass } from 'src/shared/ui/dashboard-styles'
 
 type ProjectsViewProps = {
   canManage: boolean
@@ -91,22 +92,22 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
 
   return (
     <>
-      <header className="page-header compact-page-header">
+      <header className={dashboardPageHeaderClass}>
         <h1>{t('projects.title')}</h1>
         <p>{t('projects.description')}</p>
       </header>
-      <section className="project-create-section" aria-labelledby="create-project-title">
+      <section className={`${dashboardSurfaceClass} grid grid-cols-[minmax(220px,1fr)_auto] items-center gap-12 px-6 py-5 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:tracking-[-0.015em] [&_p]:mt-2 [&_p]:mb-0 [&_p]:max-w-md [&_p]:text-[13px] [&_p]:text-muted max-[620px]:grid-cols-1 max-[620px]:gap-5 max-[620px]:p-[18px]`} aria-labelledby="create-project-title">
         <div>
           <h2 id="create-project-title">{t('projects.new')}</h2>
           <p>{t('projects.newDescription')}</p>
         </div>
-        {canManage ? <Button className="project-create-button" onClick={() => setCreateDialogOpen(true)} type="button">
+        {canManage ? <Button className="max-[620px]:w-full" onClick={() => setCreateDialogOpen(true)} type="button">
           {t('projects.create')}
         </Button> : null}
       </section>
       <GitHubInstallationsPanel canManage={canManage} connectionResult={githubResult} initialData={initialGitHubData} />
-      <section className="project-list-section" aria-labelledby="project-list-title">
-        <div className="section-heading-row">
+      <section className={`${dashboardSurfaceClass} mt-4 px-6 pt-5 pb-6 max-[620px]:p-[18px]`} aria-labelledby="project-list-title">
+        <div className={`${dashboardSectionHeadingClass} mb-4 border-b border-line pb-4 max-[620px]:items-stretch max-[620px]:flex-col`}>
           <div className="project-list-title-group">
             <h2 id="project-list-title">{t('projects.connected')}</h2>
             <span>{t('projects.projectCount', { count: items.length })}</span>
@@ -135,17 +136,17 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
             <Button onClick={() => projectsQuery.refetch()} variant="secondary">{t('common.tryAgain')}</Button>
           </div>
         ) : items.length === 0 ? (
-          <div className="project-empty-list">
-            <span><ProjectEmptyIcon /></span>
-            <strong>{t('projects.empty')}</strong>
-            <p>{t('projects.emptyDescription')}</p>
+          <div className="grid justify-items-start px-0 pt-10 pb-4">
+            <span className="mb-4 grid size-11 place-items-center rounded-xl border border-line bg-subtle text-[#3d4651] [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6]"><ProjectEmptyIcon /></span>
+            <strong className="text-sm">{t('projects.empty')}</strong>
+            <p className="mt-2 mb-4 max-w-xl text-[13px] leading-relaxed text-muted text-pretty">{t('projects.emptyDescription')}</p>
             {canManage ? <Button onClick={() => setCreateDialogOpen(true)} type="button">{t('projects.create')}</Button> : null}
           </div>
         ) : (
-          <div className="project-list">
+          <div className="project-list gap-3">
             {items.map((project) => {
               return (
-                <article className="project-row" key={project.id}>
+                <article className="project-row grid grid-cols-[minmax(180px,.8fr)_minmax(0,1.7fr)_minmax(220px,auto)] items-center gap-7 rounded-xl border border-line bg-white p-4 transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-line-strong hover:shadow-md max-[620px]:grid-cols-1 max-[620px]:gap-3.5" key={project.id}>
                   <div className="project-row-heading">
                     <div>
                       <h3>{project.name}</h3>
@@ -156,7 +157,7 @@ export const ProjectsView = ({ canManage, githubResult, initialData, initialGitH
                     </div>
                     {project.active ? <span className="active-project-label">{t('common.active')}</span> : null}
                   </div>
-                  <div className="project-dsn">
+                  <div className="project-dsn rounded-lg border-line bg-subtle">
                     <span><span>DSN</span><code>{project.dsn}</code></span>
                     <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('projects.copyDsn', { name: project.name })} value={project.dsn} />
                   </div>
