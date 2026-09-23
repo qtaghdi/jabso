@@ -17,6 +17,7 @@ import {
 import type { McpConnectionsResponse } from 'src/shared/query/dashboard-types'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { formatDateTime } from 'src/shared/format'
+import { dashboardPageHeaderClass, dashboardSectionHeadingClass, dashboardSurfaceClass } from 'src/shared/ui/dashboard-styles'
 
 type ProjectOption = {
   id: string
@@ -89,23 +90,23 @@ export const McpConnectionsView = ({
 
   return (
     <>
-      <header className="page-header compact-page-header">
+      <header className={dashboardPageHeaderClass}>
         <h1>MCP</h1>
         <p>{t('mcp.description')}</p>
       </header>
-      <section className="mcp-endpoint-section">
+      <section className={`${dashboardSurfaceClass} grid grid-cols-[minmax(260px,.8fr)_minmax(360px,1.2fr)] items-center gap-12 px-6 py-5 [&_h2]:m-0 [&_h2]:text-lg [&_h2]:tracking-[-0.015em] [&_p]:mt-2 [&_p]:mb-0 [&_p]:max-w-lg [&_p]:text-[13px] [&_p]:text-muted max-[620px]:grid-cols-1 max-[620px]:gap-5.5 max-[620px]:p-[18px]`}>
         <div>
           <h2>{t('mcp.endpoint')}</h2>
           <p>{t('mcp.endpointDescription')}</p>
         </div>
-        <div className="mcp-endpoint">
+        <div className="mcp-endpoint rounded-lg border border-line-strong bg-subtle">
           <code>{query.data?.endpoint ?? initialData.endpoint}</code>
           <CopyCodeButton copiedLabel={t('common.copied')} iconOnly label={t('mcp.copyEndpoint')} value={query.data?.endpoint ?? initialData.endpoint} />
         </div>
       </section>
-      <section className="mcp-connections-section" aria-labelledby="mcp-connections-title">
-        <div className="section-heading-row">
-          <div>
+      <section className={`${dashboardSurfaceClass} mt-4 px-6 pt-5 pb-6 max-[620px]:p-[18px]`} aria-labelledby="mcp-connections-title">
+        <div className={`${dashboardSectionHeadingClass} border-b border-line pb-4 max-[620px]:items-stretch max-[620px]:flex-col`}>
+          <div className="flex items-baseline gap-2.5">
             <h2 id="mcp-connections-title">{t('mcp.connections')}</h2>
             <span>{t('mcp.connectionCount', { count: connections.length })}</span>
           </div>
@@ -116,17 +117,17 @@ export const McpConnectionsView = ({
           ) : null}
         </div>
         {projects.length === 0 ? (
-          <div className="mcp-empty-state">
-            <span className="mcp-empty-icon"><McpEmptyIcon /></span>
+          <div className="mcp-empty-state grid justify-items-start border-0 px-0 pt-10 pb-4">
+            <span className="mb-4 grid size-11 place-items-center rounded-xl border border-line bg-subtle text-[#3d4651] [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6]"><McpEmptyIcon /></span>
             <strong>{t('mcp.noProjectTitle')}</strong>
-            <p>{t('mcp.noProject')}</p>
+            <p className="mb-4 text-pretty">{t('mcp.noProject')}</p>
             <Link className={buttonClassName('primary')} href="/projects">{t('mcp.openProjects')}</Link>
           </div>
         ) : connections.length === 0 ? (
-          <div className="mcp-empty-state">
-            <span className="mcp-empty-icon"><McpEmptyIcon /></span>
+          <div className="mcp-empty-state grid justify-items-start border-0 px-0 pt-10 pb-4">
+            <span className="mb-4 grid size-11 place-items-center rounded-xl border border-line bg-subtle text-[#3d4651] [&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6]"><McpEmptyIcon /></span>
             <strong>{t('mcp.noConnections')}</strong>
-            <p>{t('mcp.noConnectionsDescription')}</p>
+            <p className="mb-4 text-pretty">{t('mcp.noConnectionsDescription')}</p>
             {canManage ? <Button onClick={() => setCreateOpen(true)} type="button">{t('mcp.create')}</Button> : null}
           </div>
         ) : (

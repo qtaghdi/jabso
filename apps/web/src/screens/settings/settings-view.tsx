@@ -3,6 +3,7 @@
 import { LanguageSwitcher } from 'src/shared/i18n/language-switcher'
 import { useI18n } from 'src/shared/i18n/i18n-provider'
 import { WorkspaceSettingsPanel } from 'src/widgets/workspace-switcher/workspace-settings-panel'
+import { dashboardPageHeaderClass, dashboardSurfaceClass } from 'src/shared/ui/dashboard-styles'
 
 type SettingsViewProps = {
   workspace: {
@@ -20,12 +21,12 @@ export const SettingsView = ({ workspace }: SettingsViewProps) => {
 
   return (
     <>
-      <header className="page-header compact-page-header settings-page-header">
+      <header className={`${dashboardPageHeaderClass} max-w-[760px]`}>
         <h1>{t('settings.title')}</h1>
         <p>{t('settings.description')}</p>
       </header>
-      <div className="settings-layout">
-        <section className="settings-section-card" aria-labelledby="language-settings-title">
+      <div className="grid max-w-5xl gap-4">
+        <section className={`${dashboardSurfaceClass} grid grid-cols-[minmax(0,1fr)_auto] items-center gap-5 p-6 max-[620px]:grid-cols-1 max-[620px]:items-start max-[620px]:p-5`} aria-labelledby="language-settings-title">
           <header className="settings-section-heading">
             <div>
               <h2 id="language-settings-title">{t('i18n.language')}</h2>
@@ -42,7 +43,7 @@ export const SettingsView = ({ workspace }: SettingsViewProps) => {
             organizationId={workspace.organizationId}
           />
         ) : (
-          <section className="settings-section-card" id="workspace-settings" aria-labelledby="workspace-details-title">
+          <section className={`${dashboardSurfaceClass} grid gap-5 p-6 max-[620px]:p-5`} id="workspace-settings" aria-labelledby="workspace-details-title">
             <header className="settings-section-heading">
               <div>
                 <h2 id="workspace-details-title">{t('workspace.settingsTitle')}</h2>

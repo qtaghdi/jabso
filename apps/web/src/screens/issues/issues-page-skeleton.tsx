@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useSyncExternalStore } from 'react'
+import { useI18n } from 'src/shared/i18n/i18n-provider'
 import type { IssuesResponse } from 'src/shared/query/dashboard-types'
 
 type IssuesPageState = 'onboarding' | 'table'
@@ -76,6 +77,7 @@ const IssuesOnboardingSkeleton = () => (
 )
 
 export const IssuesPageSkeleton = () => {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const cachedResponses = queryClient.getQueriesData<IssuesResponse>({
     queryKey: ['dashboard', 'issues'],
@@ -95,7 +97,7 @@ export const IssuesPageSkeleton = () => {
         <span className="skeleton-block issues-skeleton-project" />
       </div>
       {state === 'table' ? <IssuesTableSkeleton /> : <IssuesOnboardingSkeleton />}
-      <span className="sr-only">Loading issues</span>
+      <span className="sr-only">{t('issues.loading')}</span>
     </div>
   )
 }
